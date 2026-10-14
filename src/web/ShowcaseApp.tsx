@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Player } from '@remotion/player';
+import { DirectionalLetterExpand } from '../compositions/DirectionalLetterExpand';
 import { CadBlueprintDraft } from '../compositions/CadBlueprintDraft';
 import { MonolithSunShadow } from '../compositions/MonolithSunShadow';
 import { LaserSectionCut } from '../compositions/LaserSectionCut';
@@ -42,6 +43,14 @@ interface SceneItem {
 }
 
 const SCENES: SceneItem[] = [
+  {
+    id: '26-Directional-Letter-Expand',
+    title: '26 // Harf Bazlı Yönlü Genişleme (Sol-Alt-Sağ-Üst-Alt)',
+    desc: '1.Sol→Sağ, 2.Alt→Yukarı, 3.Sağ→Sol, 4.Üst→Aşağı, 5.Alt→Yukarı ardışık genişleme',
+    category: 'modern',
+    durationInFrames: 150,
+    archComponent: DirectionalLetterExpand,
+  },
   {
     id: '21-Split-Flap-Half-Fold',
     title: '21 // Yatay Yarı Devrilme (Split-Flap)',
@@ -246,26 +255,26 @@ const SCENES: SceneItem[] = [
     overlayComponent: MinimalCornerWatermark,
   },
   {
-    id: '26-Master-Showcase-Reel',
-    title: '26 // TÜM ÖNERİLER MASTER SUNUM (125 SN)',
-    desc: '25 sahnenin tamamını kesintisiz peş peşe oynatan master katalog',
+    id: '27-Master-Showcase-Reel',
+    title: '27 // TÜM ÖNERİLER MASTER SUNUM (130 SN)',
+    desc: '26 sahnenin tamamını kesintisiz peş peşe oynatan master katalog',
     category: 'all',
-    durationInFrames: 3750,
+    durationInFrames: 3900,
     archComponent: MasterShowcaseReel,
   },
 ];
 
 const CATEGORIES: { id: Category; label: string }[] = [
-  { id: 'all', label: 'Tümü (26)' },
+  { id: 'all', label: 'Tümü (27)' },
   { id: 'fold', label: '3B Devrilme & Katlanma (5)' },
-  { id: 'modern', label: 'Modern & Sade (13)' },
+  { id: 'modern', label: 'Modern & Sade (14)' },
   { id: 'arch', label: 'Mimari Yaklaşım (4)' },
   { id: 'overlay', label: 'Video Alt Bant & Filigran (3)' },
 ];
 
 export const ShowcaseApp: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
-  const [selectedId, setSelectedId] = useState<string>('21-Split-Flap-Half-Fold');
+  const [selectedId, setSelectedId] = useState<string>('26-Directional-Letter-Expand');
 
   const [headline, setHeadline] = useState('YENİLİKÇİ TASARIM & ÜRETİM');
   const [subtitle, setSubtitle] = useState('MODERN ÇÖZÜMLER // İSTANBUL');

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Composition } from 'remotion';
 import { ArchitecturalSceneSchema, LowerThirdSchema } from './types/schema';
+import { DirectionalLetterExpand } from './compositions/DirectionalLetterExpand';
 import { CadBlueprintDraft } from './compositions/CadBlueprintDraft';
 import { MonolithSunShadow } from './compositions/MonolithSunShadow';
 import { LaserSectionCut } from './compositions/LaserSectionCut';
@@ -51,6 +52,17 @@ const DEFAULT_MODERN_PROPS = {
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      <Composition
+        id="26-Directional-Letter-Expand"
+        component={DirectionalLetterExpand}
+        durationInFrames={150}
+        fps={30}
+        width={1920}
+        height={1080}
+        schema={ArchitecturalSceneSchema}
+        defaultProps={DEFAULT_MODERN_PROPS}
+      />
+
       {/* 01–05: Mimari Yaklaşımlı Öneriler */}
       <Composition
         id="01-CAD-Blueprint-Draft"
@@ -325,11 +337,11 @@ export const RemotionRoot: React.FC = () => {
         defaultProps={DEFAULT_MODERN_PROPS}
       />
 
-      {/* 26: Tüm 25 Önerinin Master Sunumu (125 sn) */}
+      {/* 27: Tüm 26 Önerinin Master Sunumu (130 sn) */}
       <Composition
-        id="26-Master-Showcase-Reel"
+        id="27-Master-Showcase-Reel"
         component={MasterShowcaseReel}
-        durationInFrames={3750}
+        durationInFrames={3900}
         fps={30}
         width={1920}
         height={1080}

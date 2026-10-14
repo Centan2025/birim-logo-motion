@@ -1,6 +1,7 @@
 import React from 'react';
 import { AbsoluteFill, Series } from 'remotion';
 import { ArchitecturalSceneProps } from '../types/schema';
+import { DirectionalLetterExpand } from './DirectionalLetterExpand';
 import { CadBlueprintDraft } from './CadBlueprintDraft';
 import { MonolithSunShadow } from './MonolithSunShadow';
 import { LaserSectionCut } from './LaserSectionCut';
@@ -31,6 +32,9 @@ export const MasterShowcaseReel: React.FC<ArchitecturalSceneProps> = (props) => 
   return (
     <AbsoluteFill>
       <Series>
+        <Series.Sequence durationInFrames={150}>
+          <DirectionalLetterExpand {...props} />
+        </Series.Sequence>
         <Series.Sequence durationInFrames={150}>
           <SplitFlapHalfFold {...props} />
         </Series.Sequence>
