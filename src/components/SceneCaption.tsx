@@ -680,6 +680,362 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
     );
   }
 
+  // 19. char-scramble-morph: Her Harf Belirirken Parçalar & Karakterler Hızla Değişip Asıl Harfe Kilitlenir
+  if (animation === 'char-scramble-morph') {
+    const chars = Array.from(text);
+    const MORPH_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789§$%&#?@!/\\+=*░▒▓╱╲┼';
+    return (
+      <div
+        style={{
+          ...baseStyle,
+          display: 'inline-flex',
+          flexWrap: 'wrap',
+          justifyContent,
+        }}
+      >
+        {chars.map((targetChar, i) => {
+          if (targetChar === ' ') {
+            return (
+              <span key={i} style={{ marginRight: `${letterSpacing + 0.35}em` }}>
+                {'\u00A0'}
+              </span>
+            );
+          }
+
+          const charStart = startFrame + i * 2.2;
+          const morphDuration = 14;
+          const lockFrame = charStart + morphDuration;
+
+          if (frame < charStart) {
+            return (
+              <span
+                key={i}
+                style={{
+                  display: 'inline-block',
+                  opacity: 0,
+                  marginRight: `${letterSpacing}em`,
+                }}
+              >
+                {targetChar}
+              </span>
+            );
+          }
+
+          const isLocked = frame >= lockFrame;
+          let displayGlyph = targetChar;
+          let glyphColor = color;
+          let glyphScale = 1;
+          let glyphShadow = 'none';
+
+          if (!isLocked) {
+            const pseudoRandomSeed = Math.floor(frame * 7 + i * 13);
+            displayGlyph = MORPH_CHARS[pseudoRandomSeed % MORPH_CHARS.length];
+            glyphColor = accentColor;
+            glyphScale = 1.15;
+            glyphShadow = `0 0 12px ${accentColor}80`;
+          } else {
+            const lockSpring = spring({
+              frame: frame - lockFrame,
+              fps,
+              config: { damping: 11, stiffness: 190 },
+            });
+            glyphScale = interpolate(lockSpring, [0, 1], [1.35, 1]);
+            const flashColorT = interpolate(frame - lockFrame, [0, 7], [1, 0], {
+              extrapolateLeft: 'clamp',
+              extrapolateRight: 'clamp',
+            });
+            glyphColor = flashColorT > 0 ? accentColor : color;
+          }
+
+          return (
+            <span
+              key={i}
+              style={{
+                display: 'inline-block',
+                color: glyphColor,
+                transform: `scale(${glyphScale})`,
+                textShadow: glyphShadow,
+                marginRight: `${letterSpacing}em`,
+              }}
+            >
+              {displayGlyph}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 20. slot-machine-reel: Dikey Çark/Tambur Hareketi ile Harfe Oturma
+  if (animation === 'slot-machine-reel') {
+    const chars = Array.from(text);
+    const DUMMY_POOL = ['X', '0', '7', 'A', '8', 'Z', '9', 'K', '#', '%'];
+    const lineHeightPx = fontSize * 1.35;
+    return (
+      <div
+        style={{
+          ...baseStyle,
+          display: 'inline-flex',
+          flexWrap: 'wrap',
+          justifyContent,
+        }}
+      >
+        {chars.map((targetChar, i) => {
+          if (targetChar === ' ') {
+            return (
+              <span key={i} style={{ marginRight: `${letterSpacing + 0.35}em` }}>
+                {'\u00A0'}
+              </span>
+            );
+          }
+
+          const s = spring({
+            frame: frame - startFrame - i * 1.5,
+            fps,
+            config: { damping: 13, stiffness: 140, mass: 0.8 },
+          });
+
+          const reelY = interpolate(s, [0, 1], [-300, 0]);
+          const d1 = DUMMY_POOL[(i * 3 + 1) % DUMMY_POOL.length];
+          const d2 = DUMMY_POOL[(i * 5 + 4) % DUMMY_POOL.length];
+          const d3 = DUMMY_POOL[(i * 7 + 2) % DUMMY_POOL.length];
+
+          return (
+            <span
+              key={i}
+              style={{
+                display: 'inline-block',
+                height: lineHeightPx,
+                overflow: 'hidden',
+                verticalAlign: 'top',
+                marginRight: `${letterSpacing}em`,
+              }}
+            >
+              <span
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transform: `translateY(${reelY}%)`,
+                  opacity: interpolate(s, [0, 0.15, 1], [0, 1, 1]),
+                }}
+              >
+                <span style={{ height: lineHeightPx, display: 'flex', alignItems: 'center', color: accentColor }}>
+                  {d1}
+                </span>
+                <span style={{ height: lineHeightPx, display: 'flex', alignItems: 'center', color: accentColor }}>
+                  {d2}
+                </span>
+                <span style={{ height: lineHeightPx, display: 'flex', alignItems: 'center', color: accentColor }}>
+                  {d3}
+                </span>
+                <span style={{ height: lineHeightPx, display: 'flex', alignItems: 'center', color }}>
+                  {targetChar}
+                </span>
+              </span>
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 21. char-fragment-assemble: Harf 4 Parçadan Birleşerek Oluşur
+  if (animation === 'char-fragment-assemble') {
+    const chars = Array.from(text);
+    return (
+      <div
+        style={{
+          ...baseStyle,
+          display: 'inline-flex',
+          flexWrap: 'wrap',
+          justifyContent,
+        }}
+      >
+        {chars.map((ch, i) => {
+          if (ch === ' ') {
+            return (
+              <span key={i} style={{ marginRight: `${letterSpacing + 0.35}em` }}>
+                {'\u00A0'}
+              </span>
+            );
+          }
+          const s = spring({
+            frame: frame - startFrame - i * 1.3,
+            fps,
+            config: { damping: 13, stiffness: 160 },
+          });
+
+          const offset = interpolate(s, [0, 1], [22, 0]);
+          const rot = interpolate(s, [0, 1], [25, 0]);
+          const op = interpolate(s, [0, 0.25, 1], [0, 1, 1]);
+
+          return (
+            <span
+              key={i}
+              style={{
+                position: 'relative',
+                display: 'inline-block',
+                marginRight: `${letterSpacing}em`,
+              }}
+            >
+              {/* Top-Left Piece */}
+              <span
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  clipPath: 'polygon(0 0, 50% 0, 50% 50%, 0 50%)',
+                  transform: `translate(${-offset}px, ${-offset}px) rotate(${-rot}deg)`,
+                  opacity: op,
+                  color: s < 0.95 ? accentColor : color,
+                }}
+              >
+                {ch}
+              </span>
+              {/* Top-Right Piece */}
+              <span
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  clipPath: 'polygon(50% 0, 100% 0, 100% 50%, 50% 50%)',
+                  transform: `translate(${offset}px, ${-offset}px) rotate(${rot}deg)`,
+                  opacity: op,
+                  color: s < 0.95 ? accentColor : color,
+                }}
+              >
+                {ch}
+              </span>
+              {/* Bottom-Left Piece */}
+              <span
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  clipPath: 'polygon(0 50%, 50% 50%, 50% 100%, 0 100%)',
+                  transform: `translate(${-offset}px, ${offset}px) rotate(${rot}deg)`,
+                  opacity: op,
+                  color: s < 0.95 ? accentColor : color,
+                }}
+              >
+                {ch}
+              </span>
+              {/* Bottom-Right Piece & Base Anchor */}
+              <span
+                style={{
+                  display: 'inline-block',
+                  clipPath: 'polygon(50% 50%, 100% 50%, 100% 100%, 50% 100%)',
+                  transform: `translate(${offset}px, ${offset}px) rotate(${-rot}deg)`,
+                  opacity: op,
+                  color: s < 0.95 ? accentColor : color,
+                }}
+              >
+                {ch}
+              </span>
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 22. neon-flicker: Neon Lamba Titremesi & Işık Patlaması
+  if (animation === 'neon-flicker') {
+    const chars = Array.from(text);
+    return (
+      <div
+        style={{
+          ...baseStyle,
+          display: 'inline-flex',
+          flexWrap: 'wrap',
+          justifyContent,
+        }}
+      >
+        {chars.map((ch, i) => {
+          if (ch === ' ') {
+            return (
+              <span key={i} style={{ marginRight: `${letterSpacing + 0.35}em` }}>
+                {'\u00A0'}
+              </span>
+            );
+          }
+          const charFrame = frame - startFrame - i * 0.9;
+          if (charFrame < 0) {
+            return (
+              <span key={i} style={{ opacity: 0, marginRight: `${letterSpacing}em` }}>
+                {ch}
+              </span>
+            );
+          }
+
+          let op = 1;
+          let glow = `0 0 10px ${accentColor}, 0 0 22px ${accentColor}, 0 0 45px ${accentColor}80`;
+          let charColor = color;
+
+          if (charFrame < 14) {
+            const flickerPattern = [0.1, 0.9, 0.15, 0.95, 0.2, 0.4, 1.0, 0.3, 0.95, 0.6, 1.0, 0.85, 1.0, 1.0];
+            op = flickerPattern[Math.min(charFrame, flickerPattern.length - 1)];
+            glow = op > 0.5 ? `0 0 14px ${accentColor}, 0 0 30px ${accentColor}` : 'none';
+            charColor = op > 0.5 ? accentColor : 'rgba(255,255,255,0.2)';
+          }
+
+          return (
+            <span
+              key={i}
+              style={{
+                display: 'inline-block',
+                opacity: op,
+                color: charColor,
+                textShadow: glow,
+                marginRight: `${letterSpacing}em`,
+              }}
+            >
+              {ch}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 23. wave-cascade-y: Sinüs Dalgasal Kaskat
+  if (animation === 'wave-cascade-y') {
+    const chars = Array.from(text);
+    return (
+      <div
+        style={{
+          ...baseStyle,
+          display: 'inline-flex',
+          flexWrap: 'wrap',
+          justifyContent,
+        }}
+      >
+        {chars.map((ch, i) => {
+          const charFrame = frame - startFrame - i * 1.35;
+          const s = spring({
+            frame: charFrame,
+            fps,
+            config: { damping: 15, stiffness: 120 },
+          });
+
+          const waveSine = Math.sin((frame * 0.12) + i * 0.4) * (1 - s) * 20;
+          const y = interpolate(s, [0, 1], [-45, 0]) + waveSine;
+
+          return (
+            <span
+              key={i}
+              style={{
+                display: 'inline-block',
+                opacity: interpolate(s, [0, 0.2, 1], [0, 1, 1]),
+                transform: `translateY(${y}px)`,
+                marginRight: ch === ' ' ? `${letterSpacing + 0.35}em` : `${letterSpacing}em`,
+              }}
+            >
+              {ch === ' ' ? '\u00A0' : ch}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
   // 12. fade-up (Default): Yumuşak Yükseliş
   const s = spring({
     frame: frame - startFrame,
@@ -715,6 +1071,7 @@ interface SceneCaptionProps {
   textAnimation?: TextAnimationType;
   baseTop?: number;
   delayFrames?: number;
+  showLogo?: boolean;
 }
 
 export const SceneCaption: React.FC<SceneCaptionProps> = ({
@@ -732,6 +1089,7 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
   textAnimation = 'char-wave',
   baseTop = 678,
   delayFrames = 32,
+  showLogo = true,
 }) => {
   const alignItems =
     textAlign === 'left'
@@ -740,18 +1098,26 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
         ? 'flex-end'
         : 'center';
 
+  const totalTextHeight =
+    headlineSize * 1.35 + (subtitle ? subtitleSize * 1.35 + Math.max(12, headlineSize * 0.18) : 0);
+  const effectiveBaseTop =
+    showLogo === false ? (1080 - totalTextHeight) / 2 : baseTop;
+  const effectiveLeft = showLogo === false ? 120 : 268;
+  const effectiveWidth = showLogo === false ? 1680 : 1384;
+  const gap = Math.max(10, Math.min(36, Math.round(headlineSize * 0.2)));
+
   return (
     <div
       style={{
         position: 'absolute',
-        top: baseTop + textOffsetY,
-        left: 268 + textOffsetX,
-        width: 1384,
+        top: effectiveBaseTop + textOffsetY,
+        left: effectiveLeft + textOffsetX,
+        width: effectiveWidth,
         display: 'flex',
         flexDirection: 'column',
         alignItems,
         textAlign,
-        gap: 10,
+        gap,
         pointerEvents: 'none',
       }}
     >

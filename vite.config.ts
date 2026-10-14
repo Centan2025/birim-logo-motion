@@ -64,6 +64,7 @@ function remotionRenderPlugin(): Plugin {
                 textAnimation = 'char-wave',
                 textDelayFrames = 30,
                 durationInFrames = 150,
+                showLogo = true,
                 format = 'webm',
               } = data;
 
@@ -108,6 +109,7 @@ function remotionRenderPlugin(): Plugin {
                 textAlign: textAlign || 'left',
                 textAnimation: textAnimation || 'char-wave',
                 textDelayFrames: textDelayFrames !== undefined ? Number(textDelayFrames) : 30,
+                showLogo: showLogo !== false,
                 transparentBackground: !!transparent,
                 backgroundColor: transparent ? 'transparent' : '#0B0D10',
               };

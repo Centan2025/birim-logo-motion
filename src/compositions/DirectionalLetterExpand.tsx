@@ -40,6 +40,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
   textAlign = 'center',
   textAnimation = 'char-wave',
   textDelayFrames,
+  showLogo = true,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -55,7 +56,8 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
 
   return (
     <AbsoluteFill style={{ backgroundColor, overflow: 'hidden' }}>
-      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+      {showLogo !== false && (
+        <svg width="1920" height="1080" viewBox="0 0 1920 1080">
         <defs>
           {BIRIM_LETTERS.map((letter) => (
             <clipPath key={`bounds-${letter.id}`} id={`bounds-clip-${letter.id}`}>
@@ -124,6 +126,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
           })}
         </g>
       </svg>
+      )}
 
       {/* Customizable Animated Bottom Text */}
       <SceneCaption
@@ -141,6 +144,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
         textAnimation={textAnimation}
         baseTop={offsetY + renderedHeight + 58}
         delayFrames={textDelayFrames !== undefined ? textDelayFrames : BIRIM_LETTERS.length * STAGGER_FRAMES + 10}
+        showLogo={showLogo}
       />
     </AbsoluteFill>
   );

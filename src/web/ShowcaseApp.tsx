@@ -27,13 +27,14 @@ import { HalfLogoCantileverDrop } from '../compositions/HalfLogoCantileverDrop';
 import { OrigamiAccordionUnfold } from '../compositions/OrigamiAccordionUnfold';
 import { SplitHorizonDualTip } from '../compositions/SplitHorizonDualTip';
 import { MasterShowcaseReel } from '../compositions/MasterShowcaseReel';
+import { PureTypographyStudio } from '../compositions/PureTypographyStudio';
 import {
   ArchitecturalSceneProps,
   LowerThirdProps,
   TextAnimationType,
 } from '../types/schema';
 
-type Category = 'all' | 'fold' | 'modern' | 'arch' | 'overlay';
+type Category = 'all' | 'typography' | 'fold' | 'modern' | 'arch' | 'overlay';
 
 interface SceneItem {
   id: string;
@@ -266,10 +267,19 @@ const SCENES: SceneItem[] = [
     durationInFrames: 3900,
     archComponent: MasterShowcaseReel,
   },
+  {
+    id: '28-Pure-Kinetic-Typography',
+    title: '28 // Saf Kinetik Tipografi & Metin Stüdyosu',
+    desc: 'Logo olmadan sadece metin ve kinetik tipografi animasyonuna odaklanan saf stüdyo sahnesi',
+    category: 'typography',
+    durationInFrames: 150,
+    archComponent: PureTypographyStudio,
+  },
 ];
 
 const CATEGORIES: { id: Category; label: string }[] = [
-  { id: 'all', label: 'Tümü (27)' },
+  { id: 'all', label: 'Tümü (28)' },
+  { id: 'typography', label: 'Saf Tipografi (1)' },
   { id: 'fold', label: '3B Devrilme & Katlanma (5)' },
   { id: 'modern', label: 'Modern & Sade (14)' },
   { id: 'arch', label: 'Mimari Yaklaşım (4)' },
@@ -317,6 +327,11 @@ const TEXT_ANIMATION_CHOICES: ReadonlyArray<{
   { label: '16. Puslu Odak & Çözülme (Smoke Dissolve)', value: 'smoke-dissolve' },
   { label: '17. Deklanşör Perde Maskesi (Shutter Reveal)', value: 'shutter-reveal' },
   { label: '18. Siber Akış & Şelale (Matrix Stream)', value: 'matrix-stream' },
+  { label: '19. Harf Parça & Değişimli Morf (Scramble Morph)', value: 'char-scramble-morph' },
+  { label: '20. Dikey Harf Tamburu (Slot Machine Reel)', value: 'slot-machine-reel' },
+  { label: '21. Geometrik Parça Birleşimi (Fragment Assemble)', value: 'char-fragment-assemble' },
+  { label: '22. Neon Işık Titremesi (Neon Flicker Glow)', value: 'neon-flicker' },
+  { label: '23. Sinüs Dalgasal Kaskat (Sine Wave Cascade)', value: 'wave-cascade-y' },
 ];
 
 interface SceneCustomConfig {
@@ -336,6 +351,7 @@ interface SceneCustomConfig {
   textDelayFrames: number;
   durationInFrames: number;
   transparentBg: boolean;
+  showLogo: boolean;
 }
 
 const DEFAULT_SCENE_CONFIG: SceneCustomConfig = {
@@ -355,6 +371,7 @@ const DEFAULT_SCENE_CONFIG: SceneCustomConfig = {
   textDelayFrames: 30,
   durationInFrames: 150,
   transparentBg: true,
+  showLogo: true,
 };
 
 export const ShowcaseApp: React.FC = () => {
@@ -485,6 +502,7 @@ export const ShowcaseApp: React.FC = () => {
           textAnimation: cfg.textAnimation,
           textDelayFrames: cfg.textDelayFrames,
           durationInFrames: cfg.durationInFrames,
+          showLogo: cfg.showLogo,
           format,
         }),
       });
@@ -909,7 +927,7 @@ export const ShowcaseApp: React.FC = () => {
           >
             {activeScene.isOverlay && activeScene.overlayComponent ? (
               <Player
-                key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.textDelayFrames}-${cfg.durationInFrames}`}
+                key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.textDelayFrames}-${cfg.durationInFrames}-${cfg.showLogo}`}
                 component={activeScene.overlayComponent}
                 inputProps={{
                   projectTitle: cfg.headline,
@@ -926,6 +944,7 @@ export const ShowcaseApp: React.FC = () => {
                   textOffsetY: cfg.textOffsetY,
                   textAnimation: cfg.textAnimation,
                   textDelayFrames: cfg.textDelayFrames,
+                  showLogo: cfg.showLogo,
                 }}
                 durationInFrames={cfg.durationInFrames}
                 fps={30}
@@ -942,7 +961,7 @@ export const ShowcaseApp: React.FC = () => {
             ) : (
               activeScene.archComponent && (
                 <Player
-                  key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.textDelayFrames}-${cfg.durationInFrames}`}
+                  key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.textDelayFrames}-${cfg.durationInFrames}-${cfg.showLogo}`}
                   component={activeScene.archComponent}
                   inputProps={{
                     headline: cfg.headline,
@@ -961,6 +980,7 @@ export const ShowcaseApp: React.FC = () => {
                     textAlign: cfg.textAlign,
                     textAnimation: cfg.textAnimation,
                     textDelayFrames: cfg.textDelayFrames,
+                    showLogo: cfg.showLogo,
                   }}
                   durationInFrames={cfg.durationInFrames}
                   fps={30}
@@ -1079,6 +1099,40 @@ export const ShowcaseApp: React.FC = () => {
                 }}
               >
                 {cfg.transparentBg ? 'AÇIK' : 'KAPALI'}
+              </strong>
+            </button>
+
+            {/* Logo Görünürlüğü Düğmesi (Açık/Kapalı - Saf Metin Modu) */}
+            <button
+              onClick={() => updateConfig({ showLogo: !cfg.showLogo })}
+              title={cfg.showLogo ? 'Logoyu Gizle (Sadece Metin Animasyonu Yap)' : 'Logoyu Göster'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 14px',
+                borderRadius: 8,
+                border: cfg.showLogo
+                  ? '1px solid rgba(255,255,255,0.2)'
+                  : '1px solid #F59E0B',
+                backgroundColor: cfg.showLogo
+                  ? 'rgba(255,255,255,0.05)'
+                  : 'rgba(245, 158, 11, 0.22)',
+                color: '#FFFFFF',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              <span style={{ fontSize: 13 }}>{cfg.showLogo ? '🏛️' : '📝'}</span>
+              <span>Logo:</span>
+              <strong
+                style={{
+                  color: cfg.showLogo ? '#60A5FA' : '#FBBF24',
+                }}
+              >
+                {cfg.showLogo ? 'AÇIK' : 'KAPALI (SAF METİN)'}
               </strong>
             </button>
 
@@ -1604,6 +1658,63 @@ export const ShowcaseApp: React.FC = () => {
           </div>
         </div>
 
+        {/* LOGO GÖRÜNÜRLÜĞÜ & SAF METİN MODU */}
+        <div
+          style={{
+            padding: '12px',
+            borderRadius: 10,
+            backgroundColor: cfg.showLogo ? '#12151D' : 'rgba(245, 158, 11, 0.12)',
+            border: cfg.showLogo
+              ? '1px solid rgba(255,255,255,0.08)'
+              : '1px solid rgba(245, 158, 11, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: cfg.showLogo ? '#FFFFFF' : '#FBBF24',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <span>{cfg.showLogo ? '🏛️' : '📝'}</span>
+              <span>LOGO GÖRÜNÜRLÜĞÜ</span>
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+              {cfg.showLogo
+                ? 'Logo ve metin birlikte gösteriliyor.'
+                : '⚡ Logo gizlendi: Yalnızca metin animasyonu aktif (Otomatik merkezli).'}
+            </div>
+          </div>
+          <button
+            onClick={() => updateConfig({ showLogo: !cfg.showLogo })}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 6,
+              border: cfg.showLogo
+                ? '1px solid rgba(255,255,255,0.2)'
+                : '1px solid #F59E0B',
+              backgroundColor: cfg.showLogo ? 'rgba(255,255,255,0.08)' : '#F59E0B',
+              color: cfg.showLogo ? '#FFFFFF' : '#000000',
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {cfg.showLogo ? 'Logoyu Gizle' : '✓ Logo Kapalı'}
+          </button>
+        </div>
+
         {/* 3. BÖLÜM: YAZI TİPİ, BOYUT & KONUM */}
         <div
           style={{
@@ -1661,34 +1772,145 @@ export const ShowcaseApp: React.FC = () => {
 
           {/* Ana Metin Boyutu */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
               <span>Ana Metin Boyutu</span>
-              <strong style={{ color: cfg.accentColor }}>{cfg.headlineSize} px</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <input
+                  type="number"
+                  min={8}
+                  max={500}
+                  value={cfg.headlineSize}
+                  onChange={(e) =>
+                    updateConfig({
+                      headlineSize: Math.max(8, Math.min(500, Number(e.target.value) || 8)),
+                    })
+                  }
+                  style={{
+                    width: 52,
+                    padding: '2px 4px',
+                    borderRadius: 4,
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    backgroundColor: '#1E2330',
+                    color: cfg.accentColor,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textAlign: 'right',
+                  }}
+                />
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>px</span>
+              </div>
             </div>
             <input
               type="range"
               min={8}
-              max={200}
+              max={500}
               value={cfg.headlineSize}
               onChange={(e) => updateConfig({ headlineSize: Number(e.target.value) })}
               style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
             />
+            {/* Hızlı Ana Boyut Butonları */}
+            <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+              {[
+                { label: '32', size: 32 },
+                { label: '64 (Def)', size: 64 },
+                { label: '96', size: 96 },
+                { label: '140', size: 140 },
+                { label: '220 (Dev)', size: 220 },
+                { label: '360', size: 360 },
+              ].map((p) => (
+                <button
+                  key={p.size}
+                  onClick={() => updateConfig({ headlineSize: p.size })}
+                  style={{
+                    flex: 1,
+                    padding: '2px 0',
+                    borderRadius: 4,
+                    border:
+                      cfg.headlineSize === p.size
+                        ? `1px solid ${cfg.accentColor}`
+                        : '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor:
+                      cfg.headlineSize === p.size ? `${cfg.accentColor}25` : 'rgba(255,255,255,0.03)',
+                    color: '#FFFFFF',
+                    fontSize: 9.5,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Alt Metin Boyutu */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
               <span>Alt Metin Boyutu</span>
-              <strong style={{ color: cfg.accentColor }}>{cfg.subtitleSize} px</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <input
+                  type="number"
+                  min={6}
+                  max={250}
+                  value={cfg.subtitleSize}
+                  onChange={(e) =>
+                    updateConfig({
+                      subtitleSize: Math.max(6, Math.min(250, Number(e.target.value) || 6)),
+                    })
+                  }
+                  style={{
+                    width: 52,
+                    padding: '2px 4px',
+                    borderRadius: 4,
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    backgroundColor: '#1E2330',
+                    color: cfg.accentColor,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textAlign: 'right',
+                  }}
+                />
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>px</span>
+              </div>
             </div>
             <input
               type="range"
               min={6}
-              max={120}
+              max={250}
               value={cfg.subtitleSize}
               onChange={(e) => updateConfig({ subtitleSize: Number(e.target.value) })}
               style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
             />
+            {/* Hızlı Alt Boyut Butonları */}
+            <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+              {[
+                { label: '20', size: 20 },
+                { label: '40 (Def)', size: 40 },
+                { label: '60', size: 60 },
+                { label: '90', size: 90 },
+                { label: '140', size: 140 },
+              ].map((p) => (
+                <button
+                  key={p.size}
+                  onClick={() => updateConfig({ subtitleSize: p.size })}
+                  style={{
+                    flex: 1,
+                    padding: '2px 0',
+                    borderRadius: 4,
+                    border:
+                      cfg.subtitleSize === p.size
+                        ? `1px solid ${cfg.accentColor}`
+                        : '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor:
+                      cfg.subtitleSize === p.size ? `${cfg.accentColor}25` : 'rgba(255,255,255,0.03)',
+                    color: '#FFFFFF',
+                    fontSize: 9.5,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Harf Aralığı */}
@@ -1700,7 +1922,7 @@ export const ShowcaseApp: React.FC = () => {
             <input
               type="range"
               min={0}
-              max={1.0}
+              max={2.0}
               step={0.02}
               value={cfg.letterSpacing}
               onChange={(e) => updateConfig({ letterSpacing: Number(e.target.value) })}
@@ -1716,8 +1938,8 @@ export const ShowcaseApp: React.FC = () => {
             </div>
             <input
               type="range"
-              min={-560}
-              max={260}
+              min={-700}
+              max={500}
               step={5}
               value={cfg.textOffsetY}
               onChange={(e) => updateConfig({ textOffsetY: Number(e.target.value) })}
@@ -1737,7 +1959,7 @@ export const ShowcaseApp: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                ↑ Logonun Üstüne Al
+                ↑ Üste Al
               </button>
               <button
                 onClick={() => updateConfig({ textOffsetX: 0, textOffsetY: 0 })}
@@ -1752,7 +1974,22 @@ export const ShowcaseApp: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                ↓ Logonun Altına Al
+                • Sıfırla / Merkez
+              </button>
+              <button
+                onClick={() => updateConfig({ textOffsetX: 0, textOffsetY: 200 })}
+                style={{
+                  flex: 1,
+                  padding: '5px',
+                  borderRadius: 4,
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  backgroundColor: 'rgba(255,255,255,0.04)',
+                  color: '#FFFFFF',
+                  fontSize: 10.5,
+                  cursor: 'pointer',
+                }}
+              >
+                ↓ Alta Al
               </button>
             </div>
           </div>

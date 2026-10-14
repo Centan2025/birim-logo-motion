@@ -39,6 +39,11 @@ export const TEXT_ANIMATION_OPTIONS = [
   'smoke-dissolve',
   'shutter-reveal',
   'matrix-stream',
+  'char-scramble-morph',
+  'slot-machine-reel',
+  'char-fragment-assemble',
+  'neon-flicker',
+  'wave-cascade-y',
 ] as const;
 
 export type TextAnimationType = (typeof TEXT_ANIMATION_OPTIONS)[number];
@@ -52,14 +57,15 @@ export const ArchitecturalSceneSchema = z.object({
   primaryColor: zColor().default('#F4F1EA'),
   backgroundColor: zColor().default('#0B0D10'),
   fontFamily: z.enum(FONT_OPTIONS).optional().default("'Inter', sans-serif"),
-  headlineSize: z.number().min(8).max(240).optional().default(19),
-  subtitleSize: z.number().min(6).max(140).optional().default(12),
-  letterSpacing: z.number().min(0).max(1.5).optional().default(0.4),
-  textOffsetX: z.number().min(-900).max(900).optional().default(0),
-  textOffsetY: z.number().min(-700).max(500).optional().default(0),
+  headlineSize: z.number().min(8).max(500).optional().default(19),
+  subtitleSize: z.number().min(6).max(250).optional().default(12),
+  letterSpacing: z.number().min(0).max(2.0).optional().default(0.4),
+  textOffsetX: z.number().min(-1200).max(1200).optional().default(0),
+  textOffsetY: z.number().min(-900).max(900).optional().default(0),
   textAlign: z.enum(['left', 'center', 'right']).optional().default('center'),
   textAnimation: z.enum(TEXT_ANIMATION_OPTIONS).optional().default('char-wave'),
   textDelayFrames: z.number().min(0).max(180).optional(),
+  showLogo: z.boolean().optional(),
 });
 
 export type ArchitecturalSceneProps = z.infer<typeof ArchitecturalSceneSchema>;
@@ -72,13 +78,14 @@ export const LowerThirdSchema = z.object({
   primaryColor: zColor().optional(),
   transparentBackground: z.boolean().default(false),
   fontFamily: z.enum(FONT_OPTIONS).optional().default("'Inter', sans-serif"),
-  headlineSize: z.number().min(8).max(240).optional().default(22),
-  subtitleSize: z.number().min(6).max(140).optional().default(12),
-  letterSpacing: z.number().min(0).max(1.5).optional().default(0.18),
-  textOffsetX: z.number().min(-900).max(900).optional().default(0),
-  textOffsetY: z.number().min(-700).max(500).optional().default(0),
+  headlineSize: z.number().min(8).max(500).optional().default(22),
+  subtitleSize: z.number().min(6).max(250).optional().default(12),
+  letterSpacing: z.number().min(0).max(2.0).optional().default(0.18),
+  textOffsetX: z.number().min(-1200).max(1200).optional().default(0),
+  textOffsetY: z.number().min(-900).max(900).optional().default(0),
   textAnimation: z.enum(TEXT_ANIMATION_OPTIONS).optional().default('char-wave'),
   textDelayFrames: z.number().min(0).max(180).optional(),
+  showLogo: z.boolean().optional(),
 });
 
 export type LowerThirdProps = z.infer<typeof LowerThirdSchema>;

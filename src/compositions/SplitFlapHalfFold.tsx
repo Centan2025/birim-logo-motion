@@ -1,4 +1,4 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
+import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -15,13 +15,17 @@ export const SplitFlapHalfFold: React.FC<ArchitecturalSceneProps> = ({
   subtitle,
   accentColor,
   primaryColor,
+  backgroundColor,
   fontFamily = "'Inter', sans-serif",
   headlineSize = 19,
   subtitleSize = 12,
   letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
+  textAlign = 'center',
   textAnimation = 'char-wave',
+  textDelayFrames = 34,
+  showLogo = true,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -31,16 +35,12 @@ export const SplitFlapHalfFold: React.FC<ArchitecturalSceneProps> = ({
   const renderedHeight = LOGO_VIEWBOX.height * scale;
   const halfHeight = renderedHeight / 2;
 
-  const textSpring = spring({
-    frame: frame - 54,
-    fps,
-    config: { damping: 20, stiffness: 95 },
-  });
+  const isTransparent = backgroundColor === 'transparent';
 
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: '#090A0F',
+        backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#090A0F'),
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -50,7 +50,8 @@ export const SplitFlapHalfFold: React.FC<ArchitecturalSceneProps> = ({
       }}
     >
       {/* 3D Split-Flap Stage */}
-      <div
+      {showLogo !== false && (
+        <div
         style={{
           position: 'relative',
           width: renderedWidth,
@@ -151,64 +152,27 @@ export const SplitFlapHalfFold: React.FC<ArchitecturalSceneProps> = ({
         })}
 
 
-      </div>
+        </div>
+      )}
 
-      {/* Clean Modern Subtitle */}
-      <div
-        style={{
-          marginTop: 64,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 10,
-          opacity: textSpring,
-          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [16, 0])}px)`,
-        }}
-      >
-        <div
-          style={{
-            fontFamily,
-            fontSize: headlineSize,
-            fontWeight: 500,
-            letterSpacing: `${letterSpacing}em`,
-            color: primaryColor,
-            textTransform: 'uppercase',
-          }}
-        >
-          <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
-        </div>
-        <div
-          style={{
-            fontFamily,
-            fontSize: subtitleSize,
-            fontWeight: 400,
-            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-            color: accentColor,
-            textTransform: 'uppercase',
-          }}
-        >
-          <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
-        </div>
-      </div>
+      {/* Clean Dynamic Caption */}
+      <SceneCaption
+        headline={headline}
+        subtitle={subtitle}
+        primaryColor={primaryColor}
+        accentColor={accentColor}
+        fontFamily={fontFamily}
+        headlineSize={headlineSize}
+        subtitleSize={subtitleSize}
+        letterSpacing={letterSpacing}
+        textOffsetX={textOffsetX}
+        textOffsetY={textOffsetY}
+        textAlign={textAlign}
+        textAnimation={textAnimation}
+        delayFrames={textDelayFrames}
+        showLogo={showLogo}
+        baseTop={678}
+      />
     </AbsoluteFill>
   );
 };

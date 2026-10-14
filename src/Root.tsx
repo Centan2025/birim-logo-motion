@@ -28,6 +28,7 @@ import { HalfLogoCantileverDrop } from './compositions/HalfLogoCantileverDrop';
 import { OrigamiAccordionUnfold } from './compositions/OrigamiAccordionUnfold';
 import { SplitHorizonDualTip } from './compositions/SplitHorizonDualTip';
 import { MasterShowcaseReel } from './compositions/MasterShowcaseReel';
+import { PureTypographyStudio } from './compositions/PureTypographyStudio';
 
 const DEFAULT_ARCH_PROPS = {
   headline: 'MİMARİ TASARIM & YAPI',
@@ -63,6 +64,26 @@ const DEFAULT_MODERN_PROPS = {
   textOffsetY: 0,
   textAlign: 'left' as const,
   textAnimation: 'char-wave' as const,
+};
+
+const DEFAULT_TYPOGRAPHY_PROPS = {
+  headline: 'HİS',
+  subtitle: '2004',
+  projectCode: '',
+  scaleText: '',
+  accentColor: '#FFFFFF',
+  primaryColor: '#FFFFFF',
+  backgroundColor: 'transparent',
+  fontFamily: "'Inter', sans-serif" as const,
+  headlineSize: 64,
+  subtitleSize: 40,
+  letterSpacing: 0.25,
+  textOffsetX: 0,
+  textOffsetY: 0,
+  textAlign: 'left' as const,
+  textAnimation: 'char-scramble-morph' as const,
+  textDelayFrames: 15,
+  showLogo: false,
 };
 
 export const RemotionRoot: React.FC = () => {
@@ -384,6 +405,18 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         schema={ArchitecturalSceneSchema}
         defaultProps={DEFAULT_MODERN_PROPS}
+      />
+
+      {/* 28: Saf Kinetik Tipografi & Metin Stüdyosu (Logosuz) */}
+      <Composition
+        id="28-Pure-Kinetic-Typography"
+        component={PureTypographyStudio}
+        durationInFrames={150}
+        fps={30}
+        width={1920}
+        height={1080}
+        schema={ArchitecturalSceneSchema}
+        defaultProps={DEFAULT_TYPOGRAPHY_PROPS}
       />
     </>
   );
