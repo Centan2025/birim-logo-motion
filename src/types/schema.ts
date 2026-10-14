@@ -48,6 +48,14 @@ export const TEXT_ANIMATION_OPTIONS = [
 
 export type TextAnimationType = (typeof TEXT_ANIMATION_OPTIONS)[number];
 
+export const ASPECT_RATIO_OPTIONS = [
+  { value: '16:9', label: '16:9 Yatay', desc: 'YouTube / TV (1920×1080)', width: 1920, height: 1080, icon: '🖥️' },
+  { value: '9:16', label: '9:16 Dikey', desc: 'Reels / Shorts / TikTok (1080×1920)', width: 1080, height: 1920, icon: '📱' },
+  { value: '1:1', label: '1:1 Kare', desc: 'Instagram Feed (1080×1080)', width: 1080, height: 1080, icon: '⏹️' },
+] as const;
+
+export type AspectRatioType = (typeof ASPECT_RATIO_OPTIONS)[number]['value'];
+
 export const ArchitecturalSceneSchema = z.object({
   headline: z.string().default('MİMARİ TASARIM & YAPI'),
   subtitle: z.string().default('ÇAĞDAŞ MEKÂN KURGUSU // İSTANBUL'),
@@ -71,6 +79,7 @@ export const ArchitecturalSceneSchema = z.object({
   line1Delay: z.number().min(0).max(300).optional(),
   line2Delay: z.number().min(0).max(300).optional(),
   line3Delay: z.number().min(0).max(300).optional(),
+  aspectRatio: z.enum(['16:9', '9:16', '1:1']).optional(),
   showLogo: z.boolean().optional(),
 });
 
@@ -97,6 +106,7 @@ export const LowerThirdSchema = z.object({
   line1Delay: z.number().min(0).max(300).optional(),
   line2Delay: z.number().min(0).max(300).optional(),
   line3Delay: z.number().min(0).max(300).optional(),
+  aspectRatio: z.enum(['16:9', '9:16', '1:1']).optional(),
   showLogo: z.boolean().optional(),
 });
 

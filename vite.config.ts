@@ -72,6 +72,7 @@ function remotionRenderPlugin(): Plugin {
                 durationInFrames = 150,
                 showLogo = true,
                 format = 'webm',
+                aspectRatio = '16:9',
               } = data;
 
               if (!sceneId) {
@@ -93,7 +94,8 @@ function remotionRenderPlugin(): Plugin {
               const isWebm = format === 'webm';
               const isMov = format === 'mov' || format === 'prores';
               const ext = isWebm ? 'webm' : isMov ? 'mov' : 'mp4';
-              const filename = `${safeScene}-${transparent ? 'seffaf-' : ''}${timestamp}.${ext}`;
+              const ratioTag = aspectRatio === '9:16' ? 'dikey-9x16-' : aspectRatio === '1:1' ? 'kare-1x1-' : 'yatay-16x9-';
+              const filename = `${safeScene}-${ratioTag}${transparent ? 'seffaf-' : ''}${timestamp}.${ext}`;
               const outPath = path.join(outDir, filename);
 
               // JSON props
@@ -124,6 +126,7 @@ function remotionRenderPlugin(): Plugin {
                 showLogo: showLogo !== false,
                 transparentBackground: !!transparent,
                 backgroundColor: transparent ? 'transparent' : '#0B0D10',
+                aspectRatio: aspectRatio || '16:9',
               };
 
               // Windows komut satırında tırnak bozulmasını önlemek için geçici JSON dosyası kullan

@@ -1160,15 +1160,21 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
 
   const resolvedTaglineColor = taglineColor || accentColor;
 
+  const { width: compWidth = 1920, height: compHeight = 1080 } = useVideoConfig();
+
   const totalTextHeight =
     headlineSize * 1.35 +
     (subtitle ? subtitleSize * 1.35 + Math.max(10, headlineSize * 0.15) : 0) +
     (tagline ? taglineSize * 1.35 + Math.max(10, subtitleSize * 0.15) : 0);
 
   const effectiveBaseTop =
-    showLogo === false ? (1080 - totalTextHeight) / 2 : baseTop;
-  const effectiveLeft = showLogo === false ? 120 : 268;
-  const effectiveWidth = showLogo === false ? 1680 : 1384;
+    showLogo === false
+      ? (compHeight - totalTextHeight) / 2
+      : Math.round(baseTop * (compHeight / 1080));
+  const horizontalPadding =
+    showLogo === false ? Math.round(compWidth * 0.06) : Math.round(compWidth * 0.12);
+  const effectiveWidth = compWidth - horizontalPadding * 2;
+  const effectiveLeft = horizontalPadding;
   const gap = Math.max(10, Math.min(36, Math.round(headlineSize * 0.18)));
 
   return (

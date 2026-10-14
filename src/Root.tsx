@@ -1,6 +1,11 @@
 import React from 'react';
-import { Composition } from 'remotion';
-import { ArchitecturalSceneSchema, LowerThirdSchema } from './types/schema';
+import { Composition, CalculateMetadataFunction } from 'remotion';
+import {
+  ArchitecturalSceneProps,
+  ArchitecturalSceneSchema,
+  LowerThirdProps,
+  LowerThirdSchema,
+} from './types/schema';
 import { DirectionalLetterExpand } from './compositions/DirectionalLetterExpand';
 import { CadBlueprintDraft } from './compositions/CadBlueprintDraft';
 import { MonolithSunShadow } from './compositions/MonolithSunShadow';
@@ -86,6 +91,28 @@ const DEFAULT_TYPOGRAPHY_PROPS = {
   showLogo: false,
 };
 
+const calculateDynamicMetadata: CalculateMetadataFunction<ArchitecturalSceneProps> = ({ props }) => {
+  const isVertical = props.aspectRatio === '9:16';
+  const isSquare = props.aspectRatio === '1:1';
+  const width = isVertical ? 1080 : isSquare ? 1080 : 1920;
+  const height = isVertical ? 1920 : isSquare ? 1080 : 1080;
+  return {
+    width,
+    height,
+  };
+};
+
+const calculateLowerThirdMetadata: CalculateMetadataFunction<LowerThirdProps> = ({ props }) => {
+  const isVertical = props.aspectRatio === '9:16';
+  const isSquare = props.aspectRatio === '1:1';
+  const width = isVertical ? 1080 : isSquare ? 1080 : 1920;
+  const height = isVertical ? 1920 : isSquare ? 1080 : 1080;
+  return {
+    width,
+    height,
+  };
+};
+
 export const RemotionRoot: React.FC = () => {
   return (
     <>
@@ -97,6 +124,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
 
@@ -109,6 +137,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_ARCH_PROPS}
       />
       <Composition
@@ -119,6 +148,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_ARCH_PROPS}
       />
       <Composition
@@ -129,6 +159,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_ARCH_PROPS}
       />
       <Composition
@@ -139,6 +170,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_ARCH_PROPS}
       />
       <Composition
@@ -149,6 +181,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={LowerThirdSchema}
+        calculateMetadata={calculateLowerThirdMetadata}
         defaultProps={{
           projectTitle: 'KUZEY KAMPÜSÜ KÜLTÜR MERKEZİ',
           architecturalPhase: 'UYGULAMA PROJESİ // KESİT A-A',
@@ -174,6 +207,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -184,6 +218,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -194,6 +229,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -204,6 +240,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -214,6 +251,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={LowerThirdSchema}
+        calculateMetadata={calculateLowerThirdMetadata}
         defaultProps={{
           projectTitle: 'YENİ NESİL TASARIM DENEYİMİ',
           architecturalPhase: 'TANITIM FİLMİ // 2026',
@@ -237,6 +275,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -247,6 +286,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -257,6 +297,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -267,6 +308,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -277,6 +319,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -287,6 +330,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -297,6 +341,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -307,6 +352,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -317,6 +363,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -327,6 +374,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={LowerThirdSchema}
+        calculateMetadata={calculateLowerThirdMetadata}
         defaultProps={{
           projectTitle: 'MODERN MEKÂN & ÜRÜN HİKAYELERİ',
           architecturalPhase: 'BÖLÜM 01 // VİDEO SERİSİ',
@@ -352,6 +400,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -362,6 +411,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -372,6 +422,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -382,6 +433,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
       <Composition
@@ -392,6 +444,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
 
@@ -404,6 +457,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_MODERN_PROPS}
       />
 
@@ -416,6 +470,7 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         schema={ArchitecturalSceneSchema}
+        calculateMetadata={calculateDynamicMetadata}
         defaultProps={DEFAULT_TYPOGRAPHY_PROPS}
       />
     </>
