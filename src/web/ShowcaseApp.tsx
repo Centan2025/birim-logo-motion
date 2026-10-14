@@ -2320,66 +2320,133 @@ export const ShowcaseApp: React.FC = () => {
                 </div>
 
                 {/* Konumlandırma (X & Y) */}
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
-                    <span>Dikey Kaydırma (Y)</span>
-                    <strong style={{ color: '#A5B4FC' }}>{cfg.textOffsetY} px</strong>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {/* Yatay Kaydırma (X) */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
+                      <span>Yatay Kaydırma (X)</span>
+                      <strong style={{ color: '#A5B4FC' }}>{cfg.textOffsetX} px</strong>
+                    </div>
+                    <input
+                      type="range"
+                      min={-1000}
+                      max={1000}
+                      step={5}
+                      value={cfg.textOffsetX}
+                      onChange={(e) => updateConfig({ textOffsetX: Number(e.target.value) })}
+                      style={{ width: '100%', cursor: 'pointer' }}
+                    />
+                    <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                      <button
+                        onClick={() => updateConfig({ textOffsetX: -300 })}
+                        style={{
+                          flex: 1,
+                          padding: '4px',
+                          borderRadius: 4,
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                          color: 'rgba(255,255,255,0.7)',
+                          fontSize: 10,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Sola (-300)
+                      </button>
+                      <button
+                        onClick={() => updateConfig({ textOffsetX: 0 })}
+                        style={{
+                          flex: 1,
+                          padding: '4px',
+                          borderRadius: 4,
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                          color: 'rgba(255,255,255,0.7)',
+                          fontSize: 10,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Ortala (0)
+                      </button>
+                      <button
+                        onClick={() => updateConfig({ textOffsetX: 300 })}
+                        style={{
+                          flex: 1,
+                          padding: '4px',
+                          borderRadius: 4,
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                          color: 'rgba(255,255,255,0.7)',
+                          fontSize: 10,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Sağa (+300)
+                      </button>
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min={-700}
-                    max={500}
-                    step={5}
-                    value={cfg.textOffsetY}
-                    onChange={(e) => updateConfig({ textOffsetY: Number(e.target.value) })}
-                    style={{ width: '100%', cursor: 'pointer' }}
-                  />
-                  <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                    <button
-                      onClick={() => updateConfig({ textOffsetX: 0, textOffsetY: -380 })}
-                      style={{
-                        flex: 1,
-                        padding: '4px',
-                        borderRadius: 4,
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        backgroundColor: 'rgba(255,255,255,0.03)',
-                        color: 'rgba(255,255,255,0.7)',
-                        fontSize: 10,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Üste Al
-                    </button>
-                    <button
-                      onClick={() => updateConfig({ textOffsetX: 0, textOffsetY: 0 })}
-                      style={{
-                        flex: 1,
-                        padding: '4px',
-                        borderRadius: 4,
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        backgroundColor: 'rgba(255,255,255,0.03)',
-                        color: 'rgba(255,255,255,0.7)',
-                        fontSize: 10,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Ortala
-                    </button>
-                    <button
-                      onClick={() => updateConfig({ textOffsetX: 0, textOffsetY: 200 })}
-                      style={{
-                        flex: 1,
-                        padding: '4px',
-                        borderRadius: 4,
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        backgroundColor: 'rgba(255,255,255,0.03)',
-                        color: 'rgba(255,255,255,0.7)',
-                        fontSize: 10,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Alta Al
-                    </button>
+
+                  {/* Dikey Kaydırma (Y) */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
+                      <span>Dikey Kaydırma (Y)</span>
+                      <strong style={{ color: '#A5B4FC' }}>{cfg.textOffsetY} px</strong>
+                    </div>
+                    <input
+                      type="range"
+                      min={-700}
+                      max={500}
+                      step={5}
+                      value={cfg.textOffsetY}
+                      onChange={(e) => updateConfig({ textOffsetY: Number(e.target.value) })}
+                      style={{ width: '100%', cursor: 'pointer' }}
+                    />
+                    <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                      <button
+                        onClick={() => updateConfig({ textOffsetY: -380 })}
+                        style={{
+                          flex: 1,
+                          padding: '4px',
+                          borderRadius: 4,
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                          color: 'rgba(255,255,255,0.7)',
+                          fontSize: 10,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Üste Al
+                      </button>
+                      <button
+                        onClick={() => updateConfig({ textOffsetY: 0 })}
+                        style={{
+                          flex: 1,
+                          padding: '4px',
+                          borderRadius: 4,
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                          color: 'rgba(255,255,255,0.7)',
+                          fontSize: 10,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Ortala
+                      </button>
+                      <button
+                        onClick={() => updateConfig({ textOffsetY: 200 })}
+                        style={{
+                          flex: 1,
+                          padding: '4px',
+                          borderRadius: 4,
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                          color: 'rgba(255,255,255,0.7)',
+                          fontSize: 10,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Alta Al
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
