@@ -7,6 +7,7 @@ import {
   useVideoConfig,
 } from 'remotion';
 import { BIRIM_LETTERS, LOGO_VIEWBOX, LogoLetterData } from '../data/birimLogoPaths';
+import { SceneCaption } from '../components/SceneCaption';
 import { ArchitecturalSceneProps } from '../types/schema';
 
 type ExpandDirection = 'left' | 'bottom' | 'right' | 'top';
@@ -37,6 +38,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
   textOffsetX = 0,
   textOffsetY = 0,
   textAlign = 'center',
+  textAnimation = 'char-wave',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -49,19 +51,6 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
 
   // Tight overlapping stagger: each next letter starts 4 frames (0.13s) after the previous one starts
   const STAGGER_FRAMES = 4;
-
-  const textSpring = spring({
-    frame: frame - (BIRIM_LETTERS.length * STAGGER_FRAMES + 16),
-    fps,
-    config: { damping: 20, stiffness: 95 },
-  });
-
-  const alignItems =
-    textAlign === 'left'
-      ? 'flex-start'
-      : textAlign === 'right'
-        ? 'flex-end'
-        : 'center';
 
   return (
     <AbsoluteFill style={{ backgroundColor, overflow: 'hidden' }}>
@@ -135,51 +124,23 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
         </g>
       </svg>
 
-      {/* Customizable Modern Caption (Font, Size, Spacing, X/Y Position, Alignment) */}
-      <div
-        style={{
-          position: 'absolute',
-          top: offsetY + renderedHeight + 58 + textOffsetY,
-          left: offsetX + textOffsetX,
-          width: renderedWidth,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems,
-          textAlign,
-          gap: 10,
-          opacity: textSpring,
-          transform: `translateY(${interpolate(textSpring, [0, 1], [16, 0])}px)`,
-        }}
-      >
-        {headline && (
-          <div
-            style={{
-              fontFamily,
-              fontSize: headlineSize,
-              fontWeight: 500,
-              letterSpacing: `${letterSpacing}em`,
-              color: primaryColor,
-              textTransform: 'uppercase',
-            }}
-          >
-            {headline}
-          </div>
-        )}
-        {subtitle && (
-          <div
-            style={{
-              fontFamily,
-              fontSize: subtitleSize,
-              fontWeight: 400,
-              letterSpacing: `${Math.max(0.05, letterSpacing * 0.7)}em`,
-              color: accentColor,
-              textTransform: 'uppercase',
-            }}
-          >
-            {subtitle}
-          </div>
-        )}
-      </div>
+      {/* Customizable Animated Bottom Text */}
+      <SceneCaption
+        headline={headline}
+        subtitle={subtitle}
+        primaryColor={primaryColor}
+        accentColor={accentColor}
+        fontFamily={fontFamily}
+        headlineSize={headlineSize}
+        subtitleSize={subtitleSize}
+        letterSpacing={letterSpacing}
+        textOffsetX={textOffsetX}
+        textOffsetY={textOffsetY}
+        textAlign={textAlign}
+        textAnimation={textAnimation}
+        baseTop={offsetY + renderedHeight + 58}
+        delayFrames={BIRIM_LETTERS.length * STAGGER_FRAMES + 10}
+      />
     </AbsoluteFill>
   );
 };

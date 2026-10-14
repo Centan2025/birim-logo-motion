@@ -1,3 +1,4 @@
+import { AnimatedTextLine } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -29,6 +30,7 @@ export const GlitchSignalLock: React.FC<ArchitecturalSceneProps> = ({
   letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
+  textAnimation = 'char-wave',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -140,7 +142,16 @@ export const GlitchSignalLock: React.FC<ArchitecturalSceneProps> = ({
             textTransform: 'uppercase',
           }}
         >
-          {headline}
+          <AnimatedTextLine
+            text={headline}
+            fontFamily={fontFamily}
+            fontSize={headlineSize}
+            letterSpacing={letterSpacing}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={34}
+          />
         </div>
         <div
           style={{
@@ -151,7 +162,17 @@ export const GlitchSignalLock: React.FC<ArchitecturalSceneProps> = ({
             textTransform: 'uppercase',
           }}
         >
-          {subtitle}
+          <AnimatedTextLine
+            text={subtitle}
+            fontFamily={fontFamily}
+            fontSize={subtitleSize}
+            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={42}
+            isSubtitle
+          />
         </div>
       </div>
     </AbsoluteFill>

@@ -9,6 +9,7 @@ import {
 } from 'remotion';
 import { BIRIM_LETTERS, LOGO_VIEWBOX } from '../data/birimLogoPaths';
 import { LowerThirdProps } from '../types/schema';
+import { AnimatedTextLine } from '../components/SceneCaption';
 
 export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
   projectTitle,
@@ -22,6 +23,7 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
   letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
+  textAnimation = 'char-wave',
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -51,13 +53,6 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
       extrapolateLeft: 'clamp',
       extrapolateRight: 'clamp',
     }
-  );
-
-  const typedLength = Math.floor(
-    interpolate(frame, [58, 102], [0, projectTitle.length], {
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'clamp',
-    })
   );
 
   return (
@@ -196,20 +191,17 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
           >
             {architecturalPhase}
           </span>
-          <span
-            style={{
-              fontFamily,
-              fontSize: headlineSize,
-              fontWeight: 600,
-              letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-              color: '#FFFFFF',
-            }}
-          >
-            {projectTitle.slice(0, typedLength)}
-            {typedLength < projectTitle.length && (
-              <span style={{ color: accentColor }}>▋</span>
-            )}
-          </span>
+          <AnimatedTextLine
+            text={projectTitle}
+            animation={textAnimation}
+            startFrame={56}
+            fontFamily={fontFamily}
+            fontSize={headlineSize}
+            fontWeight={600}
+            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
+            color="#FFFFFF"
+            accentColor={accentColor}
+          />
         </div>
       </div>
     </AbsoluteFill>

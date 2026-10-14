@@ -1,3 +1,4 @@
+import { AnimatedTextLine } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -22,6 +23,7 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
   letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
+  textAnimation = 'char-wave',
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -184,7 +186,17 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
               marginBottom: 4,
             }}
           >
-            {architecturalPhase}
+            <AnimatedTextLine
+            text={architecturalPhase}
+            fontFamily={fontFamily}
+            fontSize={subtitleSize}
+            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={42}
+            isSubtitle
+          />
           </div>
           <div
             style={{
@@ -195,7 +207,16 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
               color: '#FFFFFF',
             }}
           >
-            {projectTitle}
+            <AnimatedTextLine
+            text={projectTitle}
+            fontFamily={fontFamily}
+            fontSize={headlineSize}
+            letterSpacing={letterSpacing}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={34}
+          />
           </div>
         </div>
       </div>

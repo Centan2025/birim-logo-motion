@@ -44,6 +44,7 @@ const DEFAULT_ARCH_PROPS = {
   textOffsetX: 0,
   textOffsetY: 0,
   textAlign: 'center' as const,
+  textAnimation: 'char-wave' as const,
 };
 
 const DEFAULT_MODERN_PROPS = {
@@ -61,6 +62,7 @@ const DEFAULT_MODERN_PROPS = {
   textOffsetX: 0,
   textOffsetY: 0,
   textAlign: 'center' as const,
+  textAnimation: 'char-wave' as const,
 };
 
 export const RemotionRoot: React.FC = () => {
@@ -138,6 +140,7 @@ export const RemotionRoot: React.FC = () => {
           letterSpacing: 0.18,
           textOffsetX: 0,
           textOffsetY: 0,
+          textAnimation: 'char-wave' as const,
         }}
       />
 
@@ -202,6 +205,7 @@ export const RemotionRoot: React.FC = () => {
           letterSpacing: 0.18,
           textOffsetX: 0,
           textOffsetY: 0,
+          textAnimation: 'char-wave' as const,
         }}
       />
       <Composition
@@ -314,6 +318,7 @@ export const RemotionRoot: React.FC = () => {
           letterSpacing: 0.18,
           textOffsetX: 0,
           textOffsetY: 0,
+          textAnimation: 'char-wave' as const,
         }}
       />
 

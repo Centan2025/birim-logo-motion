@@ -27,7 +27,11 @@ import { HalfLogoCantileverDrop } from '../compositions/HalfLogoCantileverDrop';
 import { OrigamiAccordionUnfold } from '../compositions/OrigamiAccordionUnfold';
 import { SplitHorizonDualTip } from '../compositions/SplitHorizonDualTip';
 import { MasterShowcaseReel } from '../compositions/MasterShowcaseReel';
-import { ArchitecturalSceneProps, LowerThirdProps } from '../types/schema';
+import {
+  ArchitecturalSceneProps,
+  LowerThirdProps,
+  TextAnimationType,
+} from '../types/schema';
 
 type Category = 'all' | 'fold' | 'modern' | 'arch' | 'overlay';
 
@@ -283,6 +287,24 @@ const FONT_CHOICES = [
   { label: 'JetBrains Mono (Mimari CAD)', value: "'JetBrains Mono', monospace" },
 ] as const;
 
+const TEXT_ANIMATION_CHOICES: ReadonlyArray<{
+  label: string;
+  value: TextAnimationType;
+}> = [
+  { label: '1. Harf Dalga (Char Wave)', value: 'char-wave' },
+  { label: '2. 4 Yönden Harf Genişleme (Directional)', value: 'char-directional' },
+  { label: '3. Kelime Maskeli Kayma (Word Slide)', value: 'word-slide' },
+  { label: '4. Harf Aralığı Daralarak (Tracking In)', value: 'tracking-in' },
+  { label: '5. Merkezden Açılma (Tracking Out)', value: 'tracking-out' },
+  { label: '6. Ortadan İkiye Perde (Split Curtain)', value: 'split-curtain' },
+  { label: '7. 3B Dikey Harf Taklası (3D Flip)', value: 'flip-3d' },
+  { label: '8. Daktilo İmleçli (Typewriter)', value: 'typewriter' },
+  { label: '9. Siber Şifre Çözme (Glitch Decode)', value: 'glitch-decode' },
+  { label: '10. Lazer Tarama Çubuğu (Wipe Bar)', value: 'wipe-bar' },
+  { label: '11. Sinematik Odaklanma (Blur Scale)', value: 'blur-scale' },
+  { label: '12. Klasik Yumuşak Yükseliş (Fade Up)', value: 'fade-up' },
+];
+
 export const ShowcaseApp: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
   const [selectedId, setSelectedId] = useState<string>('26-Directional-Letter-Expand');
@@ -295,12 +317,16 @@ export const ShowcaseApp: React.FC = () => {
   const [fontFamily, setFontFamily] = useState<
     (typeof FONT_CHOICES)[number]['value']
   >("'Inter', sans-serif");
+  const [textAnimation, setTextAnimation] =
+    useState<TextAnimationType>('char-wave');
   const [headlineSize, setHeadlineSize] = useState<number>(19);
   const [subtitleSize, setSubtitleSize] = useState<number>(12);
   const [letterSpacing, setLetterSpacing] = useState<number>(0.4);
   const [textOffsetX, setTextOffsetX] = useState<number>(0);
   const [textOffsetY, setTextOffsetY] = useState<number>(0);
   const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right'>('center');
+  const [transparentBg, setTransparentBg] = useState<boolean>(false);
+  const [copiedFormat, setCopiedFormat] = useState<string | null>(null);
 
   const filteredScenes =
     selectedCategory === 'all'
@@ -512,25 +538,30 @@ export const ShowcaseApp: React.FC = () => {
             overflow: 'hidden',
             border: '1px solid rgba(255,255,255,0.14)',
             boxShadow: '0 24px 70px rgba(0,0,0,0.65)',
-            backgroundColor: '#050507',
+            backgroundColor: transparentBg ? '#101218' : '#050507',
+            backgroundImage: transparentBg
+              ? 'radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px)'
+              : undefined,
+            backgroundSize: '16px 16px',
           }}
         >
           {activeScene.isOverlay && activeScene.overlayComponent ? (
             <Player
-              key={activeScene.id}
+              key={`${activeScene.id}-${transparentBg}-${textAnimation}`}
               component={activeScene.overlayComponent}
               inputProps={{
                 projectTitle: headline,
                 architecturalPhase: subtitle,
                 locationYear: projectCode,
                 accentColor,
-                transparentBackground: false,
+                transparentBackground: transparentBg,
                 fontFamily,
                 headlineSize,
                 subtitleSize,
                 letterSpacing,
                 textOffsetX,
                 textOffsetY,
+                textAnimation,
               }}
               durationInFrames={activeScene.durationInFrames}
               fps={30}
@@ -544,7 +575,7 @@ export const ShowcaseApp: React.FC = () => {
           ) : (
             activeScene.archComponent && (
               <Player
-                key={activeScene.id}
+                key={`${activeScene.id}-${transparentBg}-${textAnimation}`}
                 component={activeScene.archComponent}
                 inputProps={{
                   headline,
@@ -553,7 +584,7 @@ export const ShowcaseApp: React.FC = () => {
                   scaleText: 'ÖLÇEK 1:50 // BİRİM: MM',
                   accentColor,
                   primaryColor: '#F4F1EA',
-                  backgroundColor: '#0B0D10',
+                  backgroundColor: transparentBg ? 'transparent' : '#0B0D10',
                   fontFamily,
                   headlineSize,
                   subtitleSize,
@@ -561,6 +592,7 @@ export const ShowcaseApp: React.FC = () => {
                   textOffsetX,
                   textOffsetY,
                   textAlign,
+                  textAnimation,
                 }}
                 durationInFrames={activeScene.durationInFrames}
                 fps={30}
@@ -638,7 +670,66 @@ export const ShowcaseApp: React.FC = () => {
           </button>
         </div>
 
-        {/* Ana Metin */}
+        {/* Şeffaf Arka Plan (Alpha Transparan Modu) */}
+        <div
+          style={{
+            padding: '12px 14px',
+            borderRadius: 10,
+            backgroundColor: transparentBg
+              ? 'rgba(46, 204, 113, 0.12)'
+              : 'rgba(255, 255, 255, 0.04)',
+            border: transparentBg
+              ? '1px solid rgba(46, 204, 113, 0.45)'
+              : '1px solid rgba(255, 255, 255, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: transparentBg ? '#2ecc71' : '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <span>{transparentBg ? '🟢' : '⚪'}</span>
+              Şeffaf Arka Plan (Alpha)
+            </div>
+            <div
+              style={{
+                fontSize: 10.5,
+                color: 'rgba(255, 255, 255, 0.55)',
+                marginTop: 2,
+              }}
+            >
+              {transparentBg
+                ? 'Arka plan şeffaf yapıldı (Video üstüne koymaya hazır)'
+                : 'Arka plan koyu renkte'}
+            </div>
+          </div>
+          <button
+            onClick={() => setTransparentBg(!transparentBg)}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 6,
+              border: 'none',
+              backgroundColor: transparentBg ? '#2ecc71' : 'rgba(255,255,255,0.15)',
+              color: transparentBg ? '#000000' : '#FFFFFF',
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: 'pointer',
+              letterSpacing: '0.04em',
+            }}
+          >
+            {transparentBg ? 'AÇIK' : 'KAPALI'}
+          </button>
+        </div>
         <div>
           <label
             style={{
@@ -698,6 +789,46 @@ export const ShowcaseApp: React.FC = () => {
               fontSize: 13,
             }}
           />
+        </div>
+
+        {/* Alt Metin Animasyonu Seçici */}
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 11,
+              color: accentColor,
+              fontWeight: 700,
+              marginBottom: 6,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            ★ Alt Metin Animasyonu (12 Efekt)
+          </label>
+          <select
+            value={textAnimation}
+            onChange={(e) =>
+              setTextAnimation(e.target.value as TextAnimationType)
+            }
+            style={{
+              width: '100%',
+              padding: '9px 12px',
+              borderRadius: 8,
+              border: `1.5px solid ${accentColor}`,
+              backgroundColor: '#14171F',
+              color: '#FFFFFF',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            {TEXT_ANIMATION_CHOICES.map((anim) => (
+              <option key={anim.value} value={anim.value}>
+                {anim.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Font Seçici */}
@@ -994,6 +1125,129 @@ export const ShowcaseApp: React.FC = () => {
                 cursor: 'pointer',
               }}
             />
+          </div>
+        </div>
+
+        {/* 11. Şeffaf Video Aktarma Menüsü */}
+        <div
+          style={{
+            paddingTop: 14,
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.6)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span>11. ŞEFFAF VİDEO DIŞA AKTAR</span>
+            {copiedFormat && (
+              <span
+                style={{
+                  color: '#2ecc71',
+                  fontWeight: 600,
+                  fontSize: 10.5,
+                  textTransform: 'none',
+                }}
+              >
+                ✓ {copiedFormat} Kopyalandı!
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {/* WebM Butonu */}
+            <button
+              onClick={() => {
+                const cmd = `npx remotion render src/index.ts ${activeScene.id} out/${activeScene.id}-seffaf.webm --image-format=png --pixel-format=yuva420p --props="{\\"transparentBackground\\":true,\\"headline\\":\\"${headline}\\",\\"subtitle\\":\\"${subtitle}\\"}"`;
+                navigator.clipboard?.writeText(cmd);
+                setCopiedFormat('WebM (CapCut/Web)');
+                setTimeout(() => setCopiedFormat(null), 3000);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '9px 12px',
+                borderRadius: 8,
+                border: '1px solid rgba(255,255,255,0.12)',
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                color: '#FFFFFF',
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 600 }}>WebM Alpha (.webm)</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+                  CapCut, DaVinci, Web ve Tarayıcılar İçin
+                </div>
+              </div>
+              <span
+                style={{
+                  fontSize: 11,
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                }}
+              >
+                Komutu Al
+              </span>
+            </button>
+
+            {/* ProRes Butonu */}
+            <button
+              onClick={() => {
+                const cmd = `npx remotion render src/index.ts ${activeScene.id} out/${activeScene.id}-seffaf.mov --codec=prores --prores-profile=4444 --pixel-format=yuva444p10le --props="{\\"transparentBackground\\":true,\\"headline\\":\\"${headline}\\",\\"subtitle\\":\\"${subtitle}\\"}"`;
+                navigator.clipboard?.writeText(cmd);
+                setCopiedFormat('ProRes (Premiere/AE)');
+                setTimeout(() => setCopiedFormat(null), 3000);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '9px 12px',
+                borderRadius: 8,
+                border: `1px solid ${accentColor}40`,
+                backgroundColor: `${accentColor}15`,
+                color: '#FFFFFF',
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 600 }}>Apple ProRes 4444 (.mov)</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+                  Premiere Pro, After Effects, Final Cut
+                </div>
+              </div>
+              <span
+                style={{
+                  fontSize: 11,
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  backgroundColor: `${accentColor}30`,
+                  color: accentColor,
+                  fontWeight: 600,
+                }}
+              >
+                Komutu Al
+              </span>
+            </button>
           </div>
         </div>
       </aside>

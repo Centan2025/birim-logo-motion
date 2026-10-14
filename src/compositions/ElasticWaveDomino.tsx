@@ -8,6 +8,7 @@ import {
 } from 'remotion';
 import { BIRIM_LETTERS, LOGO_VIEWBOX } from '../data/birimLogoPaths';
 import { ArchitecturalSceneProps } from '../types/schema';
+import { SceneCaption } from '../components/SceneCaption';
 
 export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
   headline,
@@ -20,6 +21,8 @@ export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
   letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
+  textAlign = 'center',
+  textAnimation = 'char-wave',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -29,8 +32,6 @@ export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
   const renderedHeight = LOGO_VIEWBOX.height * scale;
   const offsetX = (1920 - renderedWidth) / 2;
   const offsetY = (1080 - renderedHeight) / 2 - 42;
-
-  const chars = headline.split('');
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#0E1117', overflow: 'hidden' }}>
@@ -72,69 +73,22 @@ export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
         </g>
       </svg>
 
-      {/* Character-by-Character Domino Wave Headline */}
-      <div
-        style={{
-          position: 'absolute',
-          top: offsetY + renderedHeight + 52,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 14,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: Math.round(letterSpacing * 16),
-          }}
-        >
-          {chars.map((ch, cIdx) => {
-            const cSpring = spring({
-              frame: frame - 32 - cIdx * 1.6,
-              fps,
-              config: { damping: 14, stiffness: 140 },
-            });
-            return (
-              <span
-                key={cIdx}
-                style={{
-                  display: 'inline-block',
-                  fontFamily,
-                  fontSize: headlineSize,
-                  fontWeight: 600,
-                  color: primaryColor,
-                  opacity: cSpring,
-                  transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(cSpring, [0, 1], [18, 0])}px) scale(${interpolate(cSpring, [0, 1], [0.6, 1])})`,
-                  minWidth: ch === ' ' ? 10 : undefined,
-                }}
-              >
-                {ch}
-              </span>
-            );
-          })}
-        </div>
-
-        <div
-          style={{
-            fontFamily,
-            fontSize: subtitleSize,
-            fontWeight: 500,
-            letterSpacing: '0.28em',
-            color: accentColor,
-            textTransform: 'uppercase',
-            opacity: interpolate(frame, [58, 82], [0, 1], {
-              extrapolateLeft: 'clamp',
-              extrapolateRight: 'clamp',
-            }),
-          }}
-        >
-          {subtitle}
-        </div>
-      </div>
+      <SceneCaption
+        headline={headline}
+        subtitle={subtitle}
+        primaryColor={primaryColor}
+        accentColor={accentColor}
+        fontFamily={fontFamily}
+        headlineSize={headlineSize}
+        subtitleSize={subtitleSize}
+        letterSpacing={letterSpacing}
+        textOffsetX={textOffsetX}
+        textOffsetY={textOffsetY}
+        textAlign={textAlign}
+        textAnimation={textAnimation}
+        baseTop={offsetY + renderedHeight + 52}
+        delayFrames={28}
+      />
     </AbsoluteFill>
   );
 };

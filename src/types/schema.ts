@@ -12,6 +12,23 @@ export const FONT_OPTIONS = [
   "'JetBrains Mono', monospace",
 ] as const;
 
+export const TEXT_ANIMATION_OPTIONS = [
+  'char-wave',
+  'char-directional',
+  'word-slide',
+  'tracking-in',
+  'tracking-out',
+  'split-curtain',
+  'flip-3d',
+  'typewriter',
+  'glitch-decode',
+  'wipe-bar',
+  'blur-scale',
+  'fade-up',
+] as const;
+
+export type TextAnimationType = (typeof TEXT_ANIMATION_OPTIONS)[number];
+
 export const ArchitecturalSceneSchema = z.object({
   headline: z.string().default('MİMARİ TASARIM & YAPI'),
   subtitle: z.string().default('ÇAĞDAŞ MEKÂN KURGUSU // İSTANBUL'),
@@ -27,6 +44,7 @@ export const ArchitecturalSceneSchema = z.object({
   textOffsetX: z.number().min(-900).max(900).optional().default(0),
   textOffsetY: z.number().min(-700).max(500).optional().default(0),
   textAlign: z.enum(['left', 'center', 'right']).optional().default('center'),
+  textAnimation: z.enum(TEXT_ANIMATION_OPTIONS).optional().default('char-wave'),
 });
 
 export type ArchitecturalSceneProps = z.infer<typeof ArchitecturalSceneSchema>;
@@ -43,6 +61,7 @@ export const LowerThirdSchema = z.object({
   letterSpacing: z.number().min(0).max(1.5).optional().default(0.18),
   textOffsetX: z.number().min(-900).max(900).optional().default(0),
   textOffsetY: z.number().min(-700).max(500).optional().default(0),
+  textAnimation: z.enum(TEXT_ANIMATION_OPTIONS).optional().default('char-wave'),
 });
 
 export type LowerThirdProps = z.infer<typeof LowerThirdSchema>;

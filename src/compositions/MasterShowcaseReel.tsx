@@ -102,6 +102,7 @@ export const MasterShowcaseReel: React.FC<ArchitecturalSceneProps> = (props) => 
             letterSpacing={props.letterSpacing}
             textOffsetX={props.textOffsetX}
             textOffsetY={props.textOffsetY}
+            textAnimation={props.textAnimation}
           />
         </Series.Sequence>
         <Series.Sequence durationInFrames={150}>
@@ -117,6 +118,7 @@ export const MasterShowcaseReel: React.FC<ArchitecturalSceneProps> = (props) => 
             letterSpacing={props.letterSpacing}
             textOffsetX={props.textOffsetX}
             textOffsetY={props.textOffsetY}
+            textAnimation={props.textAnimation}
           />
         </Series.Sequence>
         <Series.Sequence durationInFrames={150}>
@@ -144,6 +146,7 @@ export const MasterShowcaseReel: React.FC<ArchitecturalSceneProps> = (props) => 
             letterSpacing={props.letterSpacing}
             textOffsetX={props.textOffsetX}
             textOffsetY={props.textOffsetY}
+            textAnimation={props.textAnimation}
           />
         </Series.Sequence>
       </Series>
