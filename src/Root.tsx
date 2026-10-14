@@ -43,7 +43,7 @@ const DEFAULT_ARCH_PROPS = {
   letterSpacing: 0.4,
   textOffsetX: 0,
   textOffsetY: 0,
-  textAlign: 'center' as const,
+  textAlign: 'left' as const,
   textAnimation: 'char-wave' as const,
 };
 
@@ -61,7 +61,7 @@ const DEFAULT_MODERN_PROPS = {
   letterSpacing: 0.4,
   textOffsetX: 0,
   textOffsetY: 0,
-  textAlign: 'center' as const,
+  textAlign: 'left' as const,
   textAnimation: 'char-wave' as const,
 };
 

@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "remotion studio",
-    "dev:web": "vite",
+    "dev:web": "node scripts/dev-server.mjs",
     "build": "vite build",
     "build:remotion": "remotion bundle",
     "render:blueprint": "remotion render src/index.ts 01-CAD-Blueprint-Draft out/01-blueprint.mp4",

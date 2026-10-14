@@ -3,13 +3,21 @@ import { zColor } from '@remotion/zod-types';
 
 export const FONT_OPTIONS = [
   "'Inter', sans-serif",
+  "'Plus Jakarta Sans', sans-serif",
   "'Montserrat', sans-serif",
+  "'Bebas Neue', sans-serif",
   "'Space Grotesk', sans-serif",
   "'Outfit', sans-serif",
+  "'DM Sans', sans-serif",
   "'Syne', sans-serif",
+  "'Sora', sans-serif",
+  "'Oswald', sans-serif",
+  "'Archivo Black', sans-serif",
   "'Cinzel', serif",
   "'Playfair Display', serif",
+  "'Cormorant Garamond', serif",
   "'JetBrains Mono', monospace",
+  "'Fira Code', monospace",
 ] as const;
 
 export const TEXT_ANIMATION_OPTIONS = [
@@ -25,6 +33,12 @@ export const TEXT_ANIMATION_OPTIONS = [
   'wipe-bar',
   'blur-scale',
   'fade-up',
+  'bounce-drop',
+  'skew-slide',
+  'pop-scale',
+  'smoke-dissolve',
+  'shutter-reveal',
+  'matrix-stream',
 ] as const;
 
 export type TextAnimationType = (typeof TEXT_ANIMATION_OPTIONS)[number];
@@ -38,8 +52,8 @@ export const ArchitecturalSceneSchema = z.object({
   primaryColor: zColor().default('#F4F1EA'),
   backgroundColor: zColor().default('#0B0D10'),
   fontFamily: z.enum(FONT_OPTIONS).optional().default("'Inter', sans-serif"),
-  headlineSize: z.number().min(8).max(96).optional().default(19),
-  subtitleSize: z.number().min(6).max(64).optional().default(12),
+  headlineSize: z.number().min(8).max(240).optional().default(19),
+  subtitleSize: z.number().min(6).max(140).optional().default(12),
   letterSpacing: z.number().min(0).max(1.5).optional().default(0.4),
   textOffsetX: z.number().min(-900).max(900).optional().default(0),
   textOffsetY: z.number().min(-700).max(500).optional().default(0),
@@ -58,8 +72,8 @@ export const LowerThirdSchema = z.object({
   primaryColor: zColor().optional(),
   transparentBackground: z.boolean().default(false),
   fontFamily: z.enum(FONT_OPTIONS).optional().default("'Inter', sans-serif"),
-  headlineSize: z.number().min(8).max(96).optional().default(22),
-  subtitleSize: z.number().min(6).max(64).optional().default(12),
+  headlineSize: z.number().min(8).max(240).optional().default(22),
+  subtitleSize: z.number().min(6).max(140).optional().default(12),
   letterSpacing: z.number().min(0).max(1.5).optional().default(0.18),
   textOffsetX: z.number().min(-900).max(900).optional().default(0),
   textOffsetY: z.number().min(-700).max(500).optional().default(0),

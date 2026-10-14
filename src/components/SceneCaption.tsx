@@ -21,6 +21,7 @@ export interface AnimatedTextLineProps {
   animation: TextAnimationType;
   startFrame: number;
   isSubtitle?: boolean;
+  textAlign?: 'left' | 'center' | 'right';
 }
 
 export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
@@ -34,11 +35,15 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
   animation,
   startFrame,
   isSubtitle = false,
+  textAlign = 'center',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
   if (!text) return null;
+
+  const justifyContent =
+    textAlign === 'left' ? 'flex-start' : textAlign === 'right' ? 'flex-end' : 'center';
 
   const baseStyle: React.CSSProperties = {
     fontFamily,
@@ -47,6 +52,7 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
     color,
     textTransform: 'uppercase',
     lineHeight: 1.3,
+    textAlign,
   };
 
   // 1. char-wave: Harf Harf Elastik Dalga
@@ -58,7 +64,7 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
           ...baseStyle,
           display: 'inline-flex',
           flexWrap: 'wrap',
-          justifyContent: 'center',
+          justifyContent,
         }}
       >
         {chars.map((ch, i) => {
@@ -97,7 +103,7 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
           ...baseStyle,
           display: 'inline-flex',
           flexWrap: 'wrap',
-          justifyContent: 'center',
+          justifyContent,
         }}
       >
         {chars.map((ch, i) => {
@@ -146,7 +152,7 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
           ...baseStyle,
           display: 'inline-flex',
           flexWrap: 'wrap',
-          justifyContent: 'center',
+          justifyContent,
           gap: `${letterSpacing + 0.38}em`,
         }}
       >
@@ -259,7 +265,7 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
           ...baseStyle,
           display: 'inline-flex',
           flexWrap: 'wrap',
-          justifyContent: 'center',
+          justifyContent,
           perspective: 600,
         }}
       >
@@ -404,7 +410,7 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
           ...baseStyle,
           display: 'inline-flex',
           flexWrap: 'wrap',
-          justifyContent: 'center',
+          justifyContent,
         }}
       >
         {chars.map((ch, i) => {
@@ -423,6 +429,246 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
                 opacity: s,
                 filter: `blur(${bl}px)`,
                 transform: `scale(${sc})`,
+                marginRight: ch === ' ' ? `${letterSpacing + 0.35}em` : `${letterSpacing}em`,
+              }}
+            >
+              {ch === ' ' ? '\u00A0' : ch}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 13. bounce-drop: Harf Harf Esnek Düşüş & Yaylanma
+  if (animation === 'bounce-drop') {
+    const chars = Array.from(text);
+    return (
+      <div
+        style={{
+          ...baseStyle,
+          display: 'inline-flex',
+          flexWrap: 'wrap',
+          justifyContent,
+        }}
+      >
+        {chars.map((ch, i) => {
+          const s = spring({
+            frame: frame - startFrame - i * 1.15,
+            fps,
+            config: { damping: 9, stiffness: 180, mass: 0.7 },
+          });
+          const y = interpolate(s, [0, 1], [-48, 0]);
+          return (
+            <span
+              key={i}
+              style={{
+                display: 'inline-block',
+                opacity: interpolate(s, [0, 0.25, 1], [0, 1, 1]),
+                transform: `translateY(${y}px)`,
+                marginRight: ch === ' ' ? `${letterSpacing + 0.35}em` : `${letterSpacing}em`,
+              }}
+            >
+              {ch === ' ' ? '\u00A0' : ch}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 14. skew-slide: 20° Açılı İtalik Dinamik Kayma
+  if (animation === 'skew-slide') {
+    const chars = Array.from(text);
+    return (
+      <div
+        style={{
+          ...baseStyle,
+          display: 'inline-flex',
+          flexWrap: 'wrap',
+          justifyContent,
+        }}
+      >
+        {chars.map((ch, i) => {
+          const s = spring({
+            frame: frame - startFrame - i * 1.0,
+            fps,
+            config: { damping: 14, stiffness: 130 },
+          });
+          const x = interpolate(s, [0, 1], [-35, 0]);
+          const skew = interpolate(s, [0, 1], [-22, 0]);
+          return (
+            <span
+              key={i}
+              style={{
+                display: 'inline-block',
+                opacity: s,
+                transform: `translateX(${x}px) skewX(${skew}deg)`,
+                marginRight: ch === ' ' ? `${letterSpacing + 0.35}em` : `${letterSpacing}em`,
+              }}
+            >
+              {ch === ' ' ? '\u00A0' : ch}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 15. pop-scale: Elastik Patlama & Büyüme (Punchy Pop)
+  if (animation === 'pop-scale') {
+    const chars = Array.from(text);
+    return (
+      <div
+        style={{
+          ...baseStyle,
+          display: 'inline-flex',
+          flexWrap: 'wrap',
+          justifyContent,
+        }}
+      >
+        {chars.map((ch, i) => {
+          const s = spring({
+            frame: frame - startFrame - i * 1.25,
+            fps,
+            config: { damping: 10, stiffness: 200, mass: 0.6 },
+          });
+          return (
+            <span
+              key={i}
+              style={{
+                display: 'inline-block',
+                opacity: interpolate(s, [0, 0.15, 1], [0, 1, 1]),
+                transform: `scale(${s})`,
+                transformOrigin: 'center center',
+                marginRight: ch === ' ' ? `${letterSpacing + 0.35}em` : `${letterSpacing}em`,
+              }}
+            >
+              {ch === ' ' ? '\u00A0' : ch}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 16. smoke-dissolve: Puslu Genişleme & Kristalize Olma
+  if (animation === 'smoke-dissolve') {
+    const chars = Array.from(text);
+    return (
+      <div
+        style={{
+          ...baseStyle,
+          display: 'inline-flex',
+          flexWrap: 'wrap',
+          justifyContent,
+        }}
+      >
+        {chars.map((ch, i) => {
+          const s = spring({
+            frame: frame - startFrame - i * 1.0,
+            fps,
+            config: { damping: 20, stiffness: 95 },
+          });
+          const bl = interpolate(s, [0, 1], [14, 0]);
+          const sc = interpolate(s, [0, 1], [1.6, 1]);
+          return (
+            <span
+              key={i}
+              style={{
+                display: 'inline-block',
+                opacity: s,
+                filter: `blur(${bl}px)`,
+                transform: `scale(${sc})`,
+                marginRight: ch === ' ' ? `${letterSpacing + 0.35}em` : `${letterSpacing}em`,
+              }}
+            >
+              {ch === ' ' ? '\u00A0' : ch}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 17. shutter-reveal: Dikey Deklanşör / Maskeli Yükseliş
+  if (animation === 'shutter-reveal') {
+    const chars = Array.from(text);
+    return (
+      <div
+        style={{
+          ...baseStyle,
+          display: 'inline-flex',
+          flexWrap: 'wrap',
+          justifyContent,
+        }}
+      >
+        {chars.map((ch, i) => {
+          const s = spring({
+            frame: frame - startFrame - i * 1.1,
+            fps,
+            config: { damping: 15, stiffness: 125 },
+          });
+          const y = interpolate(s, [0, 1], [105, 0]);
+          return (
+            <span
+              key={i}
+              style={{
+                display: 'inline-block',
+                overflow: 'hidden',
+                verticalAlign: 'top',
+                paddingBottom: 2,
+                marginRight: ch === ' ' ? `${letterSpacing + 0.35}em` : `${letterSpacing}em`,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  transform: `translateY(${y}%)`,
+                  opacity: interpolate(s, [0, 0.2, 1], [0, 1, 1]),
+                }}
+              >
+                {ch === ' ' ? '\u00A0' : ch}
+              </span>
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 18. matrix-stream: Siber Akış & Şelale İnişi
+  if (animation === 'matrix-stream') {
+    const chars = Array.from(text);
+    return (
+      <div
+        style={{
+          ...baseStyle,
+          display: 'inline-flex',
+          flexWrap: 'wrap',
+          justifyContent,
+        }}
+      >
+        {chars.map((ch, i) => {
+          const localF = frame - startFrame - i * 1.05;
+          const s = spring({
+            frame: localF,
+            fps,
+            config: { damping: 15, stiffness: 140 },
+          });
+          const y = interpolate(s, [0, 1], [-26, 0]);
+          const isGlancing = localF >= 0 && localF < 7;
+          const charColor = isGlancing ? accentColor : color;
+          const textShadow = isGlancing ? `0 0 14px ${accentColor}` : 'none';
+          return (
+            <span
+              key={i}
+              style={{
+                display: 'inline-block',
+                opacity: s,
+                color: charColor,
+                textShadow,
+                transform: `translateY(${y}px)`,
                 marginRight: ch === ' ' ? `${letterSpacing + 0.35}em` : `${letterSpacing}em`,
               }}
             >
@@ -519,6 +765,7 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
         accentColor={accentColor}
         animation={textAnimation}
         startFrame={delayFrames}
+        textAlign={textAlign}
       />
       <AnimatedTextLine
         text={subtitle}
@@ -530,6 +777,7 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
         accentColor={primaryColor}
         animation={textAnimation}
         startFrame={delayFrames + 8}
+        textAlign={textAlign}
         isSubtitle
       />
     </div>

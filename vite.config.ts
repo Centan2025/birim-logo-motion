@@ -49,11 +49,21 @@ function remotionRenderPlugin(): Plugin {
               const {
                 sceneId,
                 transparent,
-                headline = '',
-                subtitle = '',
+                headline = 'HİS',
+                subtitle = '2004',
                 projectCode = '',
-                accentColor = '#E07A5F',
-                primaryColor = '#F4F1EA',
+                accentColor = '#FFFFFF',
+                primaryColor = '#FFFFFF',
+                fontFamily = "'Inter', sans-serif",
+                headlineSize = 64,
+                subtitleSize = 40,
+                letterSpacing = 0.25,
+                textOffsetX = 0,
+                textOffsetY = 0,
+                textAlign = 'left',
+                textAnimation = 'char-wave',
+                textDelayFrames = 30,
+                durationInFrames = 150,
                 format = 'webm',
               } = data;
 
@@ -67,6 +77,9 @@ function remotionRenderPlugin(): Plugin {
               if (!fs.existsSync(outDir)) {
                 fs.mkdirSync(outDir, { recursive: true });
               }
+
+              const totalFrames = Math.max(30, Math.min(600, Number(durationInFrames) || 150));
+              const framesFlag = `--frames=0-${totalFrames - 1}`;
 
               const safeScene = String(sceneId).replace(/[^a-zA-Z0-9_-]/g, '');
               const timestamp = Date.now();
@@ -86,26 +99,46 @@ function remotionRenderPlugin(): Plugin {
                 projectCode,
                 accentColor,
                 primaryColor,
+                fontFamily,
+                headlineSize: Number(headlineSize) || 64,
+                subtitleSize: Number(subtitleSize) || 40,
+                letterSpacing: Number(letterSpacing) ?? 0.25,
+                textOffsetX: Number(textOffsetX) || 0,
+                textOffsetY: Number(textOffsetY) || 0,
+                textAlign: textAlign || 'left',
+                textAnimation: textAnimation || 'char-wave',
+                textDelayFrames: textDelayFrames !== undefined ? Number(textDelayFrames) : 30,
                 transparentBackground: !!transparent,
                 backgroundColor: transparent ? 'transparent' : '#0B0D10',
               };
-              const propsJson = JSON.stringify(propsObj).replace(/"/g, '\\"');
+
+              // Windows komut satırında tırnak bozulmasını önlemek için geçici JSON dosyası kullan
+              const propsFile = path.join(outDir, `props-${timestamp}.json`);
+              fs.writeFileSync(propsFile, JSON.stringify(propsObj, null, 2), 'utf8');
 
               let cmd = '';
               if (isWebm) {
                 // Şeffaf Alpha WebM
-                cmd = `npx remotion render src/index.ts "${sceneId}" "${outPath}" --image-format=png --pixel-format=yuva420p --props="${propsJson}"`;
+                cmd = `npx remotion render src/index.ts "${sceneId}" "${outPath}" ${framesFlag} --image-format=png --pixel-format=yuva420p --props="${propsFile}"`;
               } else if (isMov) {
                 // Şeffaf Apple ProRes 4444 MOV
-                cmd = `npx remotion render src/index.ts "${sceneId}" "${outPath}" --codec=prores --prores-profile=4444 --pixel-format=yuva444p10le --props="${propsJson}"`;
+                cmd = `npx remotion render src/index.ts "${sceneId}" "${outPath}" ${framesFlag} --codec=prores --prores-profile=4444 --pixel-format=yuva444p10le --props="${propsFile}"`;
               } else {
                 // Standart H264 MP4
-                cmd = `npx remotion render src/index.ts "${sceneId}" "${outPath}" --props="${propsJson}"`;
+                cmd = `npx remotion render src/index.ts "${sceneId}" "${outPath}" ${framesFlag} --props="${propsFile}"`;
               }
 
               console.log(`[Remotion API] Render başlatıldı: ${sceneId} -> ${filename}`);
 
               exec(cmd, { cwd: process.cwd() }, (err, stdout, stderr) => {
+                try {
+                  if (fs.existsSync(propsFile)) {
+                    fs.unlinkSync(propsFile);
+                  }
+                } catch {
+                  // ignore
+                }
+
                 if (err) {
                   console.error('[Remotion API Hatası]:', stderr || err.message);
                   res.writeHead(500, { 'Content-Type': 'application/json' });

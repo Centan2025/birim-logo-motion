@@ -150,21 +150,7 @@ export const SplitFlapHalfFold: React.FC<ArchitecturalSceneProps> = ({
           );
         })}
 
-        {/* Center Mechanical Split-Flap Seam Line (fades out once locked) */}
-        <div
-          style={{
-            position: 'absolute',
-            top: halfHeight - 1,
-            left: -20,
-            right: -20,
-            height: 2,
-            backgroundColor: accentColor,
-            opacity: interpolate(frame, [15, 45, 78], [0.85, 0.65, 0], {
-              extrapolateLeft: 'clamp',
-              extrapolateRight: 'clamp',
-            }),
-          }}
-        />
+
       </div>
 
       {/* Clean Modern Subtitle */}

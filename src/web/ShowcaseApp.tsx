@@ -278,13 +278,21 @@ const CATEGORIES: { id: Category; label: string }[] = [
 
 const FONT_CHOICES = [
   { label: 'Inter (Modern Sans)', value: "'Inter', sans-serif" },
+  { label: 'Plus Jakarta Sans (Tech Pro)', value: "'Plus Jakarta Sans', sans-serif" },
   { label: 'Montserrat (Geometrik)', value: "'Montserrat', sans-serif" },
+  { label: 'Bebas Neue (Uzun / Güçlü Başlık)', value: "'Bebas Neue', sans-serif" },
   { label: 'Space Grotesk (Teknik)', value: "'Space Grotesk', sans-serif" },
   { label: 'Outfit (Minimalist)', value: "'Outfit', sans-serif" },
+  { label: 'DM Sans (Temiz Modern)', value: "'DM Sans', sans-serif" },
   { label: 'Syne (Art / Kinetik)', value: "'Syne', sans-serif" },
+  { label: 'Sora (Gelecekçi Sans)', value: "'Sora', sans-serif" },
+  { label: 'Oswald (Endüstriyel)', value: "'Oswald', sans-serif" },
+  { label: 'Archivo Black (Ağır Monolit)', value: "'Archivo Black', sans-serif" },
   { label: 'Cinzel (Lüks / Klasik)', value: "'Cinzel', serif" },
   { label: 'Playfair Display (Editoryal)', value: "'Playfair Display', serif" },
+  { label: 'Cormorant Garamond (Zarif Antik)', value: "'Cormorant Garamond', serif" },
   { label: 'JetBrains Mono (Mimari CAD)', value: "'JetBrains Mono', monospace" },
+  { label: 'Fira Code (Kod / Pafta)', value: "'Fira Code', monospace" },
 ] as const;
 
 const TEXT_ANIMATION_CHOICES: ReadonlyArray<{
@@ -303,6 +311,12 @@ const TEXT_ANIMATION_CHOICES: ReadonlyArray<{
   { label: '10. Lazer Tarama Çubuğu (Wipe Bar)', value: 'wipe-bar' },
   { label: '11. Sinematik Odaklanma (Blur Scale)', value: 'blur-scale' },
   { label: '12. Klasik Yumuşak Yükseliş (Fade Up)', value: 'fade-up' },
+  { label: '13. Elastik Zıplama & Düşüş (Bounce Drop)', value: 'bounce-drop' },
+  { label: '14. Açılı Dinamik Kayma (Skew Slide)', value: 'skew-slide' },
+  { label: '15. Enerjik Büyüme (Pop Scale)', value: 'pop-scale' },
+  { label: '16. Puslu Odak & Çözülme (Smoke Dissolve)', value: 'smoke-dissolve' },
+  { label: '17. Deklanşör Perde Maskesi (Shutter Reveal)', value: 'shutter-reveal' },
+  { label: '18. Siber Akış & Şelale (Matrix Stream)', value: 'matrix-stream' },
 ];
 
 interface SceneCustomConfig {
@@ -320,30 +334,33 @@ interface SceneCustomConfig {
   textOffsetY: number;
   textAlign: 'left' | 'center' | 'right';
   textDelayFrames: number;
+  durationInFrames: number;
   transparentBg: boolean;
 }
 
 const DEFAULT_SCENE_CONFIG: SceneCustomConfig = {
-  headline: 'YENİLİKÇİ TASARIM & ÜRETİM',
-  subtitle: 'MODERN ÇÖZÜMLER // İSTANBUL',
-  projectCode: 'BİRİM — 2026',
-  accentColor: '#E07A5F',
-  textColor: '#F4F1EA',
+  headline: 'HİS',
+  subtitle: '2004',
+  projectCode: '',
+  accentColor: '#FFFFFF',
+  textColor: '#FFFFFF',
   fontFamily: "'Inter', sans-serif",
   textAnimation: 'char-wave',
-  headlineSize: 19,
-  subtitleSize: 12,
-  letterSpacing: 0.4,
+  headlineSize: 64,
+  subtitleSize: 40,
+  letterSpacing: 0.25,
   textOffsetX: 0,
   textOffsetY: 0,
-  textAlign: 'center',
+  textAlign: 'left',
   textDelayFrames: 30,
-  transparentBg: false,
+  durationInFrames: 150,
+  transparentBg: true,
 };
 
 export const ShowcaseApp: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
   const [selectedId, setSelectedId] = useState<string>('26-Directional-Letter-Expand');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Her sahnenin kendine özgü ayarları burada saklanır
   const [sceneConfigs, setSceneConfigs] = useState<Record<string, SceneCustomConfig>>({});
@@ -365,21 +382,82 @@ export const ShowcaseApp: React.FC = () => {
   >('idle');
   const [renderMessage, setRenderMessage] = useState<string>('');
 
-  const filteredScenes =
-    selectedCategory === 'all'
-      ? SCENES
-      : SCENES.filter((s) => s.category === selectedCategory);
+  const filteredScenes = SCENES.filter((s) => {
+    const matchesCategory =
+      selectedCategory === 'all' || s.category === selectedCategory;
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      s.title.toLowerCase().includes(q) ||
+      s.desc.toLowerCase().includes(q) ||
+      s.id.toLowerCase().includes(q);
+    return matchesCategory && matchesSearch;
+  });
 
   const activeScene =
     SCENES.find((s) => s.id === selectedId) ?? SCENES[0];
 
   const handleRenderVideo = async (format: 'webm' | 'mp4' | 'mov') => {
     if (renderStatus === 'rendering') return;
+
+    const isTrans = format === 'mov' ? true : format === 'webm' ? cfg.transparentBg : false;
+    const ext = format === 'webm' ? 'webm' : format === 'mov' ? 'mov' : 'mp4';
+    const safeScene = String(activeScene.id).replace(/[^a-zA-Z0-9_-]/g, '');
+    const suggestedFilename = `${safeScene}-${isTrans ? 'seffaf-' : ''}${Date.now()}.${ext}`;
+
+    interface NativeSaveHandle {
+      createWritable: () => Promise<WritableStream & {
+        write?: (chunk: unknown) => Promise<void>;
+        close?: () => Promise<void>;
+      }>;
+    }
+
+    let fileHandle: NativeSaveHandle | null = null;
+
+    // 1. Tarayıcı destekliyorsa doğrudan Windows "Farklı Kaydet" penceresini aç
+    if ('showSaveFilePicker' in window) {
+      try {
+        const picker = (window as unknown as {
+          showSaveFilePicker?: (opts: unknown) => Promise<NativeSaveHandle>;
+        }).showSaveFilePicker;
+
+        if (picker) {
+          fileHandle = await picker({
+            suggestedName: suggestedFilename,
+            types: [
+              {
+                description:
+                  format === 'webm'
+                    ? 'WebM Video (*.webm)'
+                    : format === 'mp4'
+                    ? 'MP4 Video (*.mp4)'
+                    : 'Apple ProRes (*.mov)',
+                accept: {
+                  [format === 'webm'
+                    ? 'video/webm'
+                    : format === 'mp4'
+                    ? 'video/mp4'
+                    : 'video/quicktime']: [`.${ext}`],
+                },
+              },
+            ],
+          });
+        }
+      } catch (err: unknown) {
+        // Kullanıcı iptal ettiyse render başlatma
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
+        }
+        fileHandle = null;
+      }
+    }
+
     try {
       setRenderStatus('rendering');
-      const isTrans = format === 'mov' ? true : format === 'webm' ? cfg.transparentBg : false;
       setRenderMessage(
-        format === 'mov'
+        fileHandle
+          ? `⏳ Video işleniyor ve seçtiğiniz klasöre kaydedilecek...`
+          : format === 'mov'
           ? '🎬 Şeffaf ProRes 4444 (.mov) işleniyor... (Birkaç saniye sürebilir)'
           : format === 'webm'
           ? (cfg.transparentBg ? '🟢 Şeffaf WebM (Alpha) işleniyor...' : 'WebM video işleniyor...')
@@ -397,6 +475,16 @@ export const ShowcaseApp: React.FC = () => {
           projectCode: cfg.projectCode,
           accentColor: cfg.accentColor,
           primaryColor: cfg.textColor,
+          fontFamily: cfg.fontFamily,
+          headlineSize: cfg.headlineSize,
+          subtitleSize: cfg.subtitleSize,
+          letterSpacing: cfg.letterSpacing,
+          textOffsetX: cfg.textOffsetX,
+          textOffsetY: cfg.textOffsetY,
+          textAlign: cfg.textAlign,
+          textAnimation: cfg.textAnimation,
+          textDelayFrames: cfg.textDelayFrames,
+          durationInFrames: cfg.durationInFrames,
           format,
         }),
       });
@@ -416,16 +504,33 @@ export const ShowcaseApp: React.FC = () => {
         throw new Error(json.error || 'Video oluşturulamadı');
       }
 
-      setRenderStatus('success');
-      setRenderMessage(`✓ Video hazır! İndiriliyor: ${json.filename}`);
+      // 2. Seçilen konuma doğrudan kaydet
+      if (fileHandle && typeof fileHandle.createWritable === 'function') {
+        const fileRes = await fetch(json.downloadUrl);
+        const writable = await fileHandle.createWritable();
+        if (fileRes.body && typeof fileRes.body.pipeTo === 'function') {
+          await fileRes.body.pipeTo(writable);
+        } else if (typeof writable.write === 'function') {
+          const blob = await fileRes.blob();
+          await writable.write(blob);
+          if (typeof writable.close === 'function') {
+            await writable.close();
+          }
+        }
+        setRenderStatus('success');
+        setRenderMessage(`✓ Video seçtiğiniz konuma kaydedildi!`);
+      } else {
+        // Fallback: Standart tarayıcı indirmesi
+        const link = document.createElement('a');
+        link.href = json.downloadUrl;
+        link.download = json.filename ?? 'video';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-      // Otomatik dosya indirmesi başlat
-      const link = document.createElement('a');
-      link.href = json.downloadUrl;
-      link.download = json.filename ?? 'video';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+        setRenderStatus('success');
+        setRenderMessage(`✓ Video hazır! İndiriliyor: ${json.filename}`);
+      }
 
       setTimeout(() => {
         setRenderStatus('idle');
@@ -445,271 +550,384 @@ export const ShowcaseApp: React.FC = () => {
   return (
     <div
       style={{
-        display: 'grid',
-        gridTemplateColumns: '330px 1fr 340px',
+        display: 'flex',
+        flexDirection: 'column',
         height: '100vh',
         overflow: 'hidden',
-        backgroundColor: '#08090C',
+        backgroundColor: '#07090E',
         color: '#F4F1EA',
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
-      {/* 1. SOL PANEL: Sahne Seçici */}
-      <aside
+      {/* 0. ÜST MODERN STÜDYO BAR (TOPBAR) */}
+      <header
         style={{
-          borderRight: '1px solid rgba(255,255,255,0.09)',
-          backgroundColor: '#0C0E13',
+          height: 48,
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          backgroundColor: '#0B0E15',
           display: 'flex',
-          flexDirection: 'column',
-          height: '100vh',
-          overflow: 'hidden',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 20px',
+          flexShrink: 0,
         }}
       >
-        <div
-          style={{
-            padding: '18px 16px 14px',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div
             style={{
               fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 10.5,
-              letterSpacing: '0.2em',
-              color: cfg.accentColor,
-              marginBottom: 4,
-            }}
-          >
-            BİRİM LOGO // DXF MOTION SUITE
-          </div>
-          <h1
-            style={{
-              fontSize: 16,
-              fontWeight: 600,
-              letterSpacing: '0.02em',
-            }}
-          >
-            Video &amp; Logo Sunum Stüdyosu
-          </h1>
-
-          {/* Category Filter Pills */}
-          <div
-            style={{
+              fontWeight: 800,
+              fontSize: 13,
+              letterSpacing: '0.15em',
+              color: '#FFFFFF',
               display: 'flex',
-              flexWrap: 'wrap',
-              gap: 5,
-              marginTop: 12,
+              alignItems: 'center',
+              gap: 8,
             }}
           >
-            {CATEGORIES.map((cat) => {
-              const active = selectedCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  style={{
-                    padding: '5px 8px',
-                    borderRadius: 7,
-                    border: active
-                      ? `1px solid ${cfg.accentColor}`
-                      : '1px solid rgba(255,255,255,0.1)',
-                    backgroundColor: active
-                      ? `${cfg.accentColor}22`
-                      : 'rgba(255,255,255,0.03)',
-                    color: active ? '#FFFFFF' : 'rgba(255,255,255,0.65)',
-                    fontSize: 10.5,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {cat.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Scrollable Scene List */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '10px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}
-        >
-          {filteredScenes.map((scene) => {
-            const isSelected = scene.id === activeScene.id;
-            return (
-              <button
-                key={scene.id}
-                onClick={() => setSelectedId(scene.id)}
-                style={{
-                  textAlign: 'left',
-                  padding: '10px 12px',
-                  borderRadius: 10,
-                  border: isSelected
-                    ? `1px solid ${cfg.accentColor}`
-                    : '1px solid rgba(255,255,255,0.06)',
-                  backgroundColor: isSelected
-                    ? 'rgba(224, 122, 95, 0.14)'
-                    : 'rgba(255,255,255,0.02)',
-                  color: '#F4F1EA',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 12.5,
-                    fontWeight: 600,
-                    color: isSelected ? '#FFFFFF' : '#E5E7EB',
-                    marginBottom: 3,
-                  }}
-                >
-                  {scene.title}
-                </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: 'rgba(255,255,255,0.52)',
-                    lineHeight: 1.35,
-                  }}
-                >
-                  {scene.desc}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </aside>
-
-      {/* 2. ORTA ALAN: Video Oynatıcı */}
-      <main
-        style={{
-          padding: '20px 28px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          gap: 16,
-          height: '100vh',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 10,
-          }}
-        >
-          <div>
-            <h2 style={{ fontSize: 19, fontWeight: 600 }}>
-              {activeScene.title}
-            </h2>
-            <p
+            <span style={{ color: '#3B82F6' }}>◆</span> BİRİM STUDIO
+            <span
               style={{
-                fontSize: 12.5,
-                color: 'rgba(255,255,255,0.6)',
-                marginTop: 2,
+                fontSize: 9.5,
+                padding: '2px 6px',
+                borderRadius: 4,
+                backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                color: '#60A5FA',
+                fontWeight: 600,
+                border: '1px solid rgba(59, 130, 246, 0.3)',
               }}
             >
-              {activeScene.desc}
-            </p>
+              PRO v2.5
+            </span>
           </div>
+          <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
+            {activeScene.title}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div
             style={{
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: 11,
-              padding: '5px 12px',
-              borderRadius: 999,
-              backgroundColor: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              padding: '4px 10px',
+              borderRadius: 6,
+              backgroundColor: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: 'rgba(255,255,255,0.75)',
             }}
           >
-            1920×1080 // 30 FPS // {(activeScene.durationInFrames / 30).toFixed(0)} SN
+            ⏱ {(cfg.durationInFrames / 30).toFixed(1)} SN // 30 FPS // 1080P
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              padding: '4px 10px',
+              borderRadius: 6,
+              backgroundColor: cfg.transparentBg
+                ? 'rgba(46, 204, 113, 0.15)'
+                : 'rgba(255,255,255,0.05)',
+              border: cfg.transparentBg
+                ? '1px solid rgba(46, 204, 113, 0.35)'
+                : '1px solid rgba(255,255,255,0.1)',
+              color: cfg.transparentBg ? '#2ecc71' : 'rgba(255,255,255,0.6)',
+              fontWeight: 600,
+            }}
+          >
+            {cfg.transparentBg ? '🟢 ŞEFFAF ALPHA' : '⚪ SİYAH ZEMİN'}
           </div>
         </div>
+      </header>
 
-        <div
+      {/* ANA ÇALIŞMA ALANI (3 SÜTUN) */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '310px 1fr 360px',
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
+        }}
+      >
+        {/* 1. SOL PANEL: Modern Sahne Gezgini */}
+        <aside
           style={{
-            width: '100%',
-            flex: 1,
-            minHeight: 0,
+            borderRight: '1px solid rgba(255,255,255,0.08)',
+            backgroundColor: '#0B0D14',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: 16,
-            border: '1px solid rgba(255,255,255,0.14)',
-            boxShadow: '0 24px 70px rgba(0,0,0,0.65)',
-            backgroundColor: cfg.transparentBg ? '#101218' : '#050507',
-            backgroundImage: cfg.transparentBg
-              ? 'radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px)'
-              : undefined,
-            backgroundSize: '16px 16px',
+            height: '100%',
             overflow: 'hidden',
           }}
         >
-          {activeScene.isOverlay && activeScene.overlayComponent ? (
-            <Player
-              key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.textDelayFrames}`}
-              component={activeScene.overlayComponent}
-              inputProps={{
-                projectTitle: cfg.headline,
-                architecturalPhase: cfg.subtitle,
-                locationYear: cfg.projectCode,
-                accentColor: cfg.accentColor,
-                primaryColor: cfg.textColor,
-                transparentBackground: cfg.transparentBg,
-                fontFamily: cfg.fontFamily,
-                headlineSize: cfg.headlineSize,
-                subtitleSize: cfg.subtitleSize,
-                letterSpacing: cfg.letterSpacing,
-                textOffsetX: cfg.textOffsetX,
-                textOffsetY: cfg.textOffsetY,
-                textAnimation: cfg.textAnimation,
-                textDelayFrames: cfg.textDelayFrames,
+          {/* Arama ve Filtreleme */}
+          <div
+            style={{
+              padding: '14px 14px 10px',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            {/* Arama Girişi */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <span
+                style={{
+                  position: 'absolute',
+                  left: 10,
+                  fontSize: 12,
+                  color: 'rgba(255,255,255,0.4)',
+                }}
+              >
+                🔍
+              </span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Sahne veya efekt ara..."
+                style={{
+                  width: '100%',
+                  padding: '7px 28px 7px 30px',
+                  borderRadius: 8,
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  backgroundColor: '#12151E',
+                  color: '#FFFFFF',
+                  fontSize: 12,
+                  outline: 'none',
+                }}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  style={{
+                    position: 'absolute',
+                    right: 8,
+                    background: 'none',
+                    border: 'none',
+                    color: 'rgba(255,255,255,0.5)',
+                    cursor: 'pointer',
+                    fontSize: 11,
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Kategori Butonları */}
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {CATEGORIES.map((cat) => {
+                const active = selectedCategory === cat.id;
+                const count =
+                  cat.id === 'all'
+                    ? SCENES.length
+                    : SCENES.filter((s) => s.category === cat.id).length;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: 6,
+                      border: active
+                        ? '1px solid #3B82F6'
+                        : '1px solid rgba(255,255,255,0.07)',
+                      backgroundColor: active
+                        ? 'rgba(59, 130, 246, 0.2)'
+                        : 'rgba(255,255,255,0.02)',
+                      color: active ? '#93C5FD' : 'rgba(255,255,255,0.6)',
+                      fontSize: 10.5,
+                      fontWeight: active ? 600 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {cat.label} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Kaydırılabilir Sahne Listesi */}
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+            }}
+          >
+            {filteredScenes.map((scene) => {
+              const isSelected = scene.id === activeScene.id;
+              const sceneNum = scene.id.split('-')[0] ?? '';
+              return (
+                <button
+                  key={scene.id}
+                  onClick={() => setSelectedId(scene.id)}
+                  style={{
+                    textAlign: 'left',
+                    padding: '9px 12px',
+                    borderRadius: 8,
+                    border: isSelected
+                      ? '1px solid rgba(59, 130, 246, 0.6)'
+                      : '1px solid rgba(255,255,255,0.05)',
+                    borderLeft: isSelected
+                      ? '3px solid #3B82F6'
+                      : '3px solid transparent',
+                    backgroundColor: isSelected
+                      ? 'rgba(59, 130, 246, 0.12)'
+                      : 'rgba(255,255,255,0.02)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    position: 'relative',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 3,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: isSelected ? '#FFFFFF' : '#D1D5DB',
+                      }}
+                    >
+                      {scene.title}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: 9.5,
+                        padding: '1px 5px',
+                        borderRadius: 4,
+                        backgroundColor: 'rgba(255,255,255,0.06)',
+                        color: 'rgba(255,255,255,0.5)',
+                      }}
+                    >
+                      #{sceneNum}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 10.5,
+                      color: 'rgba(255,255,255,0.48)',
+                      lineHeight: 1.35,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {scene.desc}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        {/* 2. ORTA ALAN: Video Oynatıcı & Canlı Dock */}
+        <main
+          style={{
+            padding: '16px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: 12,
+            height: '100%',
+            overflow: 'hidden',
+            backgroundColor: '#07080D',
+          }}
+        >
+          {/* Sahne Başlık Çubuğu */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div>
+              <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: '#FFFFFF' }}>
+                {activeScene.title}
+              </h2>
+              <p
+                style={{
+                  fontSize: 11.5,
+                  color: 'rgba(255,255,255,0.55)',
+                  margin: '2px 0 0',
+                }}
+              >
+                {activeScene.desc}
+              </p>
+            </div>
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 10.5,
+                padding: '4px 10px',
+                borderRadius: 999,
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.09)',
+                color: 'rgba(255,255,255,0.6)',
               }}
-              durationInFrames={activeScene.durationInFrames}
-              fps={30}
-              compositionWidth={1920}
-              compositionHeight={1080}
-              style={{ width: '100%', height: '100%' }}
-              controls
-              alwaysShowControls
-              showPlaybackRateControl
-              allowFullscreen
-              autoPlay
-              loop
-            />
-          ) : (
-            activeScene.archComponent && (
+            >
+              1920×1080 • 30 FPS • {(cfg.durationInFrames / 30).toFixed(1)} SN
+            </div>
+          </div>
+
+          {/* Oynatıcı Çerçevesi */}
+          <div
+            style={{
+              width: '100%',
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderRadius: 14,
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+              backgroundColor: cfg.transparentBg ? '#10131B' : '#050608',
+              backgroundImage: cfg.transparentBg
+                ? 'radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px)'
+                : undefined,
+              backgroundSize: '16px 16px',
+              overflow: 'hidden',
+            }}
+          >
+            {activeScene.isOverlay && activeScene.overlayComponent ? (
               <Player
-                key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.textDelayFrames}`}
-                component={activeScene.archComponent}
+                key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.textDelayFrames}-${cfg.durationInFrames}`}
+                component={activeScene.overlayComponent}
                 inputProps={{
-                  headline: cfg.headline,
-                  subtitle: cfg.subtitle,
-                  projectCode: cfg.projectCode,
-                  scaleText: 'ÖLÇEK 1:50 // BİRİM: MM',
+                  projectTitle: cfg.headline,
+                  architecturalPhase: cfg.subtitle,
+                  locationYear: cfg.projectCode,
                   accentColor: cfg.accentColor,
                   primaryColor: cfg.textColor,
-                  backgroundColor: cfg.transparentBg ? 'transparent' : '#0B0D10',
+                  transparentBackground: cfg.transparentBg,
                   fontFamily: cfg.fontFamily,
                   headlineSize: cfg.headlineSize,
                   subtitleSize: cfg.subtitleSize,
                   letterSpacing: cfg.letterSpacing,
                   textOffsetX: cfg.textOffsetX,
                   textOffsetY: cfg.textOffsetY,
-                  textAlign: cfg.textAlign,
                   textAnimation: cfg.textAnimation,
                   textDelayFrames: cfg.textDelayFrames,
                 }}
-                durationInFrames={activeScene.durationInFrames}
+                durationInFrames={cfg.durationInFrames}
                 fps={30}
                 compositionWidth={1920}
                 compositionHeight={1080}
@@ -721,139 +939,246 @@ export const ShowcaseApp: React.FC = () => {
                 autoPlay
                 loop
               />
-            )
-          )}
-        </div>
+            ) : (
+              activeScene.archComponent && (
+                <Player
+                  key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.textDelayFrames}-${cfg.durationInFrames}`}
+                  component={activeScene.archComponent}
+                  inputProps={{
+                    headline: cfg.headline,
+                    subtitle: cfg.subtitle,
+                    projectCode: cfg.projectCode,
+                    scaleText: 'ÖLÇEK 1:50 // BİRİM: MM',
+                    accentColor: cfg.accentColor,
+                    primaryColor: cfg.textColor,
+                    backgroundColor: cfg.transparentBg ? 'transparent' : '#0B0D10',
+                    fontFamily: cfg.fontFamily,
+                    headlineSize: cfg.headlineSize,
+                    subtitleSize: cfg.subtitleSize,
+                    letterSpacing: cfg.letterSpacing,
+                    textOffsetX: cfg.textOffsetX,
+                    textOffsetY: cfg.textOffsetY,
+                    textAlign: cfg.textAlign,
+                    textAnimation: cfg.textAnimation,
+                    textDelayFrames: cfg.textDelayFrames,
+                  }}
+                  durationInFrames={cfg.durationInFrames}
+                  fps={30}
+                  compositionWidth={1920}
+                  compositionHeight={1080}
+                  style={{ width: '100%', height: '100%' }}
+                  controls
+                  alwaysShowControls
+                  showPlaybackRateControl
+                  allowFullscreen
+                  autoPlay
+                  loop
+                />
+              )
+            )}
+          </div>
 
-        {/* HIZLI KONTROL & İNDİRME ÇUBUĞU (Videonun Tam Altında - Göz Önünde) */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: '#0F121A',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 14,
-            padding: '12px 18px',
-            gap: 14,
-            boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
-          }}
-        >
-          {/* Sol: Büyük Şeffaflık Düğmesi */}
-          <button
-            onClick={() => updateConfig({ transparentBg: !cfg.transparentBg })}
+          {/* HIZLI KONTROL & İNDİRME DOCK'U (Videonun Tam Altında) */}
+          <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
-              padding: '9px 18px',
-              borderRadius: 8,
-              border: cfg.transparentBg ? '1px solid #2ecc71' : '1px solid rgba(255,255,255,0.2)',
-              backgroundColor: cfg.transparentBg ? 'rgba(46, 204, 113, 0.22)' : 'rgba(255,255,255,0.06)',
-              color: '#FFFFFF',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
+              justifyContent: 'space-between',
+              backgroundColor: '#0F121A',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 12,
+              padding: '10px 16px',
+              gap: 12,
+              boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
             }}
           >
-            <span style={{ fontSize: 16 }}>{cfg.transparentBg ? '🟢' : '⚪'}</span>
-            <span>Şeffaf Arka Plan:</span>
-            <strong style={{ color: cfg.transparentBg ? '#2ecc71' : 'rgba(255,255,255,0.6)' }}>
-              {cfg.transparentBg ? 'AÇIK' : 'KAPALI'}
-            </strong>
-          </button>
-
-          {/* Orta: Canlı Durum / Bildirim */}
-          {renderStatus !== 'idle' ? (
+            {/* Sol: Süre Hızlı Seçimi (3s, 5s, 7s, 10s) */}
             <div
               style={{
-                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '4px 8px',
+                borderRadius: 8,
+                backgroundColor: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 11,
+                  color: 'rgba(255,255,255,0.5)',
+                  fontWeight: 600,
+                  marginRight: 2,
+                }}
+              >
+                ⏱ Süre:
+              </span>
+              {[
+                { label: '3s', frames: 90 },
+                { label: '5s', frames: 150 },
+                { label: '7s', frames: 210 },
+                { label: '10s', frames: 300 },
+              ].map((d) => (
+                <button
+                  key={d.frames}
+                  onClick={() => updateConfig({ durationInFrames: d.frames })}
+                  style={{
+                    padding: '4px 9px',
+                    borderRadius: 6,
+                    border:
+                      cfg.durationInFrames === d.frames
+                        ? '1px solid #3B82F6'
+                        : '1px solid transparent',
+                    backgroundColor:
+                      cfg.durationInFrames === d.frames
+                        ? 'rgba(59, 130, 246, 0.25)'
+                        : 'transparent',
+                    color:
+                      cfg.durationInFrames === d.frames
+                        ? '#93C5FD'
+                        : 'rgba(255,255,255,0.65)',
+                    fontSize: 11.5,
+                    fontWeight: cfg.durationInFrames === d.frames ? 700 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Şeffaflık Düğmesi */}
+            <button
+              onClick={() => updateConfig({ transparentBg: !cfg.transparentBg })}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
                 padding: '8px 14px',
                 borderRadius: 8,
-                fontSize: 12.5,
-                fontWeight: 600,
-                textAlign: 'center',
-                backgroundColor:
-                  renderStatus === 'rendering'
-                    ? 'rgba(243, 156, 18, 0.2)'
-                    : renderStatus === 'success'
-                    ? 'rgba(46, 204, 113, 0.2)'
-                    : 'rgba(231, 76, 60, 0.2)',
-                border:
-                  renderStatus === 'rendering'
-                    ? '1px solid #f39c12'
-                    : renderStatus === 'success'
-                    ? '1px solid #2ecc71'
-                    : '1px solid #e74c3c',
-                color:
-                  renderStatus === 'rendering'
-                    ? '#f39c12'
-                    : renderStatus === 'success'
-                    ? '#2ecc71'
-                    : '#e74c3c',
-              }}
-            >
-              {renderStatus === 'rendering' ? '⏳ ' : renderStatus === 'success' ? '✓ ' : '⚠ '}
-              {renderMessage}
-            </div>
-          ) : (
-            <div style={{ flex: 1, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-              {cfg.transparentBg
-                ? '🟢 Şeffaf mod açık. Butona basarak videoyu transparan indirin:'
-                : 'Standart mod. Videonuzu tek tıkla bilgisayara indirin:'}
-            </div>
-          )}
-
-          {/* Sağ: Büyük İndirme Düğmeleri */}
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button
-              disabled={renderStatus === 'rendering'}
-              onClick={() => handleRenderVideo('webm')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '9px 18px',
-                borderRadius: 8,
-                border: '1px solid #2ecc71',
-                backgroundColor: '#2ecc71',
-                color: '#000000',
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
-                opacity: renderStatus === 'rendering' ? 0.6 : 1,
-                boxShadow: '0 4px 14px rgba(46, 204, 113, 0.3)',
-              }}
-            >
-              <span>⬇</span>
-              <span>{cfg.transparentBg ? 'Şeffaf WebM İndir' : 'WebM İndir'}</span>
-            </button>
-
-            <button
-              disabled={renderStatus === 'rendering'}
-              onClick={() => handleRenderVideo('mp4')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '9px 16px',
-                borderRadius: 8,
-                border: `1px solid ${cfg.accentColor}`,
-                backgroundColor: 'rgba(255,255,255,0.08)',
+                border: cfg.transparentBg
+                  ? '1px solid #2ecc71'
+                  : '1px solid rgba(255,255,255,0.18)',
+                backgroundColor: cfg.transparentBg
+                  ? 'rgba(46, 204, 113, 0.18)'
+                  : 'rgba(255,255,255,0.05)',
                 color: '#FFFFFF',
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 600,
-                cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
-                opacity: renderStatus === 'rendering' ? 0.6 : 1,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
               }}
             >
-              <span>🎬</span>
-              <span>MP4 İndir</span>
+              <span style={{ fontSize: 14 }}>{cfg.transparentBg ? '🟢' : '⚪'}</span>
+              <span>Şeffaf:</span>
+              <strong
+                style={{
+                  color: cfg.transparentBg ? '#2ecc71' : 'rgba(255,255,255,0.5)',
+                }}
+              >
+                {cfg.transparentBg ? 'AÇIK' : 'KAPALI'}
+              </strong>
             </button>
+
+            {/* Orta: Canlı Durum / Bildirim */}
+            {renderStatus !== 'idle' ? (
+              <div
+                style={{
+                  flex: 1,
+                  padding: '7px 12px',
+                  borderRadius: 8,
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  backgroundColor:
+                    renderStatus === 'rendering'
+                      ? 'rgba(243, 156, 18, 0.15)'
+                      : renderStatus === 'success'
+                      ? 'rgba(46, 204, 113, 0.15)'
+                      : 'rgba(231, 76, 60, 0.15)',
+                  border:
+                    renderStatus === 'rendering'
+                      ? '1px solid #f39c12'
+                      : renderStatus === 'success'
+                      ? '1px solid #2ecc71'
+                      : '1px solid #e74c3c',
+                  color:
+                    renderStatus === 'rendering'
+                      ? '#f39c12'
+                      : renderStatus === 'success'
+                      ? '#2ecc71'
+                      : '#e74c3c',
+                }}
+              >
+                {renderStatus === 'rendering' ? '⏳ ' : renderStatus === 'success' ? '✓ ' : '⚠ '}
+                {renderMessage}
+              </div>
+            ) : (
+              <div
+                style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  fontSize: 11.5,
+                  color: 'rgba(255,255,255,0.45)',
+                }}
+              >
+                {cfg.transparentBg
+                  ? '🟢 Şeffaf mod devrede. Videoyu transparan indirin:'
+                  : 'Normal mod. Videoyu doğrudan bilgisayara indirin:'}
+              </div>
+            )}
+
+            {/* Sağ: Büyük İndirme Düğmeleri */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                disabled={renderStatus === 'rendering'}
+                onClick={() => handleRenderVideo('webm')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: 'none',
+                  backgroundColor: '#2ecc71',
+                  color: '#000000',
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
+                  opacity: renderStatus === 'rendering' ? 0.6 : 1,
+                  boxShadow: '0 4px 14px rgba(46, 204, 113, 0.3)',
+                }}
+              >
+                <span>⬇</span>
+                <span>{cfg.transparentBg ? 'Şeffaf WebM İndir' : 'WebM İndir'}</span>
+              </button>
+
+              <button
+                disabled={renderStatus === 'rendering'}
+                onClick={() => handleRenderVideo('mp4')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                  border: `1px solid ${cfg.accentColor}`,
+                  backgroundColor: 'rgba(255,255,255,0.08)',
+                  color: '#FFFFFF',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
+                  opacity: renderStatus === 'rendering' ? 0.6 : 1,
+                }}
+              >
+                <span>🎬</span>
+                <span>MP4 İndir</span>
+              </button>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
 
       {/* 3. SAĞ PANEL: Metin, Font, Boyut ve Konum Ayarları (Her Zaman Görünür) */}
       <aside
@@ -1133,10 +1458,67 @@ export const ShowcaseApp: React.FC = () => {
               letterSpacing: '0.08em',
             }}
           >
-            ⏱️ 2. ANİMASYON VE ZAMANLAMA
+            ⏱️ 2. SÜRE VE ZAMANLAMA
           </div>
 
-          {/* Metin Başlama Gecikmesi */}
+          {/* 2A: Video Toplam Süresi (Duration) */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
+                Video Toplam Süresi
+              </label>
+              <strong style={{ fontSize: 11, color: '#60A5FA', fontFamily: 'monospace' }}>
+                {(cfg.durationInFrames / 30).toFixed(1)} sn ({cfg.durationInFrames} frame)
+              </strong>
+            </div>
+            <input
+              type="range"
+              min={60}
+              max={450}
+              step={15}
+              value={cfg.durationInFrames}
+              onChange={(e) => updateConfig({ durationInFrames: Number(e.target.value) })}
+              style={{ width: '100%', accentColor: '#3B82F6', cursor: 'pointer' }}
+            />
+            <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+              {[
+                { label: '3s', frames: 90 },
+                { label: '5s (Normal)', frames: 150 },
+                { label: '7s', frames: 210 },
+                { label: '10s (Uzun)', frames: 300 },
+                { label: '12s', frames: 360 },
+              ].map((btn) => (
+                <button
+                  key={btn.frames}
+                  onClick={() => updateConfig({ durationInFrames: btn.frames })}
+                  style={{
+                    flex: 1,
+                    padding: '4px 2px',
+                    borderRadius: 4,
+                    border:
+                      cfg.durationInFrames === btn.frames
+                        ? '1px solid #3B82F6'
+                        : '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor:
+                      cfg.durationInFrames === btn.frames
+                        ? 'rgba(59, 130, 246, 0.25)'
+                        : 'rgba(255,255,255,0.04)',
+                    color: cfg.durationInFrames === btn.frames ? '#93C5FD' : '#FFFFFF',
+                    fontSize: 9.5,
+                    fontWeight: cfg.durationInFrames === btn.frames ? 700 : 500,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {btn.label}
+                </button>
+              ))}
+            </div>
+            <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.42)', marginTop: 4 }}>
+              * Hem önizleme oynatıcısının hem indirilen videonun toplam süresini belirler.
+            </div>
+          </div>
+
+          {/* 2B: Metin Başlama Gecikmesi */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
               <label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
@@ -1286,7 +1668,7 @@ export const ShowcaseApp: React.FC = () => {
             <input
               type="range"
               min={8}
-              max={64}
+              max={200}
               value={cfg.headlineSize}
               onChange={(e) => updateConfig({ headlineSize: Number(e.target.value) })}
               style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
@@ -1302,7 +1684,7 @@ export const ShowcaseApp: React.FC = () => {
             <input
               type="range"
               min={6}
-              max={40}
+              max={120}
               value={cfg.subtitleSize}
               onChange={(e) => updateConfig({ subtitleSize: Number(e.target.value) })}
               style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
@@ -1613,6 +1995,7 @@ export const ShowcaseApp: React.FC = () => {
           )}
         </div>
       </aside>
+      </div>
     </div>
   );
 };
