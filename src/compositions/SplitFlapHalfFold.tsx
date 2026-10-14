@@ -10,27 +10,21 @@ import {
 import { BIRIM_LETTERS, LOGO_VIEWBOX } from '../data/birimLogoPaths';
 import { ArchitecturalSceneProps } from '../types/schema';
 
-export const SplitFlapHalfFold: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  accentColor,
-  primaryColor,
-  backgroundColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAlign = 'center',
-  textAnimation = 'char-wave',
-  textDelayFrames = 34,
-  showLogo = true,
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const SplitFlapHalfFold: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    accentColor,
+    primaryColor,
+    backgroundColor,
+    textDelayFrames = 34,
+    showLogo = true,
+  } = props;
 
-  const scale = 2.95;
+  const frame = useCurrentFrame();
+  const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
+
+  const isVertical = compHeight > compWidth;
+  const isSquare = compWidth === compHeight;
+  const scale = isVertical ? 2.0 : isSquare ? 2.2 : 2.95;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
   const halfHeight = renderedHeight / 2;
@@ -157,18 +151,7 @@ export const SplitFlapHalfFold: React.FC<ArchitecturalSceneProps> = ({
 
       {/* Clean Dynamic Caption */}
       <SceneCaption
-        headline={headline}
-        subtitle={subtitle}
-        primaryColor={primaryColor}
-        accentColor={accentColor}
-        fontFamily={fontFamily}
-        headlineSize={headlineSize}
-        subtitleSize={subtitleSize}
-        letterSpacing={letterSpacing}
-        textOffsetX={textOffsetX}
-        textOffsetY={textOffsetY}
-        textAlign={textAlign}
-        textAnimation={textAnimation}
+        {...props}
         delayFrames={textDelayFrames}
         showLogo={showLogo}
         baseTop={678}

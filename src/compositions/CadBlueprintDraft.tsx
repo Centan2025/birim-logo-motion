@@ -1,4 +1,4 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
+import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -13,31 +13,27 @@ import { BIRIM_LETTERS, LOGO_VIEWBOX } from '../data/birimLogoPaths';
 import { ArchitecturalGrid } from '../components/ArchitecturalGrid';
 import { ArchitecturalSceneProps } from '../types/schema';
 
-export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  projectCode,
-  scaleText,
-  accentColor,
-  primaryColor,
-  backgroundColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAnimation = 'char-wave',
-  textDelayFrames,
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    projectCode,
+    scaleText,
+    accentColor,
+    primaryColor,
+    backgroundColor,
+    textDelayFrames,
+    showLogo = true,
+  } = props;
 
-  const scale = 2.75;
+  const frame = useCurrentFrame();
+  const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
+
+  const isVertical = compHeight > compWidth;
+  const isSquare = compWidth === compHeight;
+  const scale = isVertical ? 1.8 : isSquare ? 2.0 : 2.75;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
-  const offsetX = (1920 - renderedWidth) / 2;
-  const offsetY = (1080 - renderedHeight) / 2 - 35;
+  const offsetX = (compWidth - renderedWidth) / 2;
+  const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 35);
 
   // Overall solid fill transition after CAD drafting completes
   const fillProgress = interpolate(frame, [78, 112], [0, 1], {
@@ -74,7 +70,8 @@ export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = ({
         modeLabel="ÖNERİ 01 // MİMARİ CAD & SPLINE RÖLEVE"
       />
 
-      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+      {showLogo !== false && (
+        <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <defs>
           <pattern
             id="cad-hatch"
@@ -348,74 +345,15 @@ export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = ({
           })}
         </g>
       </svg>
+      )}
 
       {/* Architectural Typography Lockup Below Logo */}
-      <div
-        style={{
-          position: 'absolute',
-          top: offsetY + renderedHeight + 95,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          opacity: textReveal,
-          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textReveal, [0, 1], [24, 0])}px)`,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 20,
-            marginBottom: 12,
-          }}
-        >
-          <div style={{ width: 64, height: 1, backgroundColor: accentColor }} />
-          <span
-            style={{
-              fontFamily,
-              fontSize: headlineSize,
-              fontWeight: 500,
-              letterSpacing: `${letterSpacing}em`,
-              color: primaryColor,
-              textTransform: 'uppercase',
-            }}
-          >
-            <AnimatedTextLine
-              text={headline}
-              fontFamily={fontFamily}
-              fontSize={headlineSize}
-              letterSpacing={letterSpacing}
-              color="inherit"
-              accentColor={accentColor}
-              animation={textAnimation}
-              startFrame={textDelayFrames ?? 34}
-            />
-          </span>
-          <div style={{ width: 64, height: 1, backgroundColor: accentColor }} />
-        </div>
-        <div
-          style={{
-            fontFamily,
-            fontSize: subtitleSize,
-            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-            color: accentColor,
-          }}
-        >
-          <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={(textDelayFrames ?? 34) + 8}
-            isSubtitle
-          />
-        </div>
-      </div>
+      <SceneCaption
+        {...props}
+        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 82}
+        showLogo={showLogo}
+        baseTop={offsetY + renderedHeight + 58}
+      />
     </AbsoluteFill>
   );
 };

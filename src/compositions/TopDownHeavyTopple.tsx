@@ -1,4 +1,4 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
+import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -10,36 +10,30 @@ import {
 import { BIRIM_LETTERS, LOGO_VIEWBOX } from '../data/birimLogoPaths';
 import { ArchitecturalSceneProps } from '../types/schema';
 
-export const TopDownHeavyTopple: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  accentColor,
-  primaryColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAnimation = 'char-wave',
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const TopDownHeavyTopple: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    accentColor,
+    primaryColor,
+    backgroundColor,
+    textDelayFrames,
+    showLogo = true,
+  } = props;
 
-  const scale = 2.95;
+  const frame = useCurrentFrame();
+  const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
+
+  const isVertical = compHeight > compWidth;
+  const isSquare = compWidth === compHeight;
+  const scale = isVertical ? 2.0 : isSquare ? 2.2 : 2.95;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
 
-  const textSpring = spring({
-    frame: frame - 52,
-    fps,
-    config: { damping: 18, stiffness: 100 },
-  });
+  const isTransparent = backgroundColor === 'transparent';
 
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: '#07080C',
+        backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#07080C'),
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -48,26 +42,28 @@ export const TopDownHeavyTopple: React.FC<ArchitecturalSceneProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* Top Hinge Axis Bar */}
-      <div
-        style={{
-          width: renderedWidth,
-          height: 1,
-          backgroundColor: 'rgba(255,255,255,0.16)',
-          marginBottom: -1,
-        }}
-      />
+      {showLogo !== false && (
+        <>
+          {/* Top Hinge Axis Bar */}
+          <div
+            style={{
+              width: renderedWidth,
+              height: 1,
+              backgroundColor: 'rgba(255,255,255,0.16)',
+              marginBottom: -1,
+            }}
+          />
 
-      {/* 3D Top-Hinged Toppling Letters */}
-      <div
-        style={{
-          position: 'relative',
-          width: renderedWidth,
-          height: renderedHeight,
-          transformStyle: 'preserve-3d',
-          marginTop: -30,
-        }}
-      >
+          {/* 3D Top-Hinged Toppling Letters */}
+          <div
+            style={{
+              position: 'relative',
+              width: renderedWidth,
+              height: renderedHeight,
+              transformStyle: 'preserve-3d',
+              marginTop: -30,
+            }}
+          >
         {BIRIM_LETTERS.map((letter, idx) => {
           const topple = spring({
             frame: frame - idx * 6,
@@ -146,63 +142,16 @@ export const TopDownHeavyTopple: React.FC<ArchitecturalSceneProps> = ({
           );
         })}
       </div>
+        </>
+      )}
 
-      {/* Caption */}
-      <div
-        style={{
-          marginTop: 64,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 10,
-          opacity: textSpring,
-          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [18, 0])}px)`,
-        }}
-      >
-        <div
-          style={{
-            fontFamily,
-            fontSize: headlineSize,
-            fontWeight: 500,
-            letterSpacing: `${letterSpacing}em`,
-            color: primaryColor,
-            textTransform: 'uppercase',
-          }}
-        >
-          <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
-        </div>
-        <div
-          style={{
-            fontFamily,
-            fontSize: subtitleSize,
-            fontWeight: 400,
-            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-            color: accentColor,
-            textTransform: 'uppercase',
-          }}
-        >
-          <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
-        </div>
-      </div>
+      {/* Dynamic Architecture Caption */}
+      <SceneCaption
+        {...props}
+        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 45}
+        showLogo={showLogo}
+        baseTop={678}
+      />
     </AbsoluteFill>
   );
 };

@@ -74,6 +74,12 @@ function remotionRenderPlugin(): Plugin {
                 showLogo = true,
                 format = 'webm',
                 aspectRatio = '16:9',
+                exitAnimation = 'none',
+                exitTarget = 'both',
+                exitDurationFrames = 25,
+                exitStartFrame,
+                exitTimingMode = 'before-end',
+                exitDelayFrames = 30,
               } = data;
 
               if (!sceneId) {
@@ -130,6 +136,12 @@ function remotionRenderPlugin(): Plugin {
                 aspectRatio: aspectRatio || '16:9',
                 playbackSpeed: Number(playbackSpeed) || 1,
                 durationInFrames: totalFrames,
+                exitAnimation: exitAnimation || 'none',
+                exitTarget: exitTarget || 'both',
+                exitDurationFrames: Number(exitDurationFrames) || 25,
+                exitStartFrame: exitStartFrame !== undefined ? Number(exitStartFrame) : undefined,
+                exitTimingMode: exitTimingMode || 'before-end',
+                exitDelayFrames: Number(exitDelayFrames) || 30,
               };
 
               // Windows komut satırında tırnak bozulmasını önlemek için geçici JSON dosyası kullan

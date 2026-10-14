@@ -32,9 +32,27 @@ import {
   ArchitecturalSceneProps,
   AspectRatioType,
   ASPECT_RATIO_OPTIONS,
+  EXIT_ANIMATION_OPTIONS,
+  ExitAnimationType,
+  EXIT_TARGET_OPTIONS,
+  ExitTargetType,
   LowerThirdProps,
   TextAnimationType,
 } from '../types/schema';
+import { SceneExitProvider, SceneExitWrapper } from '../components/SceneExitWrapper';
+
+export const EXIT_ANIMATION_CHOICES: { value: ExitAnimationType; label: string; desc: string; icon: string }[] = [
+  { value: 'none', label: 'Sabit Kal (Kaybolma Yok)', desc: 'Animasyon ekranda kalır, kaybolmaz', icon: '⏸️' },
+  { value: 'fade-out', label: 'Zarif Fade-Out', desc: 'Akıcı şeffaflaşarak erime', icon: '🌫️' },
+  { value: 'reverse-spring', label: 'Ters Elastik Yay', desc: 'Geriye yaylanarak elastik büzülme', icon: '🔄' },
+  { value: 'slide-down', label: 'Aşağı Süzülerek Kaybol', desc: 'Aşağıya doğru kayarak şeffaflaşma', icon: '⬇️' },
+  { value: 'slide-up', label: 'Yukarı Uçarak Kaybol', desc: 'Yukarıya doğru uçarak şeffaflaşma', icon: '⬆️' },
+  { value: 'zoom-out', label: 'Geriye Çekilerek Küçül', desc: 'Kameradan uzaklaşarak ufukta kaybolma', icon: '🔍' },
+  { value: 'zoom-in', label: 'Yaklaşarak Kaybol', desc: 'Kameraya yaklaşarak şeffaflaşma', icon: '🔎' },
+  { value: 'blur-dissolve', label: 'Bulanıklaşarak Dağılma', desc: 'Duman gibi optik bulanıklıkla erime', icon: '💨' },
+  { value: 'wipe-curtain', label: 'Mimari Perde Kapanışı', desc: 'İki yandan merkeze kapanan shutter', icon: '🚪' },
+  { value: 'glitch-fade', label: 'Glitch Sinyal Kesilmesi', desc: 'Kuantum sinyal titremesiyle sonlanma', icon: '⚡' },
+];
 
 type Category = 'all' | 'typography' | 'fold' | 'modern' | 'arch' | 'overlay';
 
@@ -362,6 +380,12 @@ interface SceneCustomConfig {
   transparentBg: boolean;
   showLogo: boolean;
   aspectRatio: AspectRatioType;
+  exitAnimation: ExitAnimationType;
+  exitTarget: ExitTargetType;
+  exitDurationFrames: number;
+  exitStartFrame?: number;
+  exitTimingMode: 'before-end' | 'after-appear' | 'custom';
+  exitDelayFrames: number;
 }
 
 const DEFAULT_SCENE_CONFIG: SceneCustomConfig = {
@@ -390,6 +414,11 @@ const DEFAULT_SCENE_CONFIG: SceneCustomConfig = {
   transparentBg: true,
   showLogo: true,
   aspectRatio: '16:9',
+  exitAnimation: 'none',
+  exitTarget: 'both',
+  exitDurationFrames: 25,
+  exitTimingMode: 'before-end',
+  exitDelayFrames: 30,
 };
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
@@ -398,6 +427,12 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
 
 // Modern Studio SVG Icons (Zero-dependency, crisp 2026 geometry)
 const SvgIcons = {
+  EyeOff: ({ size = 14, ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  ),
   Search: ({ size = 14, ...props }: IconProps) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <circle cx="11" cy="11" r="8" />
@@ -499,6 +534,39 @@ const SvgIcons = {
     </svg>
   ),
 };
+
+const sceneExitWrappedCache = new WeakMap<React.ComponentType<any>, React.ComponentType<any>>();
+
+function getOrCreateExitWrapped(Comp: React.ComponentType<any>): React.ComponentType<any> {
+  let existing = sceneExitWrappedCache.get(Comp);
+  if (!existing) {
+    existing = (props: any) => (
+      <SceneExitProvider
+        exitAnimation={props.exitAnimation}
+        exitTarget={props.exitTarget}
+        exitDurationFrames={props.exitDurationFrames}
+        exitStartFrame={props.exitStartFrame}
+        exitTimingMode={props.exitTimingMode}
+        exitDelayFrames={props.exitDelayFrames}
+      >
+        <SceneExitWrapper
+          target="scene"
+          exitAnimation={props.exitAnimation}
+          exitTarget={props.exitTarget}
+          exitDurationFrames={props.exitDurationFrames}
+          exitStartFrame={props.exitStartFrame}
+          exitTimingMode={props.exitTimingMode}
+          exitDelayFrames={props.exitDelayFrames}
+          style={{ width: '100%', height: '100%', position: 'relative' }}
+        >
+          <Comp {...props} />
+        </SceneExitWrapper>
+      </SceneExitProvider>
+    );
+    sceneExitWrappedCache.set(Comp, existing);
+  }
+  return existing;
+}
 
 export const ShowcaseApp: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
@@ -647,6 +715,12 @@ export const ShowcaseApp: React.FC = () => {
           playbackSpeed: cfg.playbackSpeed ?? 1.0,
           showLogo: cfg.showLogo,
           aspectRatio: cfg.aspectRatio,
+          exitAnimation: cfg.exitAnimation,
+          exitTarget: cfg.exitTarget,
+          exitDurationFrames: cfg.exitDurationFrames,
+          exitStartFrame: cfg.exitStartFrame,
+          exitTimingMode: cfg.exitTimingMode,
+          exitDelayFrames: cfg.exitDelayFrames,
           format,
         }),
       });
@@ -1219,8 +1293,8 @@ export const ShowcaseApp: React.FC = () => {
           >
             {activeScene.isOverlay && activeScene.overlayComponent ? (
               <Player
-                key={`${activeScene.id}-${cfg.aspectRatio}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.fontFamily}-${cfg.textAlign}-${cfg.textOffsetX}-${cfg.textOffsetY}-${cfg.letterSpacing}-${cfg.headline}-${cfg.subtitle}-${cfg.tagline}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.durationInFrames}-${cfg.showLogo}`}
-                component={activeScene.overlayComponent}
+                key={`${activeScene.id}-${cfg.aspectRatio}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.fontFamily}-${cfg.textAlign}-${cfg.textOffsetX}-${cfg.textOffsetY}-${cfg.letterSpacing}-${cfg.headline}-${cfg.subtitle}-${cfg.tagline}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.durationInFrames}-${cfg.showLogo}-${cfg.exitAnimation}-${cfg.exitTarget}-${cfg.exitDurationFrames}-${cfg.exitTimingMode}-${cfg.exitDelayFrames}`}
+                component={getOrCreateExitWrapped(activeScene.overlayComponent)}
                 inputProps={{
                   projectTitle: cfg.headline,
                   architecturalPhase: cfg.subtitle,
@@ -1246,6 +1320,12 @@ export const ShowcaseApp: React.FC = () => {
                   aspectRatio: cfg.aspectRatio,
                   playbackSpeed: cfg.playbackSpeed ?? 1.0,
                   durationInFrames: cfg.durationInFrames,
+                  exitAnimation: cfg.exitAnimation,
+                  exitTarget: cfg.exitTarget,
+                  exitDurationFrames: cfg.exitDurationFrames,
+                  exitStartFrame: cfg.exitStartFrame,
+                  exitTimingMode: cfg.exitTimingMode,
+                  exitDelayFrames: cfg.exitDelayFrames,
                 }}
                 durationInFrames={cfg.durationInFrames}
                 fps={30}
@@ -1263,8 +1343,8 @@ export const ShowcaseApp: React.FC = () => {
             ) : (
               activeScene.archComponent && (
                 <Player
-                  key={`${activeScene.id}-${cfg.aspectRatio}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.fontFamily}-${cfg.textAlign}-${cfg.textOffsetX}-${cfg.textOffsetY}-${cfg.letterSpacing}-${cfg.headline}-${cfg.subtitle}-${cfg.tagline}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.durationInFrames}-${cfg.showLogo}`}
-                  component={activeScene.archComponent}
+                  key={`${activeScene.id}-${cfg.aspectRatio}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.fontFamily}-${cfg.textAlign}-${cfg.textOffsetX}-${cfg.textOffsetY}-${cfg.letterSpacing}-${cfg.headline}-${cfg.subtitle}-${cfg.tagline}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.durationInFrames}-${cfg.showLogo}-${cfg.exitAnimation}-${cfg.exitTarget}-${cfg.exitDurationFrames}-${cfg.exitTimingMode}-${cfg.exitDelayFrames}`}
+                  component={getOrCreateExitWrapped(activeScene.archComponent)}
                   inputProps={{
                     headline: cfg.headline,
                     subtitle: cfg.subtitle,
@@ -1292,6 +1372,12 @@ export const ShowcaseApp: React.FC = () => {
                     aspectRatio: cfg.aspectRatio,
                     playbackSpeed: cfg.playbackSpeed ?? 1.0,
                     durationInFrames: cfg.durationInFrames,
+                    exitAnimation: cfg.exitAnimation,
+                    exitTarget: cfg.exitTarget,
+                    exitDurationFrames: cfg.exitDurationFrames,
+                    exitStartFrame: cfg.exitStartFrame,
+                    exitTimingMode: cfg.exitTimingMode,
+                    exitDelayFrames: cfg.exitDelayFrames,
                   }}
                   durationInFrames={cfg.durationInFrames}
                   fps={30}
@@ -1586,6 +1672,63 @@ export const ShowcaseApp: React.FC = () => {
                 {cfg.showLogo ? 'AÇIK' : 'SAF METİN'}
               </span>
             </button>
+
+            {/* Hızlı Kaybolma / Ters Animasyon Seçimi */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3,
+                padding: '3px 6px',
+                borderRadius: 8,
+                backgroundColor: cfg.exitAnimation !== 'none' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.03)',
+                border: cfg.exitAnimation !== 'none' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255,255,255,0.06)',
+              }}
+            >
+              <span
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  fontSize: 10.5,
+                  color: cfg.exitAnimation !== 'none' ? '#34D399' : 'rgba(255,255,255,0.5)',
+                  fontWeight: 600,
+                  marginRight: 2,
+                }}
+              >
+                <SvgIcons.EyeOff size={11} />
+                Çıkış:
+              </span>
+              {[
+                { label: 'Yok', value: 'none' as const },
+                { label: 'Fade', value: 'fade-out' as const },
+                { label: 'Ters Yay', value: 'reverse-spring' as const },
+                { label: 'Süzül', value: 'slide-down' as const },
+                { label: 'Dağıl', value: 'blur-dissolve' as const },
+              ].map((ex) => {
+                const isActive = cfg.exitAnimation === ex.value;
+                return (
+                  <button
+                    key={ex.value}
+                    onClick={() => updateConfig({ exitAnimation: ex.value })}
+                    title={`Kaybolma animasyonu: ${ex.label}`}
+                    style={{
+                      padding: '3px 6px',
+                      borderRadius: 5,
+                      border: isActive ? '1px solid #10B981' : '1px solid transparent',
+                      backgroundColor: isActive ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
+                      color: isActive ? '#34D399' : 'rgba(255,255,255,0.65)',
+                      fontSize: 10.5,
+                      fontWeight: isActive ? 700 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {ex.label}
+                  </button>
+                );
+              })}
+            </div>
 
             {/* Canlı Durum / Bildirim */}
             {renderStatus !== 'idle' ? (
@@ -2923,6 +3066,257 @@ export const ShowcaseApp: React.FC = () => {
                   ))}
                 </div>
               </div>
+
+              {/* KART: KAYBOLMA & TERS ANİMASYON (Yazı ve Logonun Kaybolması) */}
+              <div
+                style={{
+                  padding: '12px',
+                  borderRadius: 10,
+                  backgroundColor: '#0F121A',
+                  border: cfg.exitAnimation !== 'none'
+                    ? '1px solid rgba(16, 185, 129, 0.4)'
+                    : '1px solid rgba(255,255,255,0.07)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                  boxShadow: cfg.exitAnimation !== 'none'
+                    ? '0 0 16px rgba(16, 185, 129, 0.08)'
+                    : undefined,
+                }}
+              >
+                {/* Kart Başlığı ve Durum Rozeti */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: cfg.exitAnimation !== 'none' ? '#34D399' : '#E2E8F0', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    <SvgIcons.EyeOff size={13} color={cfg.exitAnimation !== 'none' ? '#10B981' : 'rgba(255,255,255,0.7)'} />
+                    <span>Kaybolma & Ters Animasyon</span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 9.5,
+                      fontWeight: 700,
+                      padding: '2px 7px',
+                      borderRadius: 4,
+                      backgroundColor: cfg.exitAnimation !== 'none'
+                        ? 'rgba(16, 185, 129, 0.18)'
+                        : 'rgba(255,255,255,0.05)',
+                      color: cfg.exitAnimation !== 'none' ? '#34D399' : 'rgba(255,255,255,0.4)',
+                      border: cfg.exitAnimation !== 'none'
+                        ? '1px solid rgba(16, 185, 129, 0.4)'
+                        : '1px solid rgba(255,255,255,0.08)',
+                    }}
+                  >
+                    {cfg.exitAnimation !== 'none' ? 'AKTİF' : 'KAPALI'}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
+                  Giriş animasyonu tamamlandıktan sonra veya video bitmeden önce metinlerin veya logonun ters hareketle kaybolmasını sağlar.
+                </div>
+
+                {/* 1. Hedef Seçimi (Target: Tümü, Sadece Yazı, Sadece Logo) */}
+                <div>
+                  <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600, marginBottom: 5 }}>
+                    Kaybolacak Hedef:
+                  </div>
+                  <div style={{ display: 'flex', gap: 5 }}>
+                    {[
+                      { value: 'both' as const, label: 'Tümü (Logo + Yazı)', icon: '✨' },
+                      { value: 'text-only' as const, label: 'Yalnızca Yazı', icon: '📝' },
+                      { value: 'logo-only' as const, label: 'Yalnızca Logo', icon: '🏛️' },
+                    ].map((t) => {
+                      const isActive = cfg.exitTarget === t.value;
+                      return (
+                        <button
+                          key={t.value}
+                          onClick={() => updateConfig({ exitTarget: t.value })}
+                          style={{
+                            flex: 1,
+                            padding: '6px 4px',
+                            borderRadius: 6,
+                            border: isActive ? '1px solid #10B981' : '1px solid rgba(255,255,255,0.08)',
+                            backgroundColor: isActive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.03)',
+                            color: isActive ? '#34D399' : 'rgba(255,255,255,0.75)',
+                            fontSize: 10.5,
+                            fontWeight: isActive ? 700 : 500,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 2,
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <span style={{ fontSize: 13 }}>{t.icon}</span>
+                          <span>{t.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Kaybolma Efekti (Dropdown) */}
+                <div>
+                  <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600, marginBottom: 4 }}>
+                    Kaybolma / Ters Animasyon Tipi:
+                  </div>
+                  <select
+                    value={cfg.exitAnimation}
+                    onChange={(e) => updateConfig({ exitAnimation: e.target.value as ExitAnimationType })}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: 6,
+                      border: cfg.exitAnimation !== 'none' ? '1px solid #10B981' : '1px solid rgba(255,255,255,0.15)',
+                      backgroundColor: '#161A24',
+                      color: '#FFFFFF',
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {EXIT_ANIMATION_CHOICES.map((choice) => (
+                      <option key={choice.value} value={choice.value}>
+                        {choice.icon} {choice.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>
+                    {EXIT_ANIMATION_CHOICES.find((c) => c.value === cfg.exitAnimation)?.desc}
+                  </div>
+                </div>
+
+                {/* 3. Zamanlama Modu (Timing Mode) */}
+                <div>
+                  <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600, marginBottom: 5 }}>
+                    Kaybolma Başlangıç Mantığı:
+                  </div>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {[
+                      { value: 'before-end' as const, label: 'Video Bitmeden Önce', desc: 'Sonundan X kare önce' },
+                      { value: 'after-appear' as const, label: 'Girişten Hemen Sonra', desc: 'Açıldıktan X kare sonra' },
+                      { value: 'custom' as const, label: 'Özel Kare Seçimi', desc: 'Tam belirtilen karede' },
+                    ].map((mode) => {
+                      const isActive = cfg.exitTimingMode === mode.value;
+                      return (
+                        <button
+                          key={mode.value}
+                          onClick={() => updateConfig({ exitTimingMode: mode.value })}
+                          title={mode.desc}
+                          style={{
+                            flex: 1,
+                            padding: '6px 4px',
+                            borderRadius: 6,
+                            border: isActive ? '1px solid #6366F1' : '1px solid rgba(255,255,255,0.08)',
+                            backgroundColor: isActive ? 'rgba(99, 102, 241, 0.22)' : 'rgba(255,255,255,0.03)',
+                            color: isActive ? '#A5B4FC' : 'rgba(255,255,255,0.7)',
+                            fontSize: 10,
+                            fontWeight: isActive ? 700 : 500,
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {mode.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Geçiş Süresi (exitDurationFrames) */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                    <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>
+                      Geçiş / Kaybolma Süresi:
+                    </span>
+                    <strong style={{ fontSize: 10.5, color: '#34D399', fontFamily: 'monospace' }}>
+                      {(cfg.exitDurationFrames / 30).toFixed(2)}s ({cfg.exitDurationFrames}f)
+                    </strong>
+                  </div>
+                  <input
+                    type="range"
+                    min={8}
+                    max={60}
+                    step={1}
+                    value={cfg.exitDurationFrames}
+                    onChange={(e) => updateConfig({ exitDurationFrames: Number(e.target.value) })}
+                    style={{ width: '100%', cursor: 'pointer', accentColor: '#10B981' }}
+                  />
+                </div>
+
+                {/* 5. Gecikme / Bekleme Süresi (exitDelayFrames) veya Özel Kare */}
+                {cfg.exitTimingMode !== 'custom' ? (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                      <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>
+                        {cfg.exitTimingMode === 'before-end' ? 'Bitişten Önceki Boşluk (Hold):' : 'Ekranda Kalma Süresi (Hold):'}
+                      </span>
+                      <strong style={{ fontSize: 10.5, color: '#A5B4FC', fontFamily: 'monospace' }}>
+                        {(cfg.exitDelayFrames / 30).toFixed(2)}s ({cfg.exitDelayFrames}f)
+                      </strong>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={120}
+                      step={2}
+                      value={cfg.exitDelayFrames}
+                      onChange={(e) => updateConfig({ exitDelayFrames: Number(e.target.value) })}
+                      style={{ width: '100%', cursor: 'pointer', accentColor: '#6366F1' }}
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                      <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>
+                        Kaybolma Başlangıç Karesi:
+                      </span>
+                      <strong style={{ fontSize: 10.5, color: '#FCD34D', fontFamily: 'monospace' }}>
+                        {cfg.exitStartFrame ?? Math.max(0, cfg.durationInFrames - cfg.exitDurationFrames - 15)}f
+                      </strong>
+                    </div>
+                    <input
+                      type="range"
+                      min={10}
+                      max={Math.max(10, cfg.durationInFrames - cfg.exitDurationFrames)}
+                      step={1}
+                      value={cfg.exitStartFrame ?? Math.max(0, cfg.durationInFrames - cfg.exitDurationFrames - 15)}
+                      onChange={(e) => updateConfig({ exitStartFrame: Number(e.target.value) })}
+                      style={{ width: '100%', cursor: 'pointer', accentColor: '#F59E0B' }}
+                    />
+                  </div>
+                )}
+
+                {/* Hazır Kaybolma Preset Butonları */}
+                <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
+                  {[
+                    { label: 'Fade Out', anim: 'fade-out' as const, dur: 25 },
+                    { label: 'Ters Yay', anim: 'reverse-spring' as const, dur: 30 },
+                    { label: 'Süzülme', anim: 'slide-down' as const, dur: 25 },
+                    { label: 'Bulanık', anim: 'blur-dissolve' as const, dur: 28 },
+                    { label: 'İptal', anim: 'none' as const, dur: 25 },
+                  ].map((preset) => (
+                    <button
+                      key={preset.label}
+                      onClick={() => updateConfig({ exitAnimation: preset.anim, exitDurationFrames: preset.dur })}
+                      style={{
+                        flex: 1,
+                        padding: '5px 2px',
+                        borderRadius: 4,
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        backgroundColor: 'rgba(255,255,255,0.03)',
+                        color: preset.anim === 'none' ? 'rgba(255,255,255,0.5)' : '#34D399',
+                        fontSize: 9.5,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.12s ease',
+                      }}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </>
           )}
 
@@ -3124,6 +3518,14 @@ export const ShowcaseApp: React.FC = () => {
                   <span>Arka Plan:</span>
                   <span style={{ color: cfg.transparentBg ? '#34D399' : '#FFFFFF' }}>
                     {cfg.transparentBg ? 'Transparan (Alpha)' : 'Siyah Opak'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255,255,255,0.5)' }}>
+                  <span>Ters Animasyon / Kaybolma:</span>
+                  <span style={{ color: cfg.exitAnimation !== 'none' ? '#34D399' : 'rgba(255,255,255,0.4)', fontWeight: 600 }}>
+                    {cfg.exitAnimation !== 'none'
+                      ? `${EXIT_ANIMATION_CHOICES.find(c => c.value === cfg.exitAnimation)?.label ?? cfg.exitAnimation} (${cfg.exitTarget === 'both' ? 'Tümü' : cfg.exitTarget === 'text-only' ? 'Yazı' : 'Logo'})`
+                      : 'Yok (Sabit Kalır)'}
                   </span>
                 </div>
               </div>

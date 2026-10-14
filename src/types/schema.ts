@@ -56,6 +56,29 @@ export const ASPECT_RATIO_OPTIONS = [
 
 export type AspectRatioType = (typeof ASPECT_RATIO_OPTIONS)[number]['value'];
 
+export const EXIT_ANIMATION_OPTIONS = [
+  'none',
+  'fade-out',
+  'reverse-spring',
+  'slide-down',
+  'slide-up',
+  'zoom-out',
+  'zoom-in',
+  'blur-dissolve',
+  'wipe-curtain',
+  'glitch-fade',
+] as const;
+
+export type ExitAnimationType = (typeof EXIT_ANIMATION_OPTIONS)[number];
+
+export const EXIT_TARGET_OPTIONS = [
+  'both',
+  'text-only',
+  'logo-only',
+] as const;
+
+export type ExitTargetType = (typeof EXIT_TARGET_OPTIONS)[number];
+
 export const ArchitecturalSceneSchema = z.object({
   headline: z.string().default('MİMARİ TASARIM & YAPI'),
   subtitle: z.string().default('ÇAĞDAŞ MEKÂN KURGUSU // İSTANBUL'),
@@ -83,6 +106,12 @@ export const ArchitecturalSceneSchema = z.object({
   showLogo: z.boolean().optional(),
   playbackSpeed: z.number().min(0.1).max(5).optional(),
   durationInFrames: z.number().min(30).max(3600).optional(),
+  exitAnimation: z.enum(EXIT_ANIMATION_OPTIONS).optional(),
+  exitTarget: z.enum(EXIT_TARGET_OPTIONS).optional(),
+  exitDurationFrames: z.number().min(5).max(120).optional(),
+  exitStartFrame: z.number().min(0).max(3600).optional(),
+  exitTimingMode: z.enum(['before-end', 'after-appear', 'custom']).optional(),
+  exitDelayFrames: z.number().min(0).max(600).optional(),
 });
 
 export type ArchitecturalSceneProps = z.infer<typeof ArchitecturalSceneSchema>;
@@ -112,6 +141,12 @@ export const LowerThirdSchema = z.object({
   showLogo: z.boolean().optional(),
   playbackSpeed: z.number().min(0.1).max(5).optional(),
   durationInFrames: z.number().min(30).max(3600).optional(),
+  exitAnimation: z.enum(EXIT_ANIMATION_OPTIONS).optional(),
+  exitTarget: z.enum(EXIT_TARGET_OPTIONS).optional(),
+  exitDurationFrames: z.number().min(5).max(120).optional(),
+  exitStartFrame: z.number().min(0).max(3600).optional(),
+  exitTimingMode: z.enum(['before-end', 'after-appear', 'custom']).optional(),
+  exitDelayFrames: z.number().min(0).max(600).optional(),
 });
 
 export type LowerThirdProps = z.infer<typeof LowerThirdSchema>;

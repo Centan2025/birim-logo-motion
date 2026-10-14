@@ -1,4 +1,4 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
+import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -15,28 +15,29 @@ import { ArchitecturalSceneProps } from '../types/schema';
 const SHADOW_STEPS = 28;
 const EXTRUSION_STEPS = 12;
 
-export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  projectCode,
-  scaleText,
-  accentColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAnimation = 'char-wave',
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    projectCode,
+    scaleText,
+    accentColor,
+    primaryColor,
+    backgroundColor,
+    textDelayFrames,
+    showLogo = true,
+  } = props;
 
-  const scale = 2.8;
+  const frame = useCurrentFrame();
+  const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
+
+  const isVertical = compHeight > compWidth;
+  const isSquare = compWidth === compHeight;
+  const scale = isVertical ? 1.8 : isSquare ? 2.0 : 2.8;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
-  const offsetX = (1920 - renderedWidth) / 2;
-  const offsetY = (1080 - renderedHeight) / 2 - 40;
+  const offsetX = (compWidth - renderedWidth) / 2;
+  const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 40);
+
+  const isTransparent = backgroundColor === 'transparent';
 
   // Simulated Sun Azimuth sweeping across the architectural monolith
   const sunAngleDeg = interpolate(frame, [0, 150], [122, 228], {
@@ -113,7 +114,8 @@ export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = ({
         </div>
       </div>
 
-      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+      {showLogo !== false && (
+        <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>
           {/* Cast Ground Shadows */}
           {BIRIM_LETTERS.map((letter, idx) => {
@@ -202,80 +204,17 @@ export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = ({
           })}
         </g>
       </svg>
+      )}
 
       {/* Editorial Architectural Title Block */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 135,
-          left: 112,
-          right: 112,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          borderTop: '1px solid rgba(26, 25, 23, 0.2)',
-          paddingTop: 22,
-          transform: `translate(${textOffsetX}px, ${textOffsetY}px)`,
-        }}
-      >
-        <div>
-          <div
-            style={{
-              fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-              fontSize: 28,
-              fontWeight: 600,
-              letterSpacing: '0.28em',
-              color: '#181715',
-              textTransform: 'uppercase',
-            }}
-          >
-            <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
-          </div>
-          <div
-            style={{
-              fontFamily,
-              fontSize: headlineSize,
-              letterSpacing: `${letterSpacing}em`,
-              color: '#9E6B3B',
-              marginTop: 6,
-            }}
-          >
-            <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
-          </div>
-        </div>
-
-        <div
-          style={{
-            fontFamily,
-            fontSize: subtitleSize,
-            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-            color: '#181715',
-            textAlign: 'right',
-          }}
-        >
-          <div>MALZEME // BRÜT BETON &amp; TRAVERTEN</div>
-          <div style={{ color: '#9E6B3B', marginTop: 4 }}>KOT // +12.50M MONOLİT CEPHE</div>
-        </div>
-      </div>
+      <SceneCaption
+        {...props}
+        primaryColor={primaryColor || '#181715'}
+        accentColor={accentColor || '#9E6B3B'}
+        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 34}
+        showLogo={showLogo}
+        baseTop={offsetY + renderedHeight + 58}
+      />
     </AbsoluteFill>
   );
 };

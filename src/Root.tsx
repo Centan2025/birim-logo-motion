@@ -6,34 +6,96 @@ import {
   LowerThirdProps,
   LowerThirdSchema,
 } from './types/schema';
-import { DirectionalLetterExpand } from './compositions/DirectionalLetterExpand';
-import { CadBlueprintDraft } from './compositions/CadBlueprintDraft';
-import { MonolithSunShadow } from './compositions/MonolithSunShadow';
-import { LaserSectionCut } from './compositions/LaserSectionCut';
-import { ModularKineticFacade } from './compositions/ModularKineticFacade';
-import { ArchitecturalLowerThird } from './compositions/ArchitecturalLowerThird';
-import { LiquidChromeSweep } from './compositions/LiquidChromeSweep';
-import { KineticElasticSplit } from './compositions/KineticElasticSplit';
-import { GlassPrismRefraction } from './compositions/GlassPrismRefraction';
-import { MinimalStaggerMorph } from './compositions/MinimalStaggerMorph';
-import { CleanVideoBadge } from './compositions/CleanVideoBadge';
-import { NeonLaserContour } from './compositions/NeonLaserContour';
-import { EditorialMaskCurtain } from './compositions/EditorialMaskCurtain';
-import { SpotlightDarkroomReveal } from './compositions/SpotlightDarkroomReveal';
-import { ElasticWaveDomino } from './compositions/ElasticWaveDomino';
-import { GlitchSignalLock } from './compositions/GlitchSignalLock';
-import { LiquidInkSpread } from './compositions/LiquidInkSpread';
-import { EchoOutlineTunnel } from './compositions/EchoOutlineTunnel';
-import { MagneticParticleSnap } from './compositions/MagneticParticleSnap';
-import { SplitScreenShutter } from './compositions/SplitScreenShutter';
-import { MinimalCornerWatermark } from './compositions/MinimalCornerWatermark';
-import { SplitFlapHalfFold } from './compositions/SplitFlapHalfFold';
-import { TopDownHeavyTopple } from './compositions/TopDownHeavyTopple';
-import { HalfLogoCantileverDrop } from './compositions/HalfLogoCantileverDrop';
-import { OrigamiAccordionUnfold } from './compositions/OrigamiAccordionUnfold';
-import { SplitHorizonDualTip } from './compositions/SplitHorizonDualTip';
-import { MasterShowcaseReel } from './compositions/MasterShowcaseReel';
-import { PureTypographyStudio } from './compositions/PureTypographyStudio';
+import { DirectionalLetterExpand as RawDirectionalLetterExpand } from './compositions/DirectionalLetterExpand';
+import { CadBlueprintDraft as RawCadBlueprintDraft } from './compositions/CadBlueprintDraft';
+import { MonolithSunShadow as RawMonolithSunShadow } from './compositions/MonolithSunShadow';
+import { LaserSectionCut as RawLaserSectionCut } from './compositions/LaserSectionCut';
+import { ModularKineticFacade as RawModularKineticFacade } from './compositions/ModularKineticFacade';
+import { ArchitecturalLowerThird as RawArchitecturalLowerThird } from './compositions/ArchitecturalLowerThird';
+import { LiquidChromeSweep as RawLiquidChromeSweep } from './compositions/LiquidChromeSweep';
+import { KineticElasticSplit as RawKineticElasticSplit } from './compositions/KineticElasticSplit';
+import { GlassPrismRefraction as RawGlassPrismRefraction } from './compositions/GlassPrismRefraction';
+import { MinimalStaggerMorph as RawMinimalStaggerMorph } from './compositions/MinimalStaggerMorph';
+import { CleanVideoBadge as RawCleanVideoBadge } from './compositions/CleanVideoBadge';
+import { NeonLaserContour as RawNeonLaserContour } from './compositions/NeonLaserContour';
+import { EditorialMaskCurtain as RawEditorialMaskCurtain } from './compositions/EditorialMaskCurtain';
+import { SpotlightDarkroomReveal as RawSpotlightDarkroomReveal } from './compositions/SpotlightDarkroomReveal';
+import { ElasticWaveDomino as RawElasticWaveDomino } from './compositions/ElasticWaveDomino';
+import { GlitchSignalLock as RawGlitchSignalLock } from './compositions/GlitchSignalLock';
+import { LiquidInkSpread as RawLiquidInkSpread } from './compositions/LiquidInkSpread';
+import { EchoOutlineTunnel as RawEchoOutlineTunnel } from './compositions/EchoOutlineTunnel';
+import { MagneticParticleSnap as RawMagneticParticleSnap } from './compositions/MagneticParticleSnap';
+import { SplitScreenShutter as RawSplitScreenShutter } from './compositions/SplitScreenShutter';
+import { MinimalCornerWatermark as RawMinimalCornerWatermark } from './compositions/MinimalCornerWatermark';
+import { SplitFlapHalfFold as RawSplitFlapHalfFold } from './compositions/SplitFlapHalfFold';
+import { TopDownHeavyTopple as RawTopDownHeavyTopple } from './compositions/TopDownHeavyTopple';
+import { HalfLogoCantileverDrop as RawHalfLogoCantileverDrop } from './compositions/HalfLogoCantileverDrop';
+import { OrigamiAccordionUnfold as RawOrigamiAccordionUnfold } from './compositions/OrigamiAccordionUnfold';
+import { SplitHorizonDualTip as RawSplitHorizonDualTip } from './compositions/SplitHorizonDualTip';
+import { MasterShowcaseReel as RawMasterShowcaseReel } from './compositions/MasterShowcaseReel';
+import { PureTypographyStudio as RawPureTypographyStudio } from './compositions/PureTypographyStudio';
+import { SceneExitProvider, SceneExitWrapper } from './components/SceneExitWrapper';
+
+function withSceneExit<P extends Record<string, any>>(
+  Component: React.ComponentType<P>
+): React.FC<P> {
+  const Wrapped: React.FC<P> = (props: P) => {
+    return (
+      <SceneExitProvider
+        exitAnimation={props.exitAnimation}
+        exitTarget={props.exitTarget}
+        exitDurationFrames={props.exitDurationFrames}
+        exitStartFrame={props.exitStartFrame}
+        exitTimingMode={props.exitTimingMode}
+        exitDelayFrames={props.exitDelayFrames}
+      >
+        <SceneExitWrapper
+          target="scene"
+          exitAnimation={props.exitAnimation}
+          exitTarget={props.exitTarget}
+          exitDurationFrames={props.exitDurationFrames}
+          exitStartFrame={props.exitStartFrame}
+          exitTimingMode={props.exitTimingMode}
+          exitDelayFrames={props.exitDelayFrames}
+          style={{ width: '100%', height: '100%', position: 'relative' }}
+        >
+          <Component {...props} />
+        </SceneExitWrapper>
+      </SceneExitProvider>
+    );
+  };
+  Wrapped.displayName = `withSceneExit(${Component.displayName || Component.name || 'Component'})`;
+  return Wrapped;
+}
+
+const DirectionalLetterExpand = withSceneExit(RawDirectionalLetterExpand);
+const CadBlueprintDraft = withSceneExit(RawCadBlueprintDraft);
+const MonolithSunShadow = withSceneExit(RawMonolithSunShadow);
+const LaserSectionCut = withSceneExit(RawLaserSectionCut);
+const ModularKineticFacade = withSceneExit(RawModularKineticFacade);
+const ArchitecturalLowerThird = withSceneExit(RawArchitecturalLowerThird);
+const LiquidChromeSweep = withSceneExit(RawLiquidChromeSweep);
+const KineticElasticSplit = withSceneExit(RawKineticElasticSplit);
+const GlassPrismRefraction = withSceneExit(RawGlassPrismRefraction);
+const MinimalStaggerMorph = withSceneExit(RawMinimalStaggerMorph);
+const CleanVideoBadge = withSceneExit(RawCleanVideoBadge);
+const NeonLaserContour = withSceneExit(RawNeonLaserContour);
+const EditorialMaskCurtain = withSceneExit(RawEditorialMaskCurtain);
+const SpotlightDarkroomReveal = withSceneExit(RawSpotlightDarkroomReveal);
+const ElasticWaveDomino = withSceneExit(RawElasticWaveDomino);
+const GlitchSignalLock = withSceneExit(RawGlitchSignalLock);
+const LiquidInkSpread = withSceneExit(RawLiquidInkSpread);
+const EchoOutlineTunnel = withSceneExit(RawEchoOutlineTunnel);
+const MagneticParticleSnap = withSceneExit(RawMagneticParticleSnap);
+const SplitScreenShutter = withSceneExit(RawSplitScreenShutter);
+const MinimalCornerWatermark = withSceneExit(RawMinimalCornerWatermark);
+const SplitFlapHalfFold = withSceneExit(RawSplitFlapHalfFold);
+const TopDownHeavyTopple = withSceneExit(RawTopDownHeavyTopple);
+const HalfLogoCantileverDrop = withSceneExit(RawHalfLogoCantileverDrop);
+const OrigamiAccordionUnfold = withSceneExit(RawOrigamiAccordionUnfold);
+const SplitHorizonDualTip = withSceneExit(RawSplitHorizonDualTip);
+const MasterShowcaseReel = withSceneExit(RawMasterShowcaseReel);
+const PureTypographyStudio = withSceneExit(RawPureTypographyStudio);
 
 const DEFAULT_ARCH_PROPS = {
   headline: 'MİMARİ TASARIM & YAPI',
@@ -53,6 +115,11 @@ const DEFAULT_ARCH_PROPS = {
   textAnimation: 'char-wave' as const,
   playbackSpeed: 1,
   durationInFrames: 150,
+  exitAnimation: 'none' as const,
+  exitTarget: 'both' as const,
+  exitDurationFrames: 25,
+  exitTimingMode: 'before-end' as const,
+  exitDelayFrames: 30,
 };
 
 const DEFAULT_MODERN_PROPS = {
@@ -73,6 +140,11 @@ const DEFAULT_MODERN_PROPS = {
   textAnimation: 'char-wave' as const,
   playbackSpeed: 1,
   durationInFrames: 150,
+  exitAnimation: 'none' as const,
+  exitTarget: 'both' as const,
+  exitDurationFrames: 25,
+  exitTimingMode: 'before-end' as const,
+  exitDelayFrames: 30,
 };
 
 const DEFAULT_TYPOGRAPHY_PROPS = {
@@ -93,6 +165,11 @@ const DEFAULT_TYPOGRAPHY_PROPS = {
   textAnimation: 'char-scramble-morph' as const,
   textDelayFrames: 15,
   showLogo: false,
+  exitAnimation: 'none' as const,
+  exitTarget: 'both' as const,
+  exitDurationFrames: 25,
+  exitTimingMode: 'before-end' as const,
+  exitDelayFrames: 30,
 };
 
 const calculateDynamicMetadata: CalculateMetadataFunction<ArchitecturalSceneProps> = ({ props }) => {

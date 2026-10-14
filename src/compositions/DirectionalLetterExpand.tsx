@@ -25,31 +25,41 @@ const LETTER_DIRECTIONS: Record<LogoLetterData['id'], ExpandDirection> = {
   M: 'bottom',
 };
 
-export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  accentColor,
-  primaryColor,
-  backgroundColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.4,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAlign = 'center',
-  textAnimation = 'char-wave',
-  textDelayFrames,
-  showLogo = true,
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    headline,
+    subtitle,
+    tagline,
+    accentColor,
+    primaryColor,
+    taglineColor,
+    backgroundColor,
+    fontFamily = "'Inter', sans-serif",
+    headlineSize = 64,
+    subtitleSize = 40,
+    taglineSize = 28,
+    letterSpacing = 0.4,
+    textOffsetX = 0,
+    textOffsetY = 0,
+    textAlign = 'center',
+    textAnimation = 'char-wave',
+    textDelayFrames,
+    line1Delay,
+    line2Delay,
+    line3Delay,
+    showLogo = true,
+  } = props;
 
-  const scale = 2.95;
+  const frame = useCurrentFrame();
+  const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
+
+  const isVertical = compHeight > compWidth;
+  const isSquare = compWidth === compHeight;
+  const scale = isVertical ? 2.0 : isSquare ? 2.2 : 2.95;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
-  const offsetX = (1920 - renderedWidth) / 2;
-  const offsetY = (1080 - renderedHeight) / 2 - 36;
+  const offsetX = (compWidth - renderedWidth) / 2;
+  const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 120 : 36);
 
   // Tight overlapping stagger: each next letter starts 4 frames (0.13s) after the previous one starts
   const STAGGER_FRAMES = 4;
@@ -57,7 +67,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
   return (
     <AbsoluteFill style={{ backgroundColor, overflow: 'hidden' }}>
       {showLogo !== false && (
-        <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+        <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <defs>
           {BIRIM_LETTERS.map((letter) => (
             <clipPath key={`bounds-${letter.id}`} id={`bounds-clip-${letter.id}`}>
@@ -130,18 +140,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
 
       {/* Customizable Animated Bottom Text */}
       <SceneCaption
-        headline={headline}
-        subtitle={subtitle}
-        primaryColor={primaryColor}
-        accentColor={accentColor}
-        fontFamily={fontFamily}
-        headlineSize={headlineSize}
-        subtitleSize={subtitleSize}
-        letterSpacing={letterSpacing}
-        textOffsetX={textOffsetX}
-        textOffsetY={textOffsetY}
-        textAlign={textAlign}
-        textAnimation={textAnimation}
+        {...props}
         baseTop={offsetY + renderedHeight + 58}
         delayFrames={textDelayFrames !== undefined ? textDelayFrames : BIRIM_LETTERS.length * STAGGER_FRAMES + 10}
         showLogo={showLogo}

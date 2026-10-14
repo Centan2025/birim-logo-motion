@@ -6,7 +6,8 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from 'remotion';
-import { TextAnimationType } from '../types/schema';
+import { ExitAnimationType, ExitTargetType, TextAnimationType } from '../types/schema';
+import { SceneExitWrapper } from './SceneExitWrapper';
 
 const DECODE_GLYPHS = '▓▒░#/_01X+<>[]=';
 
@@ -1122,6 +1123,12 @@ interface SceneCaptionProps {
   line2Delay?: number;
   line3Delay?: number;
   showLogo?: boolean;
+  exitAnimation?: ExitAnimationType;
+  exitTarget?: ExitTargetType;
+  exitDurationFrames?: number;
+  exitStartFrame?: number;
+  exitTimingMode?: 'before-end' | 'after-appear' | 'custom';
+  exitDelayFrames?: number;
 }
 
 export const SceneCaption: React.FC<SceneCaptionProps> = ({
@@ -1146,6 +1153,12 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
   line2Delay,
   line3Delay,
   showLogo = true,
+  exitAnimation,
+  exitTarget,
+  exitDurationFrames,
+  exitStartFrame,
+  exitTimingMode,
+  exitDelayFrames,
 }) => {
   const alignItems =
     textAlign === 'left'
@@ -1178,7 +1191,14 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
   const gap = Math.max(10, Math.min(36, Math.round(headlineSize * 0.18)));
 
   return (
-    <div
+    <SceneExitWrapper
+      target="text"
+      exitAnimation={exitAnimation}
+      exitTarget={exitTarget}
+      exitDurationFrames={exitDurationFrames}
+      exitStartFrame={exitStartFrame}
+      exitTimingMode={exitTimingMode}
+      exitDelayFrames={exitDelayFrames}
       style={{
         position: 'absolute',
         top: effectiveBaseTop + textOffsetY,
@@ -1234,6 +1254,6 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
           isSubtitle
         />
       )}
-    </div>
+    </SceneExitWrapper>
   );
 };
