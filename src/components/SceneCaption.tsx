@@ -769,7 +769,7 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
   // 20. slot-machine-reel: Dikey Çark/Tambur Hareketi ile Harfe Oturma
   if (animation === 'slot-machine-reel') {
     const chars = Array.from(text);
-    const DUMMY_POOL = ['X', '0', '7', 'A', '8', 'Z', '9', 'K', '#', '%'];
+    const DUMMY_POOL = ['X', '0', '7', 'A', '8', 'Z', '9', 'K', '#', '%', 'B', '4', 'M', '2'];
     const lineHeightPx = fontSize * 1.35;
     return (
       <div
@@ -789,16 +789,55 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
             );
           }
 
+          const charStart = startFrame + i * 1.5;
+          if (frame < charStart) {
+            return (
+              <span
+                key={i}
+                style={{
+                  display: 'inline-block',
+                  height: lineHeightPx,
+                  overflow: 'hidden',
+                  verticalAlign: 'top',
+                  marginRight: `${letterSpacing}em`,
+                  opacity: 0,
+                }}
+              >
+                <span style={{ height: lineHeightPx, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {targetChar}
+                </span>
+              </span>
+            );
+          }
+
           const s = spring({
-            frame: frame - startFrame - i * 1.5,
+            frame: frame - charStart,
             fps,
-            config: { damping: 13, stiffness: 140, mass: 0.8 },
+            config: { damping: 14, stiffness: 140, mass: 0.8 },
           });
 
-          const reelY = interpolate(s, [0, 1], [-300, 0]);
           const d1 = DUMMY_POOL[(i * 3 + 1) % DUMMY_POOL.length];
           const d2 = DUMMY_POOL[(i * 5 + 4) % DUMMY_POOL.length];
           const d3 = DUMMY_POOL[(i * 7 + 2) % DUMMY_POOL.length];
+          const d4 = DUMMY_POOL[(i * 11 + 5) % DUMMY_POOL.length];
+          const dBounce = DUMMY_POOL[(i * 13 + 3) % DUMMY_POOL.length];
+
+          // Downward roll reel items:
+          // Index 0: dBounce (overshoot buffer for spring bounce)
+          // Index 1: targetChar (landing position)
+          // Index 2..5: dummy characters rolling down
+          const reelItems = [
+            { char: dBounce, color: accentColor },
+            { char: targetChar, color },
+            { char: d4, color: accentColor },
+            { char: d3, color: accentColor },
+            { char: d2, color: accentColor },
+            { char: d1, color: accentColor },
+          ];
+
+          const targetIndex = 1;
+          const startIndex = reelItems.length - 1;
+          const reelY = interpolate(s, [0, 1], [-startIndex * lineHeightPx, -targetIndex * lineHeightPx]);
 
           return (
             <span
@@ -815,22 +854,27 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  transform: `translateY(${reelY}%)`,
-                  opacity: interpolate(s, [0, 0.15, 1], [0, 1, 1]),
+                  transform: `translateY(${reelY}px)`,
+                  opacity: interpolate(s, [0, 0.15, 1], [0.2, 1, 1], {
+                    extrapolateLeft: 'clamp',
+                    extrapolateRight: 'clamp',
+                  }),
                 }}
               >
-                <span style={{ height: lineHeightPx, display: 'flex', alignItems: 'center', color: accentColor }}>
-                  {d1}
-                </span>
-                <span style={{ height: lineHeightPx, display: 'flex', alignItems: 'center', color: accentColor }}>
-                  {d2}
-                </span>
-                <span style={{ height: lineHeightPx, display: 'flex', alignItems: 'center', color: accentColor }}>
-                  {d3}
-                </span>
-                <span style={{ height: lineHeightPx, display: 'flex', alignItems: 'center', color }}>
-                  {targetChar}
-                </span>
+                {reelItems.map((item, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      height: lineHeightPx,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: item.color,
+                    }}
+                  >
+                    {item.char}
+                  </span>
+                ))}
               </span>
             </span>
           );
@@ -1059,11 +1103,14 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
 interface SceneCaptionProps {
   headline: string;
   subtitle: string;
+  tagline?: string;
   primaryColor?: string;
   accentColor: string;
+  taglineColor?: string;
   fontFamily?: string;
   headlineSize?: number;
   subtitleSize?: number;
+  taglineSize?: number;
   letterSpacing?: number;
   textOffsetX?: number;
   textOffsetY?: number;
@@ -1071,17 +1118,23 @@ interface SceneCaptionProps {
   textAnimation?: TextAnimationType;
   baseTop?: number;
   delayFrames?: number;
+  line1Delay?: number;
+  line2Delay?: number;
+  line3Delay?: number;
   showLogo?: boolean;
 }
 
 export const SceneCaption: React.FC<SceneCaptionProps> = ({
   headline,
   subtitle,
+  tagline = '',
   primaryColor = '#F4F1EA',
   accentColor,
+  taglineColor,
   fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
+  headlineSize = 64,
+  subtitleSize = 40,
+  taglineSize = 28,
   letterSpacing = 0.4,
   textOffsetX = 0,
   textOffsetY = 0,
@@ -1089,6 +1142,9 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
   textAnimation = 'char-wave',
   baseTop = 678,
   delayFrames = 32,
+  line1Delay,
+  line2Delay,
+  line3Delay,
   showLogo = true,
 }) => {
   const alignItems =
@@ -1098,13 +1154,22 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
         ? 'flex-end'
         : 'center';
 
+  const startLine1 = line1Delay !== undefined ? line1Delay : delayFrames;
+  const startLine2 = line2Delay !== undefined ? line2Delay : delayFrames + 12;
+  const startLine3 = line3Delay !== undefined ? line3Delay : delayFrames + 24;
+
+  const resolvedTaglineColor = taglineColor || accentColor;
+
   const totalTextHeight =
-    headlineSize * 1.35 + (subtitle ? subtitleSize * 1.35 + Math.max(12, headlineSize * 0.18) : 0);
+    headlineSize * 1.35 +
+    (subtitle ? subtitleSize * 1.35 + Math.max(10, headlineSize * 0.15) : 0) +
+    (tagline ? taglineSize * 1.35 + Math.max(10, subtitleSize * 0.15) : 0);
+
   const effectiveBaseTop =
     showLogo === false ? (1080 - totalTextHeight) / 2 : baseTop;
   const effectiveLeft = showLogo === false ? 120 : 268;
   const effectiveWidth = showLogo === false ? 1680 : 1384;
-  const gap = Math.max(10, Math.min(36, Math.round(headlineSize * 0.2)));
+  const gap = Math.max(10, Math.min(36, Math.round(headlineSize * 0.18)));
 
   return (
     <div
@@ -1130,22 +1195,39 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
         color={primaryColor}
         accentColor={accentColor}
         animation={textAnimation}
-        startFrame={delayFrames}
+        startFrame={startLine1}
         textAlign={textAlign}
       />
-      <AnimatedTextLine
-        text={subtitle}
-        fontFamily={fontFamily}
-        fontSize={subtitleSize}
-        fontWeight={400}
-        letterSpacing={Math.max(0.05, letterSpacing * 0.7)}
-        color={accentColor}
-        accentColor={primaryColor}
-        animation={textAnimation}
-        startFrame={delayFrames + 8}
-        textAlign={textAlign}
-        isSubtitle
-      />
+      {subtitle && (
+        <AnimatedTextLine
+          text={subtitle}
+          fontFamily={fontFamily}
+          fontSize={subtitleSize}
+          fontWeight={400}
+          letterSpacing={Math.max(0.05, letterSpacing * 0.7)}
+          color={accentColor}
+          accentColor={primaryColor}
+          animation={textAnimation}
+          startFrame={startLine2}
+          textAlign={textAlign}
+          isSubtitle
+        />
+      )}
+      {tagline && (
+        <AnimatedTextLine
+          text={tagline}
+          fontFamily={fontFamily}
+          fontSize={taglineSize}
+          fontWeight={400}
+          letterSpacing={Math.max(0.04, letterSpacing * 0.6)}
+          color={resolvedTaglineColor}
+          accentColor={primaryColor}
+          animation={textAnimation}
+          startFrame={startLine3}
+          textAlign={textAlign}
+          isSubtitle
+        />
+      )}
     </div>
   );
 };

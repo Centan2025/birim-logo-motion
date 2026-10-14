@@ -337,18 +337,24 @@ const TEXT_ANIMATION_CHOICES: ReadonlyArray<{
 interface SceneCustomConfig {
   headline: string;
   subtitle: string;
+  tagline: string;
   projectCode: string;
   accentColor: string;
   textColor: string;
+  taglineColor: string;
   fontFamily: (typeof FONT_CHOICES)[number]['value'];
   textAnimation: TextAnimationType;
   headlineSize: number;
   subtitleSize: number;
+  taglineSize: number;
   letterSpacing: number;
   textOffsetX: number;
   textOffsetY: number;
   textAlign: 'left' | 'center' | 'right';
   textDelayFrames: number;
+  line1Delay: number;
+  line2Delay: number;
+  line3Delay: number;
   durationInFrames: number;
   transparentBg: boolean;
   showLogo: boolean;
@@ -357,18 +363,24 @@ interface SceneCustomConfig {
 const DEFAULT_SCENE_CONFIG: SceneCustomConfig = {
   headline: 'HİS',
   subtitle: '2004',
+  tagline: '',
   projectCode: '',
   accentColor: '#FFFFFF',
   textColor: '#FFFFFF',
+  taglineColor: '#C89D66',
   fontFamily: "'Inter', sans-serif",
   textAnimation: 'char-wave',
   headlineSize: 64,
   subtitleSize: 40,
+  taglineSize: 28,
   letterSpacing: 0.25,
   textOffsetX: 0,
   textOffsetY: 0,
   textAlign: 'left',
-  textDelayFrames: 30,
+  textDelayFrames: 20,
+  line1Delay: 20,
+  line2Delay: 32,
+  line3Delay: 44,
   durationInFrames: 150,
   transparentBg: true,
   showLogo: true,
@@ -489,18 +501,24 @@ export const ShowcaseApp: React.FC = () => {
           transparent: isTrans,
           headline: cfg.headline,
           subtitle: cfg.subtitle,
+          tagline: cfg.tagline,
           projectCode: cfg.projectCode,
           accentColor: cfg.accentColor,
           primaryColor: cfg.textColor,
+          taglineColor: cfg.taglineColor,
           fontFamily: cfg.fontFamily,
           headlineSize: cfg.headlineSize,
           subtitleSize: cfg.subtitleSize,
+          taglineSize: cfg.taglineSize,
           letterSpacing: cfg.letterSpacing,
           textOffsetX: cfg.textOffsetX,
           textOffsetY: cfg.textOffsetY,
           textAlign: cfg.textAlign,
           textAnimation: cfg.textAnimation,
           textDelayFrames: cfg.textDelayFrames,
+          line1Delay: cfg.line1Delay,
+          line2Delay: cfg.line2Delay,
+          line3Delay: cfg.line3Delay,
           durationInFrames: cfg.durationInFrames,
           showLogo: cfg.showLogo,
           format,
@@ -927,23 +945,29 @@ export const ShowcaseApp: React.FC = () => {
           >
             {activeScene.isOverlay && activeScene.overlayComponent ? (
               <Player
-                key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.textDelayFrames}-${cfg.durationInFrames}-${cfg.showLogo}`}
+                key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.tagline}-${cfg.durationInFrames}-${cfg.showLogo}`}
                 component={activeScene.overlayComponent}
                 inputProps={{
                   projectTitle: cfg.headline,
                   architecturalPhase: cfg.subtitle,
+                  tagline: cfg.tagline,
                   locationYear: cfg.projectCode,
                   accentColor: cfg.accentColor,
                   primaryColor: cfg.textColor,
+                  taglineColor: cfg.taglineColor,
                   transparentBackground: cfg.transparentBg,
                   fontFamily: cfg.fontFamily,
                   headlineSize: cfg.headlineSize,
                   subtitleSize: cfg.subtitleSize,
+                  taglineSize: cfg.taglineSize,
                   letterSpacing: cfg.letterSpacing,
                   textOffsetX: cfg.textOffsetX,
                   textOffsetY: cfg.textOffsetY,
                   textAnimation: cfg.textAnimation,
-                  textDelayFrames: cfg.textDelayFrames,
+                  textDelayFrames: cfg.line1Delay,
+                  line1Delay: cfg.line1Delay,
+                  line2Delay: cfg.line2Delay,
+                  line3Delay: cfg.line3Delay,
                   showLogo: cfg.showLogo,
                 }}
                 durationInFrames={cfg.durationInFrames}
@@ -961,25 +985,31 @@ export const ShowcaseApp: React.FC = () => {
             ) : (
               activeScene.archComponent && (
                 <Player
-                  key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.textDelayFrames}-${cfg.durationInFrames}-${cfg.showLogo}`}
+                  key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.tagline}-${cfg.durationInFrames}-${cfg.showLogo}`}
                   component={activeScene.archComponent}
                   inputProps={{
                     headline: cfg.headline,
                     subtitle: cfg.subtitle,
+                    tagline: cfg.tagline,
                     projectCode: cfg.projectCode,
                     scaleText: 'ÖLÇEK 1:50 // BİRİM: MM',
                     accentColor: cfg.accentColor,
                     primaryColor: cfg.textColor,
+                    taglineColor: cfg.taglineColor,
                     backgroundColor: cfg.transparentBg ? 'transparent' : '#0B0D10',
                     fontFamily: cfg.fontFamily,
                     headlineSize: cfg.headlineSize,
                     subtitleSize: cfg.subtitleSize,
+                    taglineSize: cfg.taglineSize,
                     letterSpacing: cfg.letterSpacing,
                     textOffsetX: cfg.textOffsetX,
                     textOffsetY: cfg.textOffsetY,
                     textAlign: cfg.textAlign,
                     textAnimation: cfg.textAnimation,
-                    textDelayFrames: cfg.textDelayFrames,
+                    textDelayFrames: cfg.line1Delay,
+                    line1Delay: cfg.line1Delay,
+                    line2Delay: cfg.line2Delay,
+                    line3Delay: cfg.line3Delay,
                     showLogo: cfg.showLogo,
                   }}
                   durationInFrames={cfg.durationInFrames}
@@ -1469,7 +1499,117 @@ export const ShowcaseApp: React.FC = () => {
             </div>
           </div>
 
-          {/* 1C: Künye Metni */}
+          {/* 1C: 3. Satır Metni & Rengi */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
+                3. Satır Metni (Yeni)
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 10, color: cfg.taglineColor, fontFamily: 'monospace' }}>
+                  {cfg.taglineColor}
+                </span>
+                <input
+                  type="color"
+                  value={cfg.taglineColor}
+                  onChange={(e) => updateConfig({ taglineColor: e.target.value })}
+                  title="3. Satır Rengi Seç"
+                  style={{
+                    width: 22,
+                    height: 22,
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    padding: 0,
+                    backgroundColor: 'transparent',
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                type="text"
+                value={cfg.tagline}
+                onChange={(e) => updateConfig({ tagline: e.target.value })}
+                placeholder="3. satır metni girin (ör: İSTANBUL — 2026)..."
+                style={{
+                  flex: 1,
+                  padding: '8px 10px',
+                  borderRadius: 6,
+                  border: '1px solid rgba(255,255,255,0.16)',
+                  backgroundColor: '#1A1E29',
+                  color: cfg.taglineColor,
+                  fontSize: 12,
+                }}
+              />
+              {cfg.tagline ? (
+                <button
+                  onClick={() => updateConfig({ tagline: '' })}
+                  title="3. Satırı Temizle"
+                  style={{
+                    padding: '0 8px',
+                    borderRadius: 6,
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    backgroundColor: 'rgba(255,255,255,0.05)',
+                    color: 'rgba(255,255,255,0.6)',
+                    fontSize: 11,
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✕
+                </button>
+              ) : (
+                <button
+                  onClick={() => updateConfig({ tagline: 'MİMARİ ÇÖZÜMLER // 2026' })}
+                  title="Örnek 3. Satır Ekle"
+                  style={{
+                    padding: '0 8px',
+                    borderRadius: 6,
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    backgroundColor: 'rgba(255,255,255,0.05)',
+                    color: 'rgba(255,255,255,0.7)',
+                    fontSize: 10,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  + Örnek
+                </button>
+              )}
+            </div>
+            {/* Hızlı 3. Satır Renk Paleti */}
+            <div style={{ display: 'flex', gap: 4, marginTop: 6, alignItems: 'center' }}>
+              <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.45)', marginRight: 2 }}>
+                Renk:
+              </span>
+              {[
+                { label: 'Altın', color: '#C89D66' },
+                { label: 'Bakır', color: '#E07A5F' },
+                { label: 'Krem', color: '#F4F1EA' },
+                { label: 'Turkuaz', color: '#00E5FF' },
+                { label: 'Beyaz', color: '#FFFFFF' },
+              ].map((c) => (
+                <button
+                  key={c.color}
+                  onClick={() => updateConfig({ taglineColor: c.color })}
+                  title={`3. satırı ${c.label} yap`}
+                  style={{
+                    flex: 1,
+                    height: 20,
+                    borderRadius: 4,
+                    backgroundColor: c.color,
+                    border:
+                      cfg.taglineColor.toLowerCase() === c.color.toLowerCase()
+                        ? '2px solid #FFFFFF'
+                        : '1px solid rgba(255,255,255,0.2)',
+                    cursor: 'pointer',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 1D: Künye Metni */}
           <div>
             <label style={{ display: 'block', fontSize: 10.5, color: 'rgba(255,255,255,0.55)', marginBottom: 3 }}>
               Künye Metni (Alt Köşe / Detay)
@@ -1572,58 +1712,112 @@ export const ShowcaseApp: React.FC = () => {
             </div>
           </div>
 
-          {/* 2B: Metin Başlama Gecikmesi */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
-                Metin Başlama Gecikmesi
-              </label>
-              <strong style={{ fontSize: 11, color: cfg.accentColor, fontFamily: 'monospace' }}>
-                {(cfg.textDelayFrames / 30).toFixed(1)} sn ({cfg.textDelayFrames} frame)
-              </strong>
+          {/* 2B: Satır Satır Başlama Zamanları (Timing) */}
+          <div
+            style={{
+              padding: '10px',
+              borderRadius: 8,
+              backgroundColor: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>⏱️ SATIR GİRİŞ ZAMANLAMALARI</span>
+              <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.45)' }}>Her satıra özel gecikme</span>
             </div>
-            <input
-              type="range"
-              min={0}
-              max={90}
-              step={3}
-              value={cfg.textDelayFrames}
-              onChange={(e) => updateConfig({ textDelayFrames: Number(e.target.value) })}
-              style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
-            />
-            <div style={{ display: 'flex', gap: 5, marginTop: 6 }}>
+
+            {/* 1. Satır Giriş Zamanı */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>
+                  1. Satır Başlama:
+                </span>
+                <strong style={{ fontSize: 10.5, color: '#60A5FA', fontFamily: 'monospace' }}>
+                  {(cfg.line1Delay / 30).toFixed(2)} sn ({cfg.line1Delay}f)
+                </strong>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={150}
+                step={2}
+                value={cfg.line1Delay}
+                onChange={(e) => updateConfig({ line1Delay: Number(e.target.value) })}
+                style={{ width: '100%', accentColor: '#3B82F6', cursor: 'pointer' }}
+              />
+            </div>
+
+            {/* 2. Satır Giriş Zamanı */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>
+                  2. Satır Başlama:
+                </span>
+                <strong style={{ fontSize: 10.5, color: cfg.accentColor, fontFamily: 'monospace' }}>
+                  {(cfg.line2Delay / 30).toFixed(2)} sn ({cfg.line2Delay}f)
+                </strong>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={180}
+                step={2}
+                value={cfg.line2Delay}
+                onChange={(e) => updateConfig({ line2Delay: Number(e.target.value) })}
+                style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
+              />
+            </div>
+
+            {/* 3. Satır Giriş Zamanı */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>
+                  3. Satır Başlama:
+                </span>
+                <strong style={{ fontSize: 10.5, color: cfg.taglineColor, fontFamily: 'monospace' }}>
+                  {(cfg.line3Delay / 30).toFixed(2)} sn ({cfg.line3Delay}f)
+                </strong>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={210}
+                step={2}
+                value={cfg.line3Delay}
+                onChange={(e) => updateConfig({ line3Delay: Number(e.target.value) })}
+                style={{ width: '100%', accentColor: cfg.taglineColor, cursor: 'pointer' }}
+              />
+            </div>
+
+            {/* Hızlı Zamanlama Presetleri */}
+            <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
               {[
-                { label: 'Hemen (0s)', frames: 0 },
-                { label: '0.8s (24f)', frames: 24 },
-                { label: '1.0s (30f)', frames: 30 },
-                { label: '1.5s (45f)', frames: 45 },
-              ].map((btn) => (
+                { label: '⚡ Hızlı (+8f)', l1: 15, l2: 23, l3: 31 },
+                { label: '⏱ Normal (+12f)', l1: 20, l2: 32, l3: 44 },
+                { label: '🌊 Kademeli (+24f)', l1: 20, l2: 44, l3: 68 },
+                { label: '🎯 Birlikte', l1: 20, l2: 20, l3: 20 },
+              ].map((p) => (
                 <button
-                  key={btn.frames}
-                  onClick={() => updateConfig({ textDelayFrames: btn.frames })}
+                  key={p.label}
+                  onClick={() => updateConfig({ line1Delay: p.l1, line2Delay: p.l2, line3Delay: p.l3 })}
                   style={{
                     flex: 1,
                     padding: '4px 2px',
                     borderRadius: 4,
-                    border:
-                      cfg.textDelayFrames === btn.frames
-                        ? `1px solid ${cfg.accentColor}`
-                        : '1px solid rgba(255,255,255,0.1)',
-                    backgroundColor:
-                      cfg.textDelayFrames === btn.frames
-                        ? `${cfg.accentColor}25`
-                        : 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: 'rgba(255,255,255,0.04)',
                     color: '#FFFFFF',
-                    fontSize: 10,
+                    fontSize: 9.5,
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  {btn.label}
+                  {p.label}
                 </button>
               ))}
-            </div>
-            <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.42)', marginTop: 4 }}>
-              * Logo animasyonu başladıktan ne kadar süre sonra metinlerin gireceğini belirler.
             </div>
           </div>
 
@@ -1845,16 +2039,16 @@ export const ShowcaseApp: React.FC = () => {
           {/* Alt Metin Boyutu */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
-              <span>Alt Metin Boyutu</span>
+              <span>Alt Metin Boyutu (2. Satır)</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <input
                   type="number"
                   min={6}
-                  max={250}
+                  max={500}
                   value={cfg.subtitleSize}
                   onChange={(e) =>
                     updateConfig({
-                      subtitleSize: Math.max(6, Math.min(250, Number(e.target.value) || 6)),
+                      subtitleSize: Math.max(6, Math.min(500, Number(e.target.value) || 6)),
                     })
                   }
                   style={{
@@ -1875,7 +2069,7 @@ export const ShowcaseApp: React.FC = () => {
             <input
               type="range"
               min={6}
-              max={250}
+              max={500}
               value={cfg.subtitleSize}
               onChange={(e) => updateConfig({ subtitleSize: Number(e.target.value) })}
               style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
@@ -1885,9 +2079,10 @@ export const ShowcaseApp: React.FC = () => {
               {[
                 { label: '20', size: 20 },
                 { label: '40 (Def)', size: 40 },
-                { label: '60', size: 60 },
                 { label: '90', size: 90 },
-                { label: '140', size: 140 },
+                { label: '160', size: 160 },
+                { label: '240', size: 240 },
+                { label: '360', size: 360 },
               ].map((p) => (
                 <button
                   key={p.size}
@@ -1902,6 +2097,78 @@ export const ShowcaseApp: React.FC = () => {
                         : '1px solid rgba(255,255,255,0.1)',
                     backgroundColor:
                       cfg.subtitleSize === p.size ? `${cfg.accentColor}25` : 'rgba(255,255,255,0.03)',
+                    color: '#FFFFFF',
+                    fontSize: 9.5,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. Satır Boyutu */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
+              <span>3. Satır Boyutu</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <input
+                  type="number"
+                  min={6}
+                  max={500}
+                  value={cfg.taglineSize}
+                  onChange={(e) =>
+                    updateConfig({
+                      taglineSize: Math.max(6, Math.min(500, Number(e.target.value) || 6)),
+                    })
+                  }
+                  style={{
+                    width: 52,
+                    padding: '2px 4px',
+                    borderRadius: 4,
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    backgroundColor: '#1E2330',
+                    color: cfg.taglineColor,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textAlign: 'right',
+                  }}
+                />
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>px</span>
+              </div>
+            </div>
+            <input
+              type="range"
+              min={6}
+              max={500}
+              value={cfg.taglineSize}
+              onChange={(e) => updateConfig({ taglineSize: Number(e.target.value) })}
+              style={{ width: '100%', accentColor: cfg.taglineColor, cursor: 'pointer' }}
+            />
+            {/* Hızlı 3. Satır Boyut Butonları */}
+            <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+              {[
+                { label: '16', size: 16 },
+                { label: '28 (Def)', size: 28 },
+                { label: '48', size: 48 },
+                { label: '80', size: 80 },
+                { label: '140', size: 140 },
+                { label: '220', size: 220 },
+              ].map((p) => (
+                <button
+                  key={p.size}
+                  onClick={() => updateConfig({ taglineSize: p.size })}
+                  style={{
+                    flex: 1,
+                    padding: '2px 0',
+                    borderRadius: 4,
+                    border:
+                      cfg.taglineSize === p.size
+                        ? `1px solid ${cfg.taglineColor}`
+                        : '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor:
+                      cfg.taglineSize === p.size ? `${cfg.taglineColor}25` : 'rgba(255,255,255,0.03)',
                     color: '#FFFFFF',
                     fontSize: 9.5,
                     cursor: 'pointer',
