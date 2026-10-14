@@ -292,7 +292,9 @@ export const ShowcaseApp: React.FC = () => {
   const [projectCode, setProjectCode] = useState('BİRİM — 2026');
   const [accentColor, setAccentColor] = useState('#E07A5F');
 
-  const [fontFamily, setFontFamily] = useState<string>("'Inter', sans-serif");
+  const [fontFamily, setFontFamily] = useState<
+    (typeof FONT_CHOICES)[number]['value']
+  >("'Inter', sans-serif");
   const [headlineSize, setHeadlineSize] = useState<number>(19);
   const [subtitleSize, setSubtitleSize] = useState<number>(12);
   const [letterSpacing, setLetterSpacing] = useState<number>(0.4);
@@ -312,13 +314,14 @@ export const ShowcaseApp: React.FC = () => {
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: '370px 1fr',
-        minHeight: '100vh',
+        gridTemplateColumns: '330px 1fr 340px',
+        height: '100vh',
+        overflow: 'hidden',
         backgroundColor: '#08090C',
         color: '#F4F1EA',
       }}
     >
-      {/* Left Sidebar: Scene Selector */}
+      {/* 1. SOL PANEL: Sahne Seçici */}
       <aside
         style={{
           borderRight: '1px solid rgba(255,255,255,0.09)',
@@ -326,20 +329,19 @@ export const ShowcaseApp: React.FC = () => {
           display: 'flex',
           flexDirection: 'column',
           height: '100vh',
-          position: 'sticky',
-          top: 0,
+          overflow: 'hidden',
         }}
       >
         <div
           style={{
-            padding: '22px 20px 16px',
+            padding: '18px 16px 14px',
             borderBottom: '1px solid rgba(255,255,255,0.08)',
           }}
         >
           <div
             style={{
               fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 11,
+              fontSize: 10.5,
               letterSpacing: '0.2em',
               color: accentColor,
               marginBottom: 4,
@@ -349,7 +351,7 @@ export const ShowcaseApp: React.FC = () => {
           </div>
           <h1
             style={{
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: 600,
               letterSpacing: '0.02em',
             }}
@@ -362,8 +364,8 @@ export const ShowcaseApp: React.FC = () => {
             style={{
               display: 'flex',
               flexWrap: 'wrap',
-              gap: 6,
-              marginTop: 14,
+              gap: 5,
+              marginTop: 12,
             }}
           >
             {CATEGORIES.map((cat) => {
@@ -373,8 +375,8 @@ export const ShowcaseApp: React.FC = () => {
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
                   style={{
-                    padding: '6px 10px',
-                    borderRadius: 8,
+                    padding: '5px 8px',
+                    borderRadius: 7,
                     border: active
                       ? `1px solid ${accentColor}`
                       : '1px solid rgba(255,255,255,0.1)',
@@ -382,7 +384,7 @@ export const ShowcaseApp: React.FC = () => {
                       ? `${accentColor}22`
                       : 'rgba(255,255,255,0.03)',
                     color: active ? '#FFFFFF' : 'rgba(255,255,255,0.65)',
-                    fontSize: 11,
+                    fontSize: 10.5,
                     fontWeight: 500,
                     cursor: 'pointer',
                   }}
@@ -399,7 +401,7 @@ export const ShowcaseApp: React.FC = () => {
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '12px',
+            padding: '10px',
             display: 'flex',
             flexDirection: 'column',
             gap: 6,
@@ -413,8 +415,8 @@ export const ShowcaseApp: React.FC = () => {
                 onClick={() => setSelectedId(scene.id)}
                 style={{
                   textAlign: 'left',
-                  padding: '12px 14px',
-                  borderRadius: 12,
+                  padding: '10px 12px',
+                  borderRadius: 10,
                   border: isSelected
                     ? `1px solid ${accentColor}`
                     : '1px solid rgba(255,255,255,0.06)',
@@ -428,19 +430,19 @@ export const ShowcaseApp: React.FC = () => {
               >
                 <div
                   style={{
-                    fontSize: 13,
+                    fontSize: 12.5,
                     fontWeight: 600,
                     color: isSelected ? '#FFFFFF' : '#E5E7EB',
-                    marginBottom: 4,
+                    marginBottom: 3,
                   }}
                 >
                   {scene.title}
                 </div>
                 <div
                   style={{
-                    fontSize: 11.5,
+                    fontSize: 11,
                     color: 'rgba(255,255,255,0.52)',
-                    lineHeight: 1.4,
+                    lineHeight: 1.35,
                   }}
                 >
                   {scene.desc}
@@ -451,37 +453,36 @@ export const ShowcaseApp: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Content: Interactive Remotion Player + Live Text Customizer */}
+      {/* 2. ORTA ALAN: Video Oynatıcı */}
       <main
         style={{
-          padding: '24px 36px 40px',
+          padding: '20px 28px',
           display: 'flex',
           flexDirection: 'column',
-          gap: 20,
-          maxWidth: 1400,
-          width: '100%',
-          margin: '0 auto',
+          justifyContent: 'center',
+          gap: 16,
+          height: '100vh',
+          overflow: 'hidden',
         }}
       >
-        {/* Top Scene Info Header */}
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: 12,
+            gap: 10,
           }}
         >
           <div>
-            <h2 style={{ fontSize: 22, fontWeight: 600 }}>
+            <h2 style={{ fontSize: 19, fontWeight: 600 }}>
               {activeScene.title}
             </h2>
             <p
               style={{
-                fontSize: 13,
+                fontSize: 12.5,
                 color: 'rgba(255,255,255,0.6)',
-                marginTop: 4,
+                marginTop: 2,
               }}
             >
               {activeScene.desc}
@@ -490,8 +491,8 @@ export const ShowcaseApp: React.FC = () => {
           <div
             style={{
               fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 12,
-              padding: '6px 14px',
+              fontSize: 11,
+              padding: '5px 12px',
               borderRadius: 999,
               backgroundColor: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.1)',
@@ -501,15 +502,16 @@ export const ShowcaseApp: React.FC = () => {
           </div>
         </div>
 
-        {/* Remotion Player Container */}
         <div
           style={{
             width: '100%',
+            maxHeight: 'calc(100vh - 130px)',
             aspectRatio: '16 / 9',
-            borderRadius: 18,
+            margin: '0 auto',
+            borderRadius: 16,
             overflow: 'hidden',
             border: '1px solid rgba(255,255,255,0.14)',
-            boxShadow: '0 30px 90px rgba(0,0,0,0.65)',
+            boxShadow: '0 24px 70px rgba(0,0,0,0.65)',
             backgroundColor: '#050507',
           }}
         >
@@ -572,383 +574,429 @@ export const ShowcaseApp: React.FC = () => {
             )
           )}
         </div>
+      </main>
 
-        {/* Live Text, Font, Size & Position Controls */}
+      {/* 3. SAĞ PANEL: Metin, Font, Boyut ve Konum Ayarları (Her Zaman Görünür) */}
+      <aside
+        style={{
+          borderLeft: '1px solid rgba(255,255,255,0.09)',
+          backgroundColor: '#0C0E13',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100vh',
+          overflowY: 'auto',
+          padding: '18px 18px 28px',
+          gap: 16,
+        }}
+      >
         <div
           style={{
-            padding: '20px 24px',
-            borderRadius: 16,
-            backgroundColor: '#0C0E13',
-            border: '1px solid rgba(255,255,255,0.08)',
+            paddingBottom: 12,
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
             display: 'flex',
-            flexDirection: 'column',
-            gap: 18,
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
-          {/* Row 1: Text Content & Font Selector */}
-          <div
+          <div>
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 10.5,
+                letterSpacing: '0.18em',
+                color: accentColor,
+              }}
+            >
+              CANLI AYAR PANELİ
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 600, marginTop: 2 }}>
+              Metin, Font &amp; Konum
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setTextOffsetX(0);
+              setTextOffsetY(0);
+              setHeadlineSize(19);
+              setSubtitleSize(12);
+              setLetterSpacing(0.4);
+              setTextAlign('center');
+              setFontFamily("'Inter', sans-serif");
+            }}
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-              gap: 14,
+              padding: '6px 10px',
+              borderRadius: 6,
+              border: `1px solid ${accentColor}`,
+              backgroundColor: 'rgba(224, 122, 95, 0.12)',
+              color: '#FFFFFF',
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: 'pointer',
             }}
           >
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.55)',
-                  marginBottom: 6,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                }}
-              >
-                Ana Metin (Headline)
-              </label>
-              <input
-                type="text"
-                value={headline}
-                onChange={(e) => setHeadline(e.target.value)}
-                placeholder="Ana metin (boş bırakılabilir)"
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  backgroundColor: '#14171F',
-                  color: '#FFFFFF',
-                  fontSize: 13,
-                }}
-              />
-            </div>
+            Sıfırla
+          </button>
+        </div>
 
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.55)',
-                  marginBottom: 6,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                }}
-              >
-                Alt Metin (Subtitle)
-              </label>
-              <input
-                type="text"
-                value={subtitle}
-                onChange={(e) => setSubtitle(e.target.value)}
-                placeholder="Alt metin (boş bırakılabilir)"
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  backgroundColor: '#14171F',
-                  color: '#FFFFFF',
-                  fontSize: 13,
-                }}
-              />
-            </div>
+        {/* Ana Metin */}
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.6)',
+              marginBottom: 6,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            1. Ana Metin (Headline)
+          </label>
+          <input
+            type="text"
+            value={headline}
+            onChange={(e) => setHeadline(e.target.value)}
+            placeholder="Ana metin yazın..."
+            style={{
+              width: '100%',
+              padding: '9px 12px',
+              borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.16)',
+              backgroundColor: '#14171F',
+              color: '#FFFFFF',
+              fontSize: 13,
+            }}
+          />
+        </div>
 
-            <div>
-              <label
+        {/* Alt Metin */}
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.6)',
+              marginBottom: 6,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            2. Alt Metin (Subtitle)
+          </label>
+          <input
+            type="text"
+            value={subtitle}
+            onChange={(e) => setSubtitle(e.target.value)}
+            placeholder="Alt metin yazın..."
+            style={{
+              width: '100%',
+              padding: '9px 12px',
+              borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.16)',
+              backgroundColor: '#14171F',
+              color: '#FFFFFF',
+              fontSize: 13,
+            }}
+          />
+        </div>
+
+        {/* Font Seçici */}
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.6)',
+              marginBottom: 6,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            3. Yazı Tipi (Font Seçimi)
+          </label>
+          <select
+            value={fontFamily}
+            onChange={(e) =>
+              setFontFamily(
+                e.target.value as (typeof FONT_CHOICES)[number]['value']
+              )
+            }
+            style={{
+              width: '100%',
+              padding: '9px 12px',
+              borderRadius: 8,
+              border: `1px solid ${accentColor}`,
+              backgroundColor: '#14171F',
+              color: '#FFFFFF',
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
+            {FONT_CHOICES.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Ana Metin Boyutu */}
+        <div>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.65)',
+              marginBottom: 5,
+            }}
+          >
+            <span>4. ANA METİN BOYUTU</span>
+            <strong style={{ color: accentColor }}>{headlineSize} px</strong>
+          </div>
+          <input
+            type="range"
+            min={8}
+            max={72}
+            value={headlineSize}
+            onChange={(e) => setHeadlineSize(Number(e.target.value))}
+            style={{ width: '100%', accentColor, cursor: 'pointer' }}
+          />
+        </div>
+
+        {/* Alt Metin Boyutu */}
+        <div>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.65)',
+              marginBottom: 5,
+            }}
+          >
+            <span>5. ALT METİN BOYUTU</span>
+            <strong style={{ color: accentColor }}>{subtitleSize} px</strong>
+          </div>
+          <input
+            type="range"
+            min={6}
+            max={48}
+            value={subtitleSize}
+            onChange={(e) => setSubtitleSize(Number(e.target.value))}
+            style={{ width: '100%', accentColor, cursor: 'pointer' }}
+          />
+        </div>
+
+        {/* Harf Aralığı */}
+        <div>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.65)',
+              marginBottom: 5,
+            }}
+          >
+            <span>6. HARF ARALIĞI</span>
+            <strong style={{ color: accentColor }}>
+              {letterSpacing.toFixed(2)} em
+            </strong>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={1.2}
+            step={0.02}
+            value={letterSpacing}
+            onChange={(e) => setLetterSpacing(Number(e.target.value))}
+            style={{ width: '100%', accentColor, cursor: 'pointer' }}
+          />
+        </div>
+
+        {/* Yatay Konum (X) */}
+        <div>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.65)',
+              marginBottom: 5,
+            }}
+          >
+            <span>7. YATAY KONUM (SOL / SAĞ)</span>
+            <strong style={{ color: accentColor }}>{textOffsetX} px</strong>
+          </div>
+          <input
+            type="range"
+            min={-650}
+            max={650}
+            step={5}
+            value={textOffsetX}
+            onChange={(e) => setTextOffsetX(Number(e.target.value))}
+            style={{ width: '100%', accentColor, cursor: 'pointer' }}
+          />
+        </div>
+
+        {/* Dikey Konum (Y) */}
+        <div>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.65)',
+              marginBottom: 5,
+            }}
+          >
+            <span>8. DİKEY KONUM (YUKARI / AŞAĞI)</span>
+            <strong style={{ color: accentColor }}>{textOffsetY} px</strong>
+          </div>
+          <input
+            type="range"
+            min={-560}
+            max={260}
+            step={5}
+            value={textOffsetY}
+            onChange={(e) => setTextOffsetY(Number(e.target.value))}
+            style={{ width: '100%', accentColor, cursor: 'pointer' }}
+          />
+          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+            <button
+              onClick={() => {
+                setTextOffsetX(0);
+                setTextOffsetY(-380);
+              }}
+              style={{
+                flex: 1,
+                padding: '7px 8px',
+                borderRadius: 6,
+                border: '1px solid rgba(255,255,255,0.14)',
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                color: '#FFFFFF',
+                fontSize: 11,
+                cursor: 'pointer',
+              }}
+            >
+              ↑ Logonun Üstüne Al
+            </button>
+            <button
+              onClick={() => {
+                setTextOffsetX(0);
+                setTextOffsetY(0);
+              }}
+              style={{
+                flex: 1,
+                padding: '7px 8px',
+                borderRadius: 6,
+                border: '1px solid rgba(255,255,255,0.14)',
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                color: '#FFFFFF',
+                fontSize: 11,
+                cursor: 'pointer',
+              }}
+            >
+              ↓ Logonun Altına Al
+            </button>
+          </div>
+        </div>
+
+        {/* Hizalama */}
+        <div>
+          <div
+            style={{
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.65)',
+              marginBottom: 6,
+            }}
+          >
+            9. METİN HİZALAMA
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {(
+              [
+                ['left', 'Sola Yasla'],
+                ['center', 'Ortala'],
+                ['right', 'Sağa Yasla'],
+              ] as const
+            ).map(([al, lbl]) => (
+              <button
+                key={al}
+                onClick={() => setTextAlign(al)}
                 style={{
-                  display: 'block',
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.55)',
-                  marginBottom: 6,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                }}
-              >
-                Yazı Tipi (Font)
-              </label>
-              <select
-                value={fontFamily}
-                onChange={(e) => setFontFamily(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  backgroundColor: '#14171F',
+                  flex: 1,
+                  padding: '7px 8px',
+                  borderRadius: 6,
+                  border:
+                    textAlign === al
+                      ? `1px solid ${accentColor}`
+                      : '1px solid rgba(255,255,255,0.12)',
+                  backgroundColor:
+                    textAlign === al
+                      ? `${accentColor}28`
+                      : 'rgba(255,255,255,0.04)',
                   color: '#FFFFFF',
-                  fontSize: 13,
+                  fontSize: 11,
                   cursor: 'pointer',
                 }}
               >
-                {FONT_CHOICES.map((f) => (
-                  <option key={f.value} value={f.value}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.55)',
-                  marginBottom: 6,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                }}
-              >
-                Künye Kodu &amp; Vurgu Rengi
-              </label>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input
-                  type="text"
-                  value={projectCode}
-                  onChange={(e) => setProjectCode(e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: '9px 10px',
-                    borderRadius: 8,
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    backgroundColor: '#14171F',
-                    color: '#FFFFFF',
-                    fontSize: 12,
-                  }}
-                />
-                <input
-                  type="color"
-                  value={accentColor}
-                  onChange={(e) => setAccentColor(e.target.value)}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    border: 'none',
-                    borderRadius: 6,
-                    backgroundColor: 'transparent',
-                    cursor: 'pointer',
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Row 2: Size, Spacing, Position X/Y & Alignment */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(195px, 1fr))',
-              gap: 16,
-              paddingTop: 14,
-              borderTop: '1px solid rgba(255,255,255,0.07)',
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.65)',
-                  marginBottom: 6,
-                }}
-              >
-                <span>ANA METİN BOYUTU</span>
-                <strong style={{ color: accentColor }}>{headlineSize}px</strong>
-              </div>
-              <input
-                type="range"
-                min={8}
-                max={72}
-                value={headlineSize}
-                onChange={(e) => setHeadlineSize(Number(e.target.value))}
-                style={{ width: '100%', accentColor }}
-              />
-            </div>
-
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.65)',
-                  marginBottom: 6,
-                }}
-              >
-                <span>ALT METİN BOYUTU</span>
-                <strong style={{ color: accentColor }}>{subtitleSize}px</strong>
-              </div>
-              <input
-                type="range"
-                min={6}
-                max={48}
-                value={subtitleSize}
-                onChange={(e) => setSubtitleSize(Number(e.target.value))}
-                style={{ width: '100%', accentColor }}
-              />
-            </div>
-
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.65)',
-                  marginBottom: 6,
-                }}
-              >
-                <span>HARF ARALIĞI</span>
-                <strong style={{ color: accentColor }}>
-                  {letterSpacing.toFixed(2)}em
-                </strong>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={1.2}
-                step={0.02}
-                value={letterSpacing}
-                onChange={(e) => setLetterSpacing(Number(e.target.value))}
-                style={{ width: '100%', accentColor }}
-              />
-            </div>
-
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.65)',
-                  marginBottom: 6,
-                }}
-              >
-                <span>YATAY KONUM (X)</span>
-                <strong style={{ color: accentColor }}>{textOffsetX}px</strong>
-              </div>
-              <input
-                type="range"
-                min={-650}
-                max={650}
-                step={5}
-                value={textOffsetX}
-                onChange={(e) => setTextOffsetX(Number(e.target.value))}
-                style={{ width: '100%', accentColor }}
-              />
-            </div>
-
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.65)',
-                  marginBottom: 6,
-                }}
-              >
-                <span>DİKEY KONUM (Y)</span>
-                <strong style={{ color: accentColor }}>{textOffsetY}px</strong>
-              </div>
-              <input
-                type="range"
-                min={-560}
-                max={260}
-                step={5}
-                value={textOffsetY}
-                onChange={(e) => setTextOffsetY(Number(e.target.value))}
-                style={{ width: '100%', accentColor }}
-              />
-            </div>
-
-            <div>
-              <div
-                style={{
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.65)',
-                  marginBottom: 6,
-                }}
-              >
-                HİZALAMA &amp; HIZLI KONUM
-              </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {(
-                  [
-                    ['left', 'Sol'],
-                    ['center', 'Orta'],
-                    ['right', 'Sağ'],
-                  ] as const
-                ).map(([al, lbl]) => (
-                  <button
-                    key={al}
-                    onClick={() => setTextAlign(al)}
-                    style={{
-                      flex: 1,
-                      padding: '6px 8px',
-                      borderRadius: 6,
-                      border:
-                        textAlign === al
-                          ? `1px solid ${accentColor}`
-                          : '1px solid rgba(255,255,255,0.12)',
-                      backgroundColor:
-                        textAlign === al
-                          ? `${accentColor}28`
-                          : 'rgba(255,255,255,0.04)',
-                      color: '#FFFFFF',
-                      fontSize: 11,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {lbl}
-                  </button>
-                ))}
-                <button
-                  onClick={() => {
-                    setTextOffsetX(0);
-                    setTextOffsetY(-380);
-                  }}
-                  title="Metni Logonun Üstüne Taşı"
-                  style={{
-                    padding: '6px 8px',
-                    borderRadius: 6,
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    backgroundColor: 'rgba(255,255,255,0.04)',
-                    color: '#FFFFFF',
-                    fontSize: 11,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Üste
-                </button>
-                <button
-                  onClick={() => {
-                    setTextOffsetX(0);
-                    setTextOffsetY(0);
-                    setHeadlineSize(19);
-                    setSubtitleSize(12);
-                    setLetterSpacing(0.4);
-                    setTextAlign('center');
-                  }}
-                  title="Konum ve Boyutu Sıfırla"
-                  style={{
-                    padding: '6px 8px',
-                    borderRadius: 6,
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    backgroundColor: 'rgba(255,255,255,0.04)',
-                    color: accentColor,
-                    fontSize: 11,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Sıfırla
-                </button>
-              </div>
-            </div>
+                {lbl}
+              </button>
+            ))}
           </div>
         </div>
-      </main>
+
+        {/* Vurgu Rengi & Künye */}
+        <div
+          style={{
+            paddingTop: 12,
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
+          <label
+            style={{
+              display: 'block',
+              fontSize: 11,
+              color: 'rgba(255,255,255,0.6)',
+              marginBottom: 6,
+              textTransform: 'uppercase',
+            }}
+          >
+            10. Vurgu Rengi &amp; Künye
+          </label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              type="text"
+              value={projectCode}
+              onChange={(e) => setProjectCode(e.target.value)}
+              style={{
+                flex: 1,
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid rgba(255,255,255,0.15)',
+                backgroundColor: '#14171F',
+                color: '#FFFFFF',
+                fontSize: 12,
+              }}
+            />
+            <input
+              type="color"
+              value={accentColor}
+              onChange={(e) => setAccentColor(e.target.value)}
+              style={{
+                width: 36,
+                height: 36,
+                border: 'none',
+                borderRadius: 6,
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+              }}
+            />
+          </div>
+        </div>
+      </aside>
     </div>
   );
 };
