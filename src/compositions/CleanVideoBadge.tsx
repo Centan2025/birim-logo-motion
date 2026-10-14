@@ -14,25 +14,16 @@ import { LowerThirdProps } from '../types/schema';
 export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
   projectTitle,
   architecturalPhase,
-  tagline,
   locationYear,
   accentColor,
-  primaryColor = '#FFFFFF',
-  taglineColor,
   transparentBackground,
   fontFamily = "'Inter', sans-serif",
   headlineSize = 19,
   subtitleSize = 12,
-  taglineSize = 10,
   letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
   textAnimation = 'char-wave',
-  textDelayFrames,
-  line1Delay,
-  line2Delay,
-  line3Delay,
-  showLogo = true,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -196,16 +187,16 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
             }}
           >
             <AnimatedTextLine
-              text={architecturalPhase}
-              fontFamily={fontFamily}
-              fontSize={subtitleSize}
-              letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-              color="inherit"
-              accentColor={accentColor}
-              animation={textAnimation}
-              startFrame={line1Delay ?? textDelayFrames ?? 34}
-              isSubtitle
-            />
+            text={architecturalPhase}
+            fontFamily={fontFamily}
+            fontSize={subtitleSize}
+            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={42}
+            isSubtitle
+          />
           </div>
           <div
             style={{
@@ -213,44 +204,20 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
               fontSize: subtitleSize,
               fontWeight: 600,
               letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-              color: primaryColor ?? '#FFFFFF',
+              color: '#FFFFFF',
             }}
           >
             <AnimatedTextLine
-              text={projectTitle}
-              fontFamily={fontFamily}
-              fontSize={headlineSize}
-              letterSpacing={letterSpacing}
-              color="inherit"
-              accentColor={accentColor}
-              animation={textAnimation}
-              startFrame={line2Delay ?? (textDelayFrames !== undefined ? textDelayFrames + 8 : 42)}
-            />
+            text={projectTitle}
+            fontFamily={fontFamily}
+            fontSize={headlineSize}
+            letterSpacing={letterSpacing}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={34}
+          />
           </div>
-          {tagline && (
-            <div
-              style={{
-                fontFamily,
-                fontSize: taglineSize,
-                letterSpacing: `${Math.max(0.04, letterSpacing * 0.6)}em`,
-                color: taglineColor ?? accentColor,
-                textTransform: 'uppercase',
-                marginTop: 4,
-              }}
-            >
-              <AnimatedTextLine
-                text={tagline}
-                fontFamily={fontFamily}
-                fontSize={taglineSize}
-                letterSpacing={Math.max(0.04, letterSpacing * 0.6)}
-                color="inherit"
-                accentColor={accentColor}
-                animation={textAnimation}
-                startFrame={line3Delay ?? (textDelayFrames !== undefined ? textDelayFrames + 16 : 50)}
-                isSubtitle
-              />
-            </div>
-          )}
         </div>
       </div>
     </AbsoluteFill>

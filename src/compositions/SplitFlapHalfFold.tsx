@@ -13,28 +13,19 @@ import { ArchitecturalSceneProps } from '../types/schema';
 export const SplitFlapHalfFold: React.FC<ArchitecturalSceneProps> = ({
   headline,
   subtitle,
-  tagline,
-  projectCode,
-  scaleText,
   accentColor,
   primaryColor,
-  taglineColor,
   backgroundColor,
   fontFamily = "'Inter', sans-serif",
-  headlineSize = 64,
-  subtitleSize = 40,
-  taglineSize = 28,
-  letterSpacing = 0.4,
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
   textAlign = 'center',
   textAnimation = 'char-wave',
-  textDelayFrames,
-  line1Delay,
-  line2Delay,
-  line3Delay,
+  textDelayFrames = 34,
   showLogo = true,
-  aspectRatio = '16:9',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -165,29 +156,22 @@ export const SplitFlapHalfFold: React.FC<ArchitecturalSceneProps> = ({
       )}
 
       {/* Clean Dynamic Caption */}
-      {/* Customizable Architectural Kinetic Caption */}
       <SceneCaption
         headline={headline}
         subtitle={subtitle}
-        tagline={tagline}
         primaryColor={primaryColor}
         accentColor={accentColor}
-        taglineColor={taglineColor}
         fontFamily={fontFamily}
         headlineSize={headlineSize}
         subtitleSize={subtitleSize}
-        taglineSize={taglineSize}
         letterSpacing={letterSpacing}
         textOffsetX={textOffsetX}
         textOffsetY={textOffsetY}
         textAlign={textAlign}
         textAnimation={textAnimation}
-        baseTop={678}
-        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 32}
-        line1Delay={line1Delay}
-        line2Delay={line2Delay}
-        line3Delay={line3Delay}
+        delayFrames={textDelayFrames}
         showLogo={showLogo}
+        baseTop={678}
       />
     </AbsoluteFill>
   );

@@ -14,25 +14,16 @@ import { AnimatedTextLine } from '../components/SceneCaption';
 export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
   projectTitle,
   architecturalPhase,
-  tagline,
   locationYear,
   accentColor,
-  primaryColor = '#FFFFFF',
-  taglineColor,
   transparentBackground,
   fontFamily = "'Inter', sans-serif",
   headlineSize = 19,
   subtitleSize = 12,
-  taglineSize = 11,
   letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
   textAnimation = 'char-wave',
-  textDelayFrames,
-  line1Delay,
-  line2Delay,
-  line3Delay,
-  showLogo = true,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -203,38 +194,14 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
           <AnimatedTextLine
             text={projectTitle}
             animation={textAnimation}
-            startFrame={line1Delay ?? textDelayFrames ?? 56}
+            startFrame={56}
             fontFamily={fontFamily}
             fontSize={headlineSize}
             fontWeight={600}
             letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color={primaryColor ?? '#FFFFFF'}
+            color="#FFFFFF"
             accentColor={accentColor}
           />
-          {tagline && (
-            <span
-              style={{
-                fontFamily,
-                fontSize: taglineSize,
-                letterSpacing: `${Math.max(0.04, letterSpacing * 0.6)}em`,
-                color: taglineColor ?? accentColor,
-                textTransform: 'uppercase',
-              }}
-            >
-              <AnimatedTextLine
-                text={tagline}
-                animation={textAnimation}
-                startFrame={line2Delay ?? (textDelayFrames !== undefined ? textDelayFrames + 8 : 64)}
-                fontFamily={fontFamily}
-                fontSize={taglineSize}
-                fontWeight={500}
-                letterSpacing={Math.max(0.04, letterSpacing * 0.6)}
-                color={taglineColor ?? accentColor}
-                accentColor={accentColor}
-                isSubtitle
-              />
-            </span>
-          )}
         </div>
       </div>
     </AbsoluteFill>

@@ -1,4 +1,4 @@
-import { SceneCaption } from '../components/SceneCaption';
+import { AnimatedTextLine } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -19,28 +19,14 @@ const SLICES = [
 export const KineticElasticSplit: React.FC<ArchitecturalSceneProps> = ({
   headline,
   subtitle,
-  tagline,
-  projectCode,
-  scaleText,
   accentColor,
-  primaryColor,
-  taglineColor,
-  backgroundColor,
   fontFamily = "'Inter', sans-serif",
-  headlineSize = 64,
-  subtitleSize = 40,
-  taglineSize = 28,
-  letterSpacing = 0.4,
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
-  textAlign = 'center',
   textAnimation = 'char-wave',
-  textDelayFrames,
-  line1Delay,
-  line2Delay,
-  line3Delay,
-  showLogo = true,
-  aspectRatio = '16:9',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -70,30 +56,159 @@ export const KineticElasticSplit: React.FC<ArchitecturalSceneProps> = ({
         overflow: 'hidden',
       }}
     >
-            {/* Customizable Architectural Kinetic Caption */}
-      <SceneCaption
-        headline={headline}
-        subtitle={subtitle}
-        tagline={tagline}
-        primaryColor={primaryColor}
-        accentColor={accentColor}
-        taglineColor={taglineColor}
-        fontFamily={fontFamily}
-        headlineSize={headlineSize}
-        subtitleSize={subtitleSize}
-        taglineSize={taglineSize}
-        letterSpacing={letterSpacing}
-        textOffsetX={textOffsetX}
-        textOffsetY={textOffsetY}
-        textAlign={textAlign}
-        textAnimation={textAnimation}
-        baseTop={offsetY + renderedHeight + 52}
-        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 32}
-        line1Delay={line1Delay}
-        line2Delay={line2Delay}
-        line3Delay={line3Delay}
-        showLogo={showLogo}
+      {/* Subtle Modern Editorial Frame */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 44,
+          border: '1px solid rgba(13, 13, 16, 0.08)',
+          borderRadius: 24,
+          pointerEvents: 'none',
+        }}
       />
+
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+        <defs>
+          {SLICES.map((slice) => (
+            <clipPath key={slice.id} id={`kinetic-slice-${slice.id}`}>
+              <rect
+                x={-200}
+                y={slice.yStart}
+                width={LOGO_VIEWBOX.width + 400}
+                height={slice.yEnd - slice.yStart + 0.4}
+              />
+            </clipPath>
+          ))}
+        </defs>
+
+        <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>
+          {SLICES.map((slice, sIdx) => (
+            <g key={slice.id} clipPath={`url(#kinetic-slice-${slice.id})`}>
+              {BIRIM_LETTERS.map((letter, lIdx) => {
+                const s = spring({
+                  frame: frame - lIdx * 4 - sIdx * 3,
+                  fps,
+                  config: { damping: 15, stiffness: 135, mass: 0.9 },
+                });
+
+                const shiftX = interpolate(s, [0, 1], [slice.dir * 85, 0]);
+                const opacity = interpolate(s, [0, 0.3, 1], [0, 1, 1]);
+
+                // Subtle chromatic accent ghost while in motion
+                const ghostOffset = interpolate(s, [0, 1], [slice.dir * 12, 0]);
+                const ghostOpacity = interpolate(s, [0, 0.5, 1], [0, 0.65, 0]);
+
+                return (
+                  <g key={`${slice.id}-${letter.id}`}>
+                    <path
+                      d={letter.compoundPath}
+                      fill={accentColor}
+                      fillRule="evenodd"
+                      opacity={ghostOpacity}
+                      transform={`translate(${shiftX + ghostOffset}, 0)`}
+                    />
+                    <path
+                      d={letter.compoundPath}
+                      fill="#0D0D10"
+                      fillRule="evenodd"
+                      opacity={opacity}
+                      transform={`translate(${shiftX}, 0)`}
+                    />
+                  </g>
+                );
+              })}
+            </g>
+          ))}
+        </g>
+      </svg>
+
+      {/* Modern Kinetic Pill & Editorial Subtitle */}
+      <div
+        style={{
+          position: 'absolute',
+          top: offsetY + renderedHeight + 52,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 16,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#0D0D10',
+            color: '#F6F4EF',
+            height: 44,
+            paddingLeft: interpolate(pillSpring, [0, 1], [0, 32]),
+            paddingRight: interpolate(pillSpring, [0, 1], [0, 32]),
+            borderRadius: 999,
+            opacity: pillSpring,
+            transform: `scale(${interpolate(pillSpring, [0, 1], [0.85, 1])})`,
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: accentColor,
+              marginRight: 14,
+              flexShrink: 0,
+            }}
+          />
+          <span
+            style={{
+              fontFamily,
+              fontSize: headlineSize,
+              fontWeight: 600,
+              letterSpacing: `${letterSpacing}em`,
+              textTransform: 'uppercase',
+            }}
+          >
+            <AnimatedTextLine
+            text={headline}
+            fontFamily={fontFamily}
+            fontSize={headlineSize}
+            letterSpacing={letterSpacing}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={34}
+          />
+          </span>
+        </div>
+
+        <div
+          style={{
+            fontFamily,
+            fontSize: subtitleSize,
+            fontWeight: 500,
+            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
+            color: 'rgba(13, 13, 16, 0.55)',
+            textTransform: 'uppercase',
+            opacity: subSpring,
+            transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(subSpring, [0, 1], [12, 0])}px)`,
+          }}
+        >
+          <AnimatedTextLine
+            text={subtitle}
+            fontFamily={fontFamily}
+            fontSize={subtitleSize}
+            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={42}
+            isSubtitle
+          />
+        </div>
+      </div>
     </AbsoluteFill>
   );
 };

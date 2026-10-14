@@ -13,28 +13,16 @@ import { SceneCaption } from '../components/SceneCaption';
 export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
   headline,
   subtitle,
-  tagline,
-  projectCode,
-  scaleText,
   accentColor,
   primaryColor,
-  taglineColor,
-  backgroundColor,
   fontFamily = "'Inter', sans-serif",
-  headlineSize = 64,
-  subtitleSize = 40,
-  taglineSize = 28,
-  letterSpacing = 0.4,
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
   textAlign = 'center',
   textAnimation = 'char-wave',
-  textDelayFrames,
-  line1Delay,
-  line2Delay,
-  line3Delay,
-  showLogo = true,
-  aspectRatio = '16:9',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -47,8 +35,7 @@ export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#0E1117', overflow: 'hidden' }}>
-      {showLogo !== false && (
-<svg width="1920" height="1080" viewBox="0 0 1920 1080">
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
         <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>
           {BIRIM_LETTERS.map((letter, idx) => {
             const flip = spring({
@@ -86,31 +73,21 @@ export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
         </g>
       </svg>
 
-      )}
-
-      {/* Customizable Architectural Kinetic Caption */}
       <SceneCaption
         headline={headline}
         subtitle={subtitle}
-        tagline={tagline}
         primaryColor={primaryColor}
         accentColor={accentColor}
-        taglineColor={taglineColor}
         fontFamily={fontFamily}
         headlineSize={headlineSize}
         subtitleSize={subtitleSize}
-        taglineSize={taglineSize}
         letterSpacing={letterSpacing}
         textOffsetX={textOffsetX}
         textOffsetY={textOffsetY}
         textAlign={textAlign}
         textAnimation={textAnimation}
-        baseTop={offsetY + renderedHeight + 58}
-        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 32}
-        line1Delay={line1Delay}
-        line2Delay={line2Delay}
-        line3Delay={line3Delay}
-        showLogo={showLogo}
+        baseTop={offsetY + renderedHeight + 52}
+        delayFrames={28}
       />
     </AbsoluteFill>
   );

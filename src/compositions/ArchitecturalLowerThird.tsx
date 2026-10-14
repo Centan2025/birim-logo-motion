@@ -15,25 +15,18 @@ import { LowerThirdProps } from '../types/schema';
 export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
   projectTitle,
   architecturalPhase,
-  tagline,
   locationYear,
   accentColor,
-  primaryColor = '#F4F1EA',
-  taglineColor,
+  primaryColor,
   transparentBackground,
   fontFamily = "'Inter', sans-serif",
   headlineSize = 19,
   subtitleSize = 12,
-  taglineSize = 10,
   letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
   textAnimation = 'char-wave',
   textDelayFrames,
-  line1Delay,
-  line2Delay,
-  line3Delay,
-  showLogo = true,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -239,7 +232,7 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
               color="inherit"
               accentColor={accentColor}
               animation={textAnimation}
-              startFrame={line1Delay ?? textDelayFrames ?? 34}
+              startFrame={(textDelayFrames ?? 34) + 8}
               isSubtitle
             />
           </div>
@@ -261,33 +254,9 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
               color="inherit"
               accentColor={accentColor}
               animation={textAnimation}
-              startFrame={line2Delay ?? (textDelayFrames !== undefined ? textDelayFrames + 8 : 42)}
+              startFrame={textDelayFrames ?? 34}
             />
           </div>
-          {tagline && (
-            <div
-              style={{
-                fontFamily,
-                fontSize: taglineSize,
-                letterSpacing: `${Math.max(0.04, letterSpacing * 0.6)}em`,
-                color: taglineColor ?? accentColor,
-                textTransform: 'uppercase',
-                marginTop: 6,
-              }}
-            >
-              <AnimatedTextLine
-                text={tagline}
-                fontFamily={fontFamily}
-                fontSize={taglineSize}
-                letterSpacing={Math.max(0.04, letterSpacing * 0.6)}
-                color="inherit"
-                accentColor={accentColor}
-                animation={textAnimation}
-                startFrame={line3Delay ?? (textDelayFrames !== undefined ? textDelayFrames + 16 : 50)}
-                isSubtitle
-              />
-            </div>
-          )}
         </div>
       </div>
     </AbsoluteFill>

@@ -28,28 +28,19 @@ const LETTER_DIRECTIONS: Record<LogoLetterData['id'], ExpandDirection> = {
 export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
   headline,
   subtitle,
-  tagline,
-  projectCode,
-  scaleText,
   accentColor,
   primaryColor,
-  taglineColor,
   backgroundColor,
   fontFamily = "'Inter', sans-serif",
-  headlineSize = 64,
-  subtitleSize = 40,
-  taglineSize = 28,
+  headlineSize = 19,
+  subtitleSize = 12,
   letterSpacing = 0.4,
   textOffsetX = 0,
   textOffsetY = 0,
   textAlign = 'center',
   textAnimation = 'char-wave',
   textDelayFrames,
-  line1Delay,
-  line2Delay,
-  line3Delay,
   showLogo = true,
-  aspectRatio = '16:9',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -138,18 +129,14 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
       )}
 
       {/* Customizable Animated Bottom Text */}
-      {/* Customizable Architectural Kinetic Caption */}
       <SceneCaption
         headline={headline}
         subtitle={subtitle}
-        tagline={tagline}
         primaryColor={primaryColor}
         accentColor={accentColor}
-        taglineColor={taglineColor}
         fontFamily={fontFamily}
         headlineSize={headlineSize}
         subtitleSize={subtitleSize}
-        taglineSize={taglineSize}
         letterSpacing={letterSpacing}
         textOffsetX={textOffsetX}
         textOffsetY={textOffsetY}
@@ -157,9 +144,6 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
         textAnimation={textAnimation}
         baseTop={offsetY + renderedHeight + 58}
         delayFrames={textDelayFrames !== undefined ? textDelayFrames : BIRIM_LETTERS.length * STAGGER_FRAMES + 10}
-        line1Delay={line1Delay}
-        line2Delay={line2Delay}
-        line3Delay={line3Delay}
         showLogo={showLogo}
       />
     </AbsoluteFill>

@@ -1,4 +1,4 @@
-import { SceneCaption } from '../components/SceneCaption';
+import { AnimatedTextLine } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -13,28 +13,15 @@ import { ArchitecturalSceneProps } from '../types/schema';
 export const SplitScreenShutter: React.FC<ArchitecturalSceneProps> = ({
   headline,
   subtitle,
-  tagline,
-  projectCode,
-  scaleText,
   accentColor,
   primaryColor,
-  taglineColor,
-  backgroundColor,
   fontFamily = "'Inter', sans-serif",
-  headlineSize = 64,
-  subtitleSize = 40,
-  taglineSize = 28,
-  letterSpacing = 0.4,
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
-  textAlign = 'center',
   textAnimation = 'char-wave',
-  textDelayFrames,
-  line1Delay,
-  line2Delay,
-  line3Delay,
-  showLogo = true,
-  aspectRatio = '16:9',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -63,8 +50,7 @@ export const SplitScreenShutter: React.FC<ArchitecturalSceneProps> = ({
   return (
     <AbsoluteFill style={{ backgroundColor: '#0A0B0E', overflow: 'hidden' }}>
       {/* Center Macro-to-Normal Logo */}
-      {showLogo !== false && (
-<svg width="1920" height="1080" viewBox="0 0 1920 1080">
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
         <g
           transform={`translate(960, 520) scale(${macroZoom}) translate(-960, -520)`}
         >
@@ -94,32 +80,69 @@ export const SplitScreenShutter: React.FC<ArchitecturalSceneProps> = ({
         </g>
       </svg>
 
-      )}
-
-            {/* Customizable Architectural Kinetic Caption */}
-      <SceneCaption
-        headline={headline}
-        subtitle={subtitle}
-        tagline={tagline}
-        primaryColor={primaryColor}
-        accentColor={accentColor}
-        taglineColor={taglineColor}
-        fontFamily={fontFamily}
-        headlineSize={headlineSize}
-        subtitleSize={subtitleSize}
-        taglineSize={taglineSize}
-        letterSpacing={letterSpacing}
-        textOffsetX={textOffsetX}
-        textOffsetY={textOffsetY}
-        textAlign={textAlign}
-        textAnimation={textAnimation}
-        baseTop={1080 - 210}
-        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 32}
-        line1Delay={line1Delay}
-        line2Delay={line2Delay}
-        line3Delay={line3Delay}
-        showLogo={showLogo}
-      />
+      {/* Modern Framed Typography */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 110,
+          left: offsetX,
+          width: renderedWidth,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          opacity: textSpring,
+          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [20, 0])}px)`,
+          borderTop: '1px solid rgba(255,255,255,0.12)',
+          paddingTop: 20,
+        }}
+      >
+        <div
+          style={{
+            fontFamily,
+            fontSize: headlineSize,
+            fontWeight: 600,
+            letterSpacing: `${letterSpacing}em`,
+            color: primaryColor,
+            textTransform: 'uppercase',
+          }}
+        >
+          <AnimatedTextLine
+            text={headline}
+            fontFamily={fontFamily}
+            fontSize={headlineSize}
+            letterSpacing={letterSpacing}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={34}
+          />
+        </div>
+        <div
+          style={{
+            padding: '6px 18px',
+            borderRadius: 999,
+            backgroundColor: accentColor,
+            color: '#0A0B0E',
+            fontFamily,
+            fontSize: subtitleSize,
+            fontWeight: 700,
+            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
+            textTransform: 'uppercase',
+          }}
+        >
+          <AnimatedTextLine
+            text={subtitle}
+            fontFamily={fontFamily}
+            fontSize={subtitleSize}
+            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={42}
+            isSubtitle
+          />
+        </div>
+      </div>
     </AbsoluteFill>
   );
 };

@@ -1,4 +1,4 @@
-import { SceneCaption } from '../components/SceneCaption';
+import { AnimatedTextLine } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -14,28 +14,14 @@ import { ArchitecturalSceneProps } from '../types/schema';
 export const LiquidInkSpread: React.FC<ArchitecturalSceneProps> = ({
   headline,
   subtitle,
-  tagline,
-  projectCode,
-  scaleText,
   accentColor,
-  primaryColor,
-  taglineColor,
-  backgroundColor,
   fontFamily = "'Inter', sans-serif",
-  headlineSize = 64,
-  subtitleSize = 40,
-  taglineSize = 28,
-  letterSpacing = 0.4,
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
-  textAlign = 'center',
   textAnimation = 'char-wave',
-  textDelayFrames,
-  line1Delay,
-  line2Delay,
-  line3Delay,
-  showLogo = true,
-  aspectRatio = '16:9',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -67,8 +53,7 @@ export const LiquidInkSpread: React.FC<ArchitecturalSceneProps> = ({
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#F7F5F0', overflow: 'hidden' }}>
-      {showLogo !== false && (
-<svg width="1920" height="1080" viewBox="0 0 1920 1080">
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
         <defs>
           <clipPath id="inversion-portal-clip">
             <circle cx={960} cy={504} r={portalRadius} />
@@ -110,32 +95,65 @@ export const LiquidInkSpread: React.FC<ArchitecturalSceneProps> = ({
         )}
       </svg>
 
-      )}
-
-            {/* Customizable Architectural Kinetic Caption */}
-      <SceneCaption
-        headline={headline}
-        subtitle={subtitle}
-        tagline={tagline}
-        primaryColor={primaryColor}
-        accentColor={accentColor}
-        taglineColor={taglineColor}
-        fontFamily={fontFamily}
-        headlineSize={headlineSize}
-        subtitleSize={subtitleSize}
-        taglineSize={taglineSize}
-        letterSpacing={letterSpacing}
-        textOffsetX={textOffsetX}
-        textOffsetY={textOffsetY}
-        textAlign={textAlign}
-        textAnimation={textAnimation}
-        baseTop={offsetY + renderedHeight + 58}
-        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 32}
-        line1Delay={line1Delay}
-        line2Delay={line2Delay}
-        line3Delay={line3Delay}
-        showLogo={showLogo}
-      />
+      {/* Dynamic Inverted Caption */}
+      <div
+        style={{
+          position: 'absolute',
+          top: offsetY + renderedHeight + 58,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 10,
+          opacity: textSpring,
+          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [16, 0])}px)`,
+        }}
+      >
+        <div
+          style={{
+            fontFamily,
+            fontSize: headlineSize,
+            fontWeight: 500,
+            letterSpacing: `${letterSpacing}em`,
+            color: portalRadius > 450 ? '#F7F5F0' : '#0B0C0E',
+            textTransform: 'uppercase',
+          }}
+        >
+          <AnimatedTextLine
+            text={headline}
+            fontFamily={fontFamily}
+            fontSize={headlineSize}
+            letterSpacing={letterSpacing}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={34}
+          />
+        </div>
+        <div
+          style={{
+            fontFamily,
+            fontSize: subtitleSize,
+            fontWeight: 500,
+            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
+            color: accentColor,
+            textTransform: 'uppercase',
+          }}
+        >
+          <AnimatedTextLine
+            text={subtitle}
+            fontFamily={fontFamily}
+            fontSize={subtitleSize}
+            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={42}
+            isSubtitle
+          />
+        </div>
+      </div>
     </AbsoluteFill>
   );
 };

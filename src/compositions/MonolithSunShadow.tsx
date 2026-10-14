@@ -1,4 +1,4 @@
-import { SceneCaption } from '../components/SceneCaption';
+import { AnimatedTextLine } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -18,28 +18,16 @@ const EXTRUSION_STEPS = 12;
 export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = ({
   headline,
   subtitle,
-  tagline,
   projectCode,
   scaleText,
   accentColor,
-  primaryColor = '#181715',
-  taglineColor,
-  backgroundColor,
   fontFamily = "'Inter', sans-serif",
-  headlineSize = 64,
-  subtitleSize = 40,
-  taglineSize = 28,
-  letterSpacing = 0.4,
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
-  textAlign = 'center',
   textAnimation = 'char-wave',
-  textDelayFrames,
-  line1Delay,
-  line2Delay,
-  line3Delay,
-  showLogo = true,
-  aspectRatio = '16:9',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -215,30 +203,79 @@ export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = ({
         </g>
       </svg>
 
-      {/* Customizable Architectural Kinetic Caption */}
-      <SceneCaption
-        headline={headline}
-        subtitle={subtitle}
-        tagline={tagline}
-        primaryColor={primaryColor}
-        accentColor={accentColor}
-        taglineColor={taglineColor}
-        fontFamily={fontFamily}
-        headlineSize={headlineSize}
-        subtitleSize={subtitleSize}
-        taglineSize={taglineSize}
-        letterSpacing={letterSpacing}
-        textOffsetX={textOffsetX}
-        textOffsetY={textOffsetY}
-        textAlign={textAlign}
-        textAnimation={textAnimation}
-        baseTop={1080 - 230}
-        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 34}
-        line1Delay={line1Delay}
-        line2Delay={line2Delay}
-        line3Delay={line3Delay}
-        showLogo={showLogo}
-      />
+      {/* Editorial Architectural Title Block */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 135,
+          left: 112,
+          right: 112,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          borderTop: '1px solid rgba(26, 25, 23, 0.2)',
+          paddingTop: 22,
+          transform: `translate(${textOffsetX}px, ${textOffsetY}px)`,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
+              fontSize: 28,
+              fontWeight: 600,
+              letterSpacing: '0.28em',
+              color: '#181715',
+              textTransform: 'uppercase',
+            }}
+          >
+            <AnimatedTextLine
+            text={headline}
+            fontFamily={fontFamily}
+            fontSize={headlineSize}
+            letterSpacing={letterSpacing}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={34}
+          />
+          </div>
+          <div
+            style={{
+              fontFamily,
+              fontSize: headlineSize,
+              letterSpacing: `${letterSpacing}em`,
+              color: '#9E6B3B',
+              marginTop: 6,
+            }}
+          >
+            <AnimatedTextLine
+            text={subtitle}
+            fontFamily={fontFamily}
+            fontSize={subtitleSize}
+            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={42}
+            isSubtitle
+          />
+          </div>
+        </div>
+
+        <div
+          style={{
+            fontFamily,
+            fontSize: subtitleSize,
+            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
+            color: '#181715',
+            textAlign: 'right',
+          }}
+        >
+          <div>MALZEME // BRÜT BETON &amp; TRAVERTEN</div>
+          <div style={{ color: '#9E6B3B', marginTop: 4 }}>KOT // +12.50M MONOLİT CEPHE</div>
+        </div>
+      </div>
     </AbsoluteFill>
   );
 };

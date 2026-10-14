@@ -1,4 +1,4 @@
-import { SceneCaption } from '../components/SceneCaption';
+import { AnimatedTextLine } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -14,28 +14,15 @@ import { ArchitecturalSceneProps } from '../types/schema';
 export const SpotlightDarkroomReveal: React.FC<ArchitecturalSceneProps> = ({
   headline,
   subtitle,
-  tagline,
-  projectCode,
-  scaleText,
   accentColor,
   primaryColor,
-  taglineColor,
-  backgroundColor,
   fontFamily = "'Inter', sans-serif",
-  headlineSize = 64,
-  subtitleSize = 40,
-  taglineSize = 28,
-  letterSpacing = 0.4,
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
-  textAlign = 'center',
   textAnimation = 'char-wave',
-  textDelayFrames,
-  line1Delay,
-  line2Delay,
-  line3Delay,
-  showLogo = true,
-  aspectRatio = '16:9',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -73,30 +60,129 @@ export const SpotlightDarkroomReveal: React.FC<ArchitecturalSceneProps> = ({
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#060608', overflow: 'hidden' }}>
-            {/* Customizable Architectural Kinetic Caption */}
-      <SceneCaption
-        headline={headline}
-        subtitle={subtitle}
-        tagline={tagline}
-        primaryColor={primaryColor}
-        accentColor={accentColor}
-        taglineColor={taglineColor}
-        fontFamily={fontFamily}
-        headlineSize={headlineSize}
-        subtitleSize={subtitleSize}
-        taglineSize={taglineSize}
-        letterSpacing={letterSpacing}
-        textOffsetX={textOffsetX}
-        textOffsetY={textOffsetY}
-        textAlign={textAlign}
-        textAnimation={textAnimation}
-        baseTop={offsetY + renderedHeight + 58}
-        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 32}
-        line1Delay={line1Delay}
-        line2Delay={line2Delay}
-        line3Delay={line3Delay}
-        showLogo={showLogo}
+      {/* Ambient Stage Spotlight Cone */}
+      <div
+        style={{
+          position: 'absolute',
+          left: offsetX + lightX * scale,
+          top: offsetY + (LOGO_VIEWBOX.height / 2) * scale,
+          width: lightRadius * scale * 2.2,
+          height: lightRadius * scale * 1.6,
+          transform: 'translate(-50%, -50%)',
+          background: `radial-gradient(circle, ${accentColor}26 0%, rgba(255,255,255,0.04) 45%, transparent 72%)`,
+          filter: 'blur(40px)',
+          pointerEvents: 'none',
+        }}
       />
+
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+        <defs>
+          <radialGradient
+            id="spotlight-grad"
+            gradientUnits="userSpaceOnUse"
+            cx={lightX}
+            cy={LOGO_VIEWBOX.height / 2}
+            r={lightRadius}
+          >
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
+            <stop offset="55%" stopColor={primaryColor} stopOpacity="0.85" />
+            <stop offset="82%" stopColor={accentColor} stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#141418" stopOpacity="0.06" />
+          </radialGradient>
+        </defs>
+
+        <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>
+          {/* Dynamic Opposite Cast Shadow per Letter based on Spotlight Position */}
+          {BIRIM_LETTERS.map((letter) => {
+            const dx = (letter.centerX - lightX) * 0.045;
+            const dist = Math.abs(letter.centerX - lightX);
+            const shadowAlpha = interpolate(dist, [0, 180], [0.55, 0.05], {
+              extrapolateLeft: 'clamp',
+              extrapolateRight: 'clamp',
+            });
+
+            return (
+              <path
+                key={`shadow-${letter.id}`}
+                d={letter.compoundPath}
+                fill="#000000"
+                fillRule="evenodd"
+                opacity={shadowAlpha}
+                transform={`translate(${dx}, 4.5)`}
+              />
+            );
+          })}
+
+          {/* Spotlight-Illuminated Core Silhouette */}
+          <path
+            d={FULL_LOGO_PATH}
+            fill="url(#spotlight-grad)"
+            stroke="url(#spotlight-grad)"
+            strokeWidth={0.45}
+            fillRule="evenodd"
+          />
+        </g>
+      </svg>
+
+      {/* Studio Caption */}
+      <div
+        style={{
+          position: 'absolute',
+          top: offsetY + renderedHeight + 58,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 10,
+          opacity: textSpring,
+          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [16, 0])}px)`,
+        }}
+      >
+        <div
+          style={{
+            fontFamily,
+            fontSize: headlineSize,
+            fontWeight: 400,
+            letterSpacing: `${letterSpacing}em`,
+            color: primaryColor,
+            textTransform: 'uppercase',
+          }}
+        >
+          <AnimatedTextLine
+            text={headline}
+            fontFamily={fontFamily}
+            fontSize={headlineSize}
+            letterSpacing={letterSpacing}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={34}
+          />
+        </div>
+        <div
+          style={{
+            fontFamily,
+            fontSize: subtitleSize,
+            fontWeight: 400,
+            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
+            color: accentColor,
+            textTransform: 'uppercase',
+          }}
+        >
+          <AnimatedTextLine
+            text={subtitle}
+            fontFamily={fontFamily}
+            fontSize={subtitleSize}
+            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
+            color="inherit"
+            accentColor={accentColor}
+            animation={textAnimation}
+            startFrame={42}
+            isSubtitle
+          />
+        </div>
+      </div>
     </AbsoluteFill>
   );
 };
