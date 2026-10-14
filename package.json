@@ -1,0 +1,37 @@
+{
+  "name": "birim-architectural-motion",
+  "version": "1.0.0",
+  "description": "BİRİM Logo (DXF) - Modern & Architectural Remotion Motion Graphics Suite",
+  "private": true,
+  "scripts": {
+    "dev": "remotion studio",
+    "dev:web": "vite",
+    "build": "vite build",
+    "build:remotion": "remotion bundle",
+    "render:blueprint": "remotion render src/index.ts 01-CAD-Blueprint-Draft out/01-blueprint.mp4",
+    "render:monolith": "remotion render src/index.ts 02-Monolith-Sun-Shadow out/02-monolith.mp4",
+    "render:section": "remotion render src/index.ts 03-Laser-Section-Cut out/03-section.mp4",
+    "render:facade": "remotion render src/index.ts 04-Modular-Kinetic-Facade out/04-facade.mp4",
+    "render:lower-third": "remotion render src/index.ts 05-Architectural-Lower-Third out/05-lower-third.webm --image-format=png --pixel-format=yuva420p",
+    "render:showcase": "remotion render src/index.ts 26-Master-Showcase-Reel out/26-master-showcase.mp4",
+    "convert:dxf": "python scripts/convert-dxf.py",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.272",
+    "@remotion/paths": "4.0.272",
+    "@remotion/player": "4.0.272",
+    "@remotion/zod-types": "4.0.272",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.272",
+    "zod": "3.22.3"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "4.3.3",
+    "typescript": "5.6.3",
+    "vite": "5.4.11"
+  }
+}
