@@ -1,4 +1,4 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
+import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -12,30 +12,29 @@ import { FULL_LOGO_PATH, LOGO_VIEWBOX } from '../data/birimLogoPaths';
 import { ArchitecturalGrid } from '../components/ArchitecturalGrid';
 import { ArchitecturalSceneProps } from '../types/schema';
 
-export const LaserSectionCut: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  projectCode,
-  scaleText,
-  accentColor,
-  primaryColor,
-  backgroundColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAnimation = 'char-wave',
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const LaserSectionCut: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    projectCode,
+    scaleText,
+    accentColor,
+    primaryColor,
+    backgroundColor,
+    textDelayFrames,
+    showLogo = true,
+  } = props;
 
-  const scale = 2.85;
+  const frame = useCurrentFrame();
+  const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
+
+  const isVertical = compHeight > compWidth;
+  const isSquare = compWidth === compHeight;
+  const scale = isVertical ? 1.8 : isSquare ? 2.0 : 2.85;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
-  const offsetX = (1920 - renderedWidth) / 2;
-  const offsetY = (1080 - renderedHeight) / 2 - 30;
+  const offsetX = (compWidth - renderedWidth) / 2;
+  const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 30);
+
+  const isTransparent = backgroundColor === 'transparent';
 
   // Section line X in logo coordinate space (0 -> LOGO_VIEWBOX.width)
   const cutProgress = interpolate(frame, [10, 95], [0, 1.05], {
@@ -70,7 +69,8 @@ export const LaserSectionCut: React.FC<ArchitecturalSceneProps> = ({
         showAxes={false}
       />
 
-      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+      {showLogo !== false && (
+        <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <defs>
           {/* Architectural 45° Cross-Section Hatch Pattern */}
           <pattern
@@ -254,86 +254,15 @@ export const LaserSectionCut: React.FC<ArchitecturalSceneProps> = ({
           </g>
         </g>
       </svg>
+      )}
 
-      {/* Bottom Architectural Section Specification Box */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 135,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          opacity: badgeSpring,
-          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(badgeSpring, [0, 1], [20, 0])}px)`,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 36,
-            padding: '16px 36px',
-            border: `1px solid ${accentColor}`,
-            backgroundColor: 'rgba(11, 13, 16, 0.88)',
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontFamily: "'JetBrains Mono', 'Consolas', monospace",
-                fontSize: 11,
-                color: accentColor,
-                letterSpacing: '0.2em',
-              }}
-            >
-              KESİT DÜZLEMİ // A—A
-            </div>
-            <div
-              style={{
-                fontFamily,
-                fontSize: headlineSize,
-                fontWeight: 600,
-                color: primaryColor,
-                letterSpacing: `${letterSpacing}em`,
-                marginTop: 4,
-              }}
-            >
-              <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
-            </div>
-          </div>
-          <div style={{ width: 1, height: 38, backgroundColor: 'rgba(200, 157, 102, 0.35)' }} />
-          <div
-            style={{
-              fontFamily,
-              fontSize: subtitleSize,
-              color: primaryColor,
-              letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-            }}
-          >
-            <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
-          </div>
-        </div>
-      </div>
+      {/* Dynamic Architecture Caption */}
+      <SceneCaption
+        {...props}
+        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 50}
+        showLogo={showLogo}
+        baseTop={offsetY + renderedHeight + 58}
+      />
     </AbsoluteFill>
   );
 };

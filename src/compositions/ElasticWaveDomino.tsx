@@ -10,32 +10,32 @@ import { BIRIM_LETTERS, LOGO_VIEWBOX } from '../data/birimLogoPaths';
 import { ArchitecturalSceneProps } from '../types/schema';
 import { SceneCaption } from '../components/SceneCaption';
 
-export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  accentColor,
-  primaryColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAlign = 'center',
-  textAnimation = 'char-wave',
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    accentColor,
+    primaryColor,
+    backgroundColor,
+    textDelayFrames,
+    showLogo = true,
+  } = props;
 
-  const scale = 2.9;
+  const frame = useCurrentFrame();
+  const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
+
+  const isVertical = compHeight > compWidth;
+  const isSquare = compWidth === compHeight;
+  const scale = isVertical ? 2.0 : isSquare ? 2.2 : 2.9;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
-  const offsetX = (1920 - renderedWidth) / 2;
-  const offsetY = (1080 - renderedHeight) / 2 - 42;
+  const offsetX = (compWidth - renderedWidth) / 2;
+  const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 42);
+
+  const isTransparent = backgroundColor === 'transparent';
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#0E1117', overflow: 'hidden' }}>
-      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#0E1117'), overflow: 'hidden' }}>
+      {showLogo !== false && (
+        <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>
           {BIRIM_LETTERS.map((letter, idx) => {
             const flip = spring({
@@ -72,22 +72,13 @@ export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
           })}
         </g>
       </svg>
+      )}
 
       <SceneCaption
-        headline={headline}
-        subtitle={subtitle}
-        primaryColor={primaryColor}
-        accentColor={accentColor}
-        fontFamily={fontFamily}
-        headlineSize={headlineSize}
-        subtitleSize={subtitleSize}
-        letterSpacing={letterSpacing}
-        textOffsetX={textOffsetX}
-        textOffsetY={textOffsetY}
-        textAlign={textAlign}
-        textAnimation={textAnimation}
+        {...props}
         baseTop={offsetY + renderedHeight + 52}
-        delayFrames={28}
+        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 28}
+        showLogo={showLogo}
       />
     </AbsoluteFill>
   );

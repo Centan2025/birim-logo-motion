@@ -1,4 +1,4 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
+import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -12,27 +12,27 @@ import { evolvePath } from '@remotion/paths';
 import { BIRIM_LETTERS, FULL_LOGO_PATH, LOGO_VIEWBOX } from '../data/birimLogoPaths';
 import { ArchitecturalSceneProps } from '../types/schema';
 
-export const LiquidChromeSweep: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  accentColor,
-  primaryColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAnimation = 'char-wave',
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const LiquidChromeSweep: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    accentColor,
+    primaryColor,
+    backgroundColor,
+    textDelayFrames,
+    showLogo = true,
+  } = props;
 
-  const scale = 2.9;
+  const frame = useCurrentFrame();
+  const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
+
+  const isVertical = compHeight > compWidth;
+  const isSquare = compWidth === compHeight;
+  const scale = isVertical ? 2.0 : isSquare ? 2.2 : 2.9;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
-  const offsetX = (1920 - renderedWidth) / 2;
-  const offsetY = (1080 - renderedHeight) / 2 - 28;
+  const offsetX = (compWidth - renderedWidth) / 2;
+  const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 28);
+
+  const isTransparent = backgroundColor === 'transparent';
 
   // Subtle camera push-in
   const camScale = interpolate(frame, [0, 150], [0.94, 1.02], {
@@ -53,14 +53,6 @@ export const LiquidChromeSweep: React.FC<ArchitecturalSceneProps> = ({
     extrapolateRight: 'clamp',
     easing: Easing.out(Easing.cubic),
   });
-
-  const textSpring = spring({
-    frame: frame - 55,
-    fps,
-    config: { damping: 24, stiffness: 90 },
-  });
-
-  const letterSpacingEm = interpolate(textSpring, [0, 1], [0.1, letterSpacing]);
 
   return (
     <AbsoluteFill
@@ -85,7 +77,8 @@ export const LiquidChromeSweep: React.FC<ArchitecturalSceneProps> = ({
       />
 
       <AbsoluteFill style={{ transform: `scale(${camScale})` }}>
-        <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+      {showLogo !== false && (
+        <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
           <defs>
             {/* Base Satin Metallic Fill */}
             <linearGradient id="satin-metal" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -166,75 +159,15 @@ export const LiquidChromeSweep: React.FC<ArchitecturalSceneProps> = ({
             })}
           </g>
         </svg>
+        )}
 
         {/* Minimalist Luxury Tagline */}
-        <div
-          style={{
-            position: 'absolute',
-            top: offsetY + renderedHeight + 68,
-            left: 0,
-            right: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            opacity: textSpring,
-            transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [18, 0])}px)`,
-          }}
-        >
-          <div
-            style={{
-              fontFamily,
-              fontSize: headlineSize,
-              fontWeight: 300,
-              letterSpacing: `${letterSpacingEm}em`,
-              color: primaryColor,
-              textTransform: 'uppercase',
-            }}
-          >
-            <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
-          </div>
-          <div
-            style={{
-              width: interpolate(textSpring, [0, 1], [0, 48]),
-              height: 1.5,
-              backgroundColor: accentColor,
-              marginTop: 16,
-              marginBottom: 14,
-              opacity: 0.85,
-            }}
-          />
-          <div
-            style={{
-              fontFamily,
-              fontSize: subtitleSize,
-              fontWeight: 400,
-              letterSpacing: '0.32em',
-              color: 'rgba(244, 241, 234, 0.55)',
-              textTransform: 'uppercase',
-            }}
-          >
-            <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
-          </div>
-        </div>
+        <SceneCaption
+          {...props}
+          delayFrames={textDelayFrames !== undefined ? textDelayFrames : 34}
+          showLogo={showLogo}
+          baseTop={offsetY + renderedHeight + 58}
+        />
       </AbsoluteFill>
     </AbsoluteFill>
   );

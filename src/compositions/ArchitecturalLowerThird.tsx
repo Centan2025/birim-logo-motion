@@ -15,6 +15,7 @@ import { LowerThirdProps } from '../types/schema';
 export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
   projectTitle,
   architecturalPhase,
+  tagline,
   locationYear,
   accentColor,
   primaryColor,
@@ -22,11 +23,13 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
   fontFamily = "'Inter', sans-serif",
   headlineSize = 19,
   subtitleSize = 12,
+  taglineSize,
   letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
   textAnimation = 'char-wave',
   textDelayFrames,
+  showLogo = true,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -142,67 +145,69 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
         }}
       >
         {/* Left Cell: Animated BİRİM Vector Logo */}
-        <div
-          style={{
-            padding: '24px 32px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            borderRight: '1px solid rgba(244, 241, 234, 0.15)',
-          }}
-        >
-          <svg
-            width={LOGO_VIEWBOX.width * 0.48}
-            height={LOGO_VIEWBOX.height * 0.48}
-            viewBox={`0 0 ${LOGO_VIEWBOX.width} ${LOGO_VIEWBOX.height}`}
-          >
-            {BIRIM_LETTERS.map((letter, idx) => {
-              const p = interpolate(
-                frame,
-                [4 + idx * 4, 28 + idx * 4],
-                [0, 1],
-                {
-                  extrapolateLeft: 'clamp',
-                  extrapolateRight: 'clamp',
-                  easing: Easing.out(Easing.cubic),
-                }
-              );
-              const evolved = evolvePath(p, letter.outerPath);
-              return (
-                <g key={letter.id}>
-                  <path
-                    d={letter.compoundPath}
-                    fill="#F4F1EA"
-                    fillRule="evenodd"
-                    opacity={interpolate(frame, [22 + idx * 3, 38 + idx * 3], [0, 1], {
-                      extrapolateLeft: 'clamp',
-                      extrapolateRight: 'clamp',
-                    })}
-                  />
-                  <path
-                    d={letter.outerPath}
-                    fill="none"
-                    stroke={accentColor}
-                    strokeWidth={2}
-                    strokeDasharray={evolved.strokeDasharray}
-                    strokeDashoffset={evolved.strokeDashoffset}
-                  />
-                </g>
-              );
-            })}
-          </svg>
+        {showLogo !== false && (
           <div
             style={{
-              fontFamily: "'JetBrains Mono', 'Consolas', monospace",
-              fontSize: 9,
-              letterSpacing: '0.26em',
-              color: accentColor,
-              marginTop: 8,
+              padding: '24px 32px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              borderRight: '1px solid rgba(244, 241, 234, 0.15)',
             }}
           >
-            MİMARLIK &amp; TASARIM
+            <svg
+              width={LOGO_VIEWBOX.width * 0.48}
+              height={LOGO_VIEWBOX.height * 0.48}
+              viewBox={`0 0 ${LOGO_VIEWBOX.width} ${LOGO_VIEWBOX.height}`}
+            >
+              {BIRIM_LETTERS.map((letter, idx) => {
+                const p = interpolate(
+                  frame,
+                  [4 + idx * 4, 28 + idx * 4],
+                  [0, 1],
+                  {
+                    extrapolateLeft: 'clamp',
+                    extrapolateRight: 'clamp',
+                    easing: Easing.out(Easing.cubic),
+                  }
+                );
+                const evolved = evolvePath(p, letter.outerPath);
+                return (
+                  <g key={letter.id}>
+                    <path
+                      d={letter.compoundPath}
+                      fill="#F4F1EA"
+                      fillRule="evenodd"
+                      opacity={interpolate(frame, [22 + idx * 3, 38 + idx * 3], [0, 1], {
+                        extrapolateLeft: 'clamp',
+                        extrapolateRight: 'clamp',
+                      })}
+                    />
+                    <path
+                      d={letter.outerPath}
+                      fill="none"
+                      stroke={accentColor}
+                      strokeWidth={2}
+                      strokeDasharray={evolved.strokeDasharray}
+                      strokeDashoffset={evolved.strokeDashoffset}
+                    />
+                  </g>
+                );
+              })}
+            </svg>
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', 'Consolas', monospace",
+                fontSize: 9,
+                letterSpacing: '0.26em',
+                color: accentColor,
+                marginTop: 8,
+              }}
+            >
+              MİMARLIK &amp; TASARIM
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Right Cell: Dynamic Video Text Metadata */}
         <div
@@ -257,6 +262,30 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
               startFrame={textDelayFrames ?? 34}
             />
           </div>
+          {tagline && (
+            <div
+              style={{
+                fontFamily,
+                fontSize: taglineSize ?? Math.round(subtitleSize * 0.85),
+                letterSpacing: `${letterSpacing}em`,
+                color: 'rgba(244, 241, 234, 0.65)',
+                textTransform: 'uppercase',
+                marginTop: 6,
+              }}
+            >
+              <AnimatedTextLine
+                text={tagline}
+                fontFamily={fontFamily}
+                fontSize={taglineSize ?? Math.round(subtitleSize * 0.85)}
+                letterSpacing={letterSpacing}
+                color="inherit"
+                accentColor={accentColor}
+                animation={textAnimation}
+                startFrame={(textDelayFrames ?? 34) + 16}
+                isSubtitle
+              />
+            </div>
+          )}
         </div>
       </div>
     </AbsoluteFill>

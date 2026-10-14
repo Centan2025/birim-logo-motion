@@ -1,4 +1,4 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
+import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -10,38 +10,32 @@ import {
 import { BIRIM_LETTERS, LOGO_VIEWBOX } from '../data/birimLogoPaths';
 import { ArchitecturalSceneProps } from '../types/schema';
 
-export const MinimalStaggerMorph: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  accentColor,
-  primaryColor,
-  backgroundColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAnimation = 'char-wave',
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const MinimalStaggerMorph: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    accentColor,
+    primaryColor,
+    backgroundColor,
+    textDelayFrames,
+    showLogo = true,
+  } = props;
 
-  const scale = 2.95;
+  const frame = useCurrentFrame();
+  const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
+
+  const isVertical = compHeight > compWidth;
+  const isSquare = compWidth === compHeight;
+  const scale = isVertical ? 2.0 : isSquare ? 2.2 : 2.95;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
-  const offsetX = (1920 - renderedWidth) / 2;
-  const offsetY = (1080 - renderedHeight) / 2 - 36;
+  const offsetX = (compWidth - renderedWidth) / 2;
+  const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 36);
 
-  const textSpring = spring({
-    frame: frame - 46,
-    fps,
-    config: { damping: 22, stiffness: 100 },
-  });
+  const isTransparent = backgroundColor === 'transparent';
 
   return (
-    <AbsoluteFill style={{ backgroundColor }}>
-      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : backgroundColor }}>
+      {showLogo !== false && (
+        <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <defs>
           {BIRIM_LETTERS.map((letter, idx) => {
             const morph = spring({
@@ -110,74 +104,15 @@ export const MinimalStaggerMorph: React.FC<ArchitecturalSceneProps> = ({
           })}
         </g>
       </svg>
+      )}
 
       {/* Ultra-Clean Modern Minimalist Caption */}
-      <div
-        style={{
-          position: 'absolute',
-          top: offsetY + renderedHeight + 56,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: 20,
-          opacity: textSpring,
-          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [16, 0])}px)`,
-        }}
-      >
-        <span
-          style={{
-            fontFamily,
-            fontSize: headlineSize,
-            fontWeight: 500,
-            letterSpacing: `${letterSpacing}em`,
-            color: primaryColor,
-            textTransform: 'uppercase',
-          }}
-        >
-          <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
-        </span>
-        <span
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            backgroundColor: accentColor,
-          }}
-        />
-        <span
-          style={{
-            fontFamily,
-            fontSize: subtitleSize,
-            fontWeight: 400,
-            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-            color: accentColor,
-            textTransform: 'uppercase',
-          }}
-        >
-          <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
-        </span>
-      </div>
+      <SceneCaption
+        {...props}
+        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 34}
+        showLogo={showLogo}
+        baseTop={offsetY + renderedHeight + 58}
+      />
     </AbsoluteFill>
   );
 };

@@ -14,16 +14,23 @@ import { LowerThirdProps } from '../types/schema';
 export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
   projectTitle,
   architecturalPhase,
+  tagline,
   locationYear,
   accentColor,
   transparentBackground,
   fontFamily = "'Inter', sans-serif",
   headlineSize = 19,
   subtitleSize = 12,
+  taglineSize,
   letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
   textAnimation = 'char-wave',
+  textDelayFrames,
+  line1Delay,
+  line2Delay,
+  line3Delay,
+  showLogo = true,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -52,6 +59,11 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
   );
 
   const masterAlpha = enter * exit;
+
+  const baseDelay = textDelayFrames ?? 34;
+  const l1Delay = line1Delay ?? baseDelay;
+  const l2Delay = line2Delay ?? (baseDelay + 8);
+  const l3Delay = line3Delay ?? (baseDelay + 16);
 
   return (
     <AbsoluteFill
@@ -116,7 +128,7 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
           left: 68,
           display: 'flex',
           alignItems: 'center',
-          padding: '16px 28px 16px 20px',
+          padding: showLogo !== false ? '16px 28px 16px 20px' : '16px 32px',
           borderRadius: 28,
           backgroundColor: 'rgba(18, 20, 26, 0.82)',
           border: '1px solid rgba(255, 255, 255, 0.14)',
@@ -127,45 +139,47 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
         }}
       >
         {/* Dark Accent Badge with BİRİM Logo */}
-        <div
-          style={{
-            padding: '18px 26px',
-            borderRadius: 18,
-            backgroundColor: 'rgba(255, 255, 255, 0.06)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <svg
-            width={LOGO_VIEWBOX.width * 0.42}
-            height={LOGO_VIEWBOX.height * 0.42}
-            viewBox={`0 0 ${LOGO_VIEWBOX.width} ${LOGO_VIEWBOX.height}`}
+        {showLogo !== false && (
+          <div
+            style={{
+              padding: '18px 26px',
+              borderRadius: 18,
+              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            {BIRIM_LETTERS.map((letter, idx) => {
-              const lSpring = spring({
-                frame: frame - 4 - idx * 3,
-                fps,
-                config: { damping: 16, stiffness: 120 },
-              });
-              return (
-                <path
-                  key={letter.id}
-                  d={letter.compoundPath}
-                  fill="#FFFFFF"
-                  fillRule="evenodd"
-                  opacity={lSpring}
-                  transform={`translate(0, ${interpolate(lSpring, [0, 1], [16, 0])})`}
-                />
-              );
-            })}
-          </svg>
-        </div>
+            <svg
+              width={LOGO_VIEWBOX.width * 0.42}
+              height={LOGO_VIEWBOX.height * 0.42}
+              viewBox={`0 0 ${LOGO_VIEWBOX.width} ${LOGO_VIEWBOX.height}`}
+            >
+              {BIRIM_LETTERS.map((letter, idx) => {
+                const lSpring = spring({
+                  frame: frame - 4 - idx * 3,
+                  fps,
+                  config: { damping: 16, stiffness: 120 },
+                });
+                return (
+                  <path
+                    key={letter.id}
+                    d={letter.compoundPath}
+                    fill="#FFFFFF"
+                    fillRule="evenodd"
+                    opacity={lSpring}
+                    transform={`translate(0, ${interpolate(lSpring, [0, 1], [16, 0])})`}
+                  />
+                );
+              })}
+            </svg>
+          </div>
+        )}
 
         {/* Expanding Clean Text Block */}
         <div
           style={{
-            marginLeft: 24,
+            marginLeft: showLogo !== false ? 24 : 0,
             maxWidth: interpolate(textExpand, [0, 1], [0, 620]),
             opacity: textExpand,
             overflow: 'hidden',
@@ -187,16 +201,16 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
             }}
           >
             <AnimatedTextLine
-            text={architecturalPhase}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
+              text={architecturalPhase}
+              fontFamily={fontFamily}
+              fontSize={subtitleSize}
+              letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
+              color="inherit"
+              accentColor={accentColor}
+              animation={textAnimation}
+              startFrame={l2Delay}
+              isSubtitle
+            />
           </div>
           <div
             style={{
@@ -208,16 +222,40 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
             }}
           >
             <AnimatedTextLine
-            text={projectTitle}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
+              text={projectTitle}
+              fontFamily={fontFamily}
+              fontSize={headlineSize}
+              letterSpacing={letterSpacing}
+              color="inherit"
+              accentColor={accentColor}
+              animation={textAnimation}
+              startFrame={l1Delay}
+            />
           </div>
+          {tagline && (
+            <div
+              style={{
+                fontFamily,
+                fontSize: taglineSize ?? Math.round(subtitleSize * 0.85),
+                letterSpacing: `${letterSpacing}em`,
+                color: 'rgba(255, 255, 255, 0.65)',
+                textTransform: 'uppercase',
+                marginTop: 4,
+              }}
+            >
+              <AnimatedTextLine
+                text={tagline}
+                fontFamily={fontFamily}
+                fontSize={taglineSize ?? Math.round(subtitleSize * 0.85)}
+                letterSpacing={letterSpacing}
+                color="inherit"
+                accentColor={accentColor}
+                animation={textAnimation}
+                startFrame={l3Delay}
+                isSubtitle
+              />
+            </div>
+          )}
         </div>
       </div>
     </AbsoluteFill>

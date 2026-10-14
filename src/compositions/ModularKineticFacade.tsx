@@ -1,4 +1,4 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
+import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -11,30 +11,29 @@ import { BIRIM_LETTERS, LOGO_VIEWBOX } from '../data/birimLogoPaths';
 import { ArchitecturalGrid } from '../components/ArchitecturalGrid';
 import { ArchitecturalSceneProps } from '../types/schema';
 
-export const ModularKineticFacade: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  projectCode,
-  scaleText,
-  accentColor,
-  primaryColor,
-  backgroundColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAnimation = 'char-wave',
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const ModularKineticFacade: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    projectCode,
+    scaleText,
+    accentColor,
+    primaryColor,
+    backgroundColor,
+    textDelayFrames,
+    showLogo = true,
+  } = props;
 
-  const scale = 2.65;
+  const frame = useCurrentFrame();
+  const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
+
+  const isVertical = compHeight > compWidth;
+  const isSquare = compWidth === compHeight;
+  const scale = isVertical ? 1.8 : isSquare ? 2.0 : 2.65;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
-  const offsetX = (1920 - renderedWidth) / 2;
-  const offsetY = (1080 - renderedHeight) / 2 - 20;
+  const offsetX = (compWidth - renderedWidth) / 2;
+  const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 20);
+
+  const isTransparent = backgroundColor === 'transparent';
 
   return (
     <AbsoluteFill style={{ backgroundColor }}>
@@ -46,7 +45,8 @@ export const ModularKineticFacade: React.FC<ArchitecturalSceneProps> = ({
         showAxes={false}
       />
 
-      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+      {showLogo !== false && (
+        <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>
           {BIRIM_LETTERS.map((letter, idx) => {
             const slideSpring = spring({
@@ -138,62 +138,15 @@ export const ModularKineticFacade: React.FC<ArchitecturalSceneProps> = ({
           })}
         </g>
       </svg>
+      )}
 
-      {/* Top Architectural Axis Header */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 138 + textOffsetY,
-          left: offsetX + textOffsetX,
-          width: renderedWidth,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderBottom: `1px solid rgba(200, 157, 102, 0.35)`,
-          paddingBottom: 14,
-        }}
-      >
-        <div
-          style={{
-            fontFamily,
-            fontSize: headlineSize,
-            fontWeight: 600,
-            letterSpacing: `${letterSpacing}em`,
-            color: primaryColor,
-          }}
-        >
-          <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
-        </div>
-        <div
-          style={{
-            fontFamily,
-            fontSize: subtitleSize,
-            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-            color: accentColor,
-          }}
-        >
-          <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
-        </div>
-      </div>
+      {/* Architectural Caption */}
+      <SceneCaption
+        {...props}
+        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 34}
+        showLogo={showLogo}
+        baseTop={offsetY + renderedHeight + 58}
+      />
     </AbsoluteFill>
   );
 };

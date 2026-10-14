@@ -14,16 +14,23 @@ import { AnimatedTextLine } from '../components/SceneCaption';
 export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
   projectTitle,
   architecturalPhase,
+  tagline,
   locationYear,
   accentColor,
   transparentBackground,
   fontFamily = "'Inter', sans-serif",
   headlineSize = 19,
   subtitleSize = 12,
+  taglineSize,
   letterSpacing = 0.38,
   textOffsetX = 0,
   textOffsetY = 0,
   textAnimation = 'char-wave',
+  textDelayFrames,
+  line1Delay,
+  line2Delay,
+  line3Delay,
+  showLogo = true,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -55,6 +62,11 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
     }
   );
 
+  const baseDelay = textDelayFrames ?? 56;
+  const l1Delay = line1Delay ?? baseDelay;
+  const l2Delay = line2Delay ?? (baseDelay - 8);
+  const l3Delay = line3Delay ?? (baseDelay + 12);
+
   return (
     <AbsoluteFill
       style={{
@@ -72,84 +84,88 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
       )}
 
       {/* Top-Left Corner Pill Backdrop (fades in when logo docks) */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 42,
-          left: 56,
-          height: 72,
-          paddingLeft: 215,
-          paddingRight: 26,
-          borderRadius: 999,
-          backgroundColor: 'rgba(15, 17, 23, 0.78)',
-          border: '1px solid rgba(255, 255, 255, 0.14)',
-          backdropFilter: 'blur(16px)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          opacity: dockProgress,
-          transform: `scale(${interpolate(dockProgress, [0, 1], [0.9, 1])})`,
-        }}
-      >
+      {showLogo !== false && (
         <div
           style={{
-            width: 1,
-            height: 28,
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            marginRight: 6,
-          }}
-        />
-        <span
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            backgroundColor: accentColor,
-          }}
-        />
-        <span
-          style={{
-            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-            fontSize: 12,
-            fontWeight: 600,
-            letterSpacing: '0.18em',
-            color: '#FFFFFF',
-            textTransform: 'uppercase',
+            position: 'absolute',
+            top: 42,
+            left: 56,
+            height: 72,
+            paddingLeft: 215,
+            paddingRight: 26,
+            borderRadius: 999,
+            backgroundColor: 'rgba(15, 17, 23, 0.78)',
+            border: '1px solid rgba(255, 255, 255, 0.14)',
+            backdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            opacity: dockProgress,
+            transform: `scale(${interpolate(dockProgress, [0, 1], [0.9, 1])})`,
           }}
         >
-          {locationYear}
-        </span>
-      </div>
+          <div
+            style={{
+              width: 1,
+              height: 28,
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              marginRight: 6,
+            }}
+          />
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: accentColor,
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: '0.18em',
+              color: '#FFFFFF',
+              textTransform: 'uppercase',
+            }}
+          >
+            {locationYear}
+          </span>
+        </div>
+      )}
 
       {/* Hero-to-Corner Morphing BİRİM Logo */}
-      <svg
-        width="1920"
-        height="1080"
-        viewBox="0 0 1920 1080"
-        style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
-      >
-        <g
-          transform={`translate(${logoX}, ${logoY}) scale(${logoScale}) translate(${-LOGO_VIEWBOX.width / 2}, ${-LOGO_VIEWBOX.height / 2})`}
+      {showLogo !== false && (
+        <svg
+          width="1920"
+          height="1080"
+          viewBox="0 0 1920 1080"
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
         >
-          {BIRIM_LETTERS.map((letter, idx) => {
-            const enterS = spring({
-              frame: frame - idx * 3,
-              fps,
-              config: { damping: 16, stiffness: 120 },
-            });
-            return (
-              <path
-                key={letter.id}
-                d={letter.compoundPath}
-                fill="#FFFFFF"
-                fillRule="evenodd"
-                opacity={enterS}
-                transform={`translate(0, ${interpolate(enterS, [0, 1], [20, 0])})`}
-              />
-            );
-          })}
-        </g>
-      </svg>
+          <g
+            transform={`translate(${logoX}, ${logoY}) scale(${logoScale}) translate(${-LOGO_VIEWBOX.width / 2}, ${-LOGO_VIEWBOX.height / 2})`}
+          >
+            {BIRIM_LETTERS.map((letter, idx) => {
+              const enterS = spring({
+                frame: frame - idx * 3,
+                fps,
+                config: { damping: 16, stiffness: 120 },
+              });
+              return (
+                <path
+                  key={letter.id}
+                  d={letter.compoundPath}
+                  fill="#FFFFFF"
+                  fillRule="evenodd"
+                  opacity={enterS}
+                  transform={`translate(0, ${interpolate(enterS, [0, 1], [20, 0])})`}
+                />
+              );
+            })}
+          </g>
+        </svg>
+      )}
 
       {/* Bottom-Center Modern Cinema Caption Bar */}
       <div
@@ -194,7 +210,7 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
           <AnimatedTextLine
             text={projectTitle}
             animation={textAnimation}
-            startFrame={56}
+            startFrame={l1Delay}
             fontFamily={fontFamily}
             fontSize={headlineSize}
             fontWeight={600}
@@ -202,6 +218,32 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
             color="#FFFFFF"
             accentColor={accentColor}
           />
+          {tagline && (
+            <span
+              style={{
+                fontFamily,
+                fontSize: taglineSize ?? Math.round(subtitleSize * 0.9),
+                letterSpacing: `${letterSpacing}em`,
+                color: 'rgba(255, 255, 255, 0.7)',
+                textTransform: 'uppercase',
+                borderLeft: '1px solid rgba(255, 255, 255, 0.2)',
+                paddingLeft: 16,
+              }}
+            >
+              <AnimatedTextLine
+                text={tagline}
+                animation={textAnimation}
+                startFrame={l3Delay}
+                fontFamily={fontFamily}
+                fontSize={taglineSize ?? Math.round(subtitleSize * 0.9)}
+                fontWeight={500}
+                letterSpacing={letterSpacing}
+                color="inherit"
+                accentColor={accentColor}
+                isSubtitle
+              />
+            </span>
+          )}
         </div>
       </div>
     </AbsoluteFill>

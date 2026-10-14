@@ -574,8 +574,9 @@ export const ShowcaseApp: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [inspectorTab, setInspectorTab] = useState<'content' | 'timing' | 'export'>('content');
 
-  // Her sahnenin kendine özgü ayarları burada saklanır
-  const [sceneConfigs, setSceneConfigs] = useState<Record<string, SceneCustomConfig>>({});
+  // Her sahnede ortak stüdyo ayarları (metinler, logo durumu, animasyon, font, renkler)
+  const [studioConfig, setStudioConfig] = useState<SceneCustomConfig>(DEFAULT_SCENE_CONFIG);
+  const [sceneConfigs, setSceneConfigs] = useState<Record<string, Partial<SceneCustomConfig>>>({});
 
   const filteredScenes = SCENES.filter((s) => {
     const matchesCategory =
@@ -595,18 +596,21 @@ export const ShowcaseApp: React.FC = () => {
   const sceneCustom = sceneConfigs[selectedId];
   const cfg: SceneCustomConfig = {
     ...DEFAULT_SCENE_CONFIG,
+    ...studioConfig,
     ...sceneCustom,
   };
 
   const updateConfig = (patch: Partial<SceneCustomConfig>) => {
+    // 1. Genel stüdyo durumunu güncelle: Tüm sahneler arasında metin, logo, font vb. korunur
+    setStudioConfig((prev) => ({
+      ...prev,
+      ...patch,
+    }));
+    // 2. Sahneye özel durum da saklanır
     setSceneConfigs((prev) => ({
       ...prev,
       [selectedId]: {
-        ...(prev[selectedId] ?? {
-          ...DEFAULT_SCENE_CONFIG,
-          durationInFrames: activeScene.durationInFrames ?? 150,
-          playbackSpeed: 1.0,
-        }),
+        ...(prev[selectedId] ?? {}),
         ...patch,
       },
     }));

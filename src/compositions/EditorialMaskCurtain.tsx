@@ -1,4 +1,4 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
+import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -10,27 +10,27 @@ import {
 import { BIRIM_LETTERS, LOGO_VIEWBOX } from '../data/birimLogoPaths';
 import { ArchitecturalSceneProps } from '../types/schema';
 
-export const EditorialMaskCurtain: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  accentColor,
-  primaryColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAnimation = 'char-wave',
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const EditorialMaskCurtain: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    accentColor,
+    primaryColor,
+    backgroundColor,
+    textDelayFrames,
+    showLogo = true,
+  } = props;
 
-  const scale = 2.95;
+  const frame = useCurrentFrame();
+  const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
+
+  const isVertical = compHeight > compWidth;
+  const isSquare = compWidth === compHeight;
+  const scale = isVertical ? 2.0 : isSquare ? 2.2 : 2.95;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
-  const offsetX = (1920 - renderedWidth) / 2;
-  const offsetY = (1080 - renderedHeight) / 2 - 48;
+  const offsetX = (compWidth - renderedWidth) / 2;
+  const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 48);
+
+  const isTransparent = backgroundColor === 'transparent';
 
   const lineExpand = spring({
     frame: frame - 4,
@@ -38,20 +38,16 @@ export const EditorialMaskCurtain: React.FC<ArchitecturalSceneProps> = ({
     config: { damping: 24, stiffness: 90 },
   });
 
-  const textRise = spring({
-    frame: frame - 32,
-    fps,
-    config: { damping: 22, stiffness: 95 },
-  });
-
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: '#121110',
+        backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#121110'),
         overflow: 'hidden',
       }}
     >
-      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+      {showLogo !== false && (
+        <>
+        <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <defs>
           <clipPath id="editorial-horizon-mask">
             <rect
@@ -106,72 +102,16 @@ export const EditorialMaskCurtain: React.FC<ArchitecturalSceneProps> = ({
           />
         </g>
       </svg>
+      </>
+      )}
 
-      {/* Counter-Emerging Editorial Text Below the Horizon Line */}
-      <div
-        style={{
-          position: 'absolute',
-          top: offsetY + renderedHeight + 42,
-          left: offsetX,
-          width: renderedWidth,
-          overflow: 'hidden',
-          paddingTop: 8,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textRise, [0, 1], [-56, 0])}px)`,
-            opacity: textRise,
-          }}
-        >
-          <span
-            style={{
-              fontFamily,
-              fontSize: headlineSize,
-              fontWeight: 500,
-              letterSpacing: `${letterSpacing}em`,
-              color: primaryColor,
-              textTransform: 'uppercase',
-            }}
-          >
-            <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
-          </span>
-          <span
-            style={{
-              fontFamily,
-              fontSize: subtitleSize,
-              fontWeight: 400,
-              letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-              color: accentColor,
-              textTransform: 'uppercase',
-            }}
-          >
-            <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
-          </span>
-        </div>
-      </div>
+      {/* Dynamic Architecture Caption */}
+      <SceneCaption
+        {...props}
+        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 32}
+        showLogo={showLogo}
+        baseTop={offsetY + renderedHeight + 58}
+      />
     </AbsoluteFill>
   );
 };

@@ -1,4 +1,4 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
+import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -16,26 +16,27 @@ const SLICES = [
   { id: 'bot', yStart: 48, yEnd: 80, dir: -1 },
 ] as const;
 
-export const KineticElasticSplit: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  accentColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAnimation = 'char-wave',
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+export const KineticElasticSplit: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    accentColor,
+    primaryColor,
+    backgroundColor,
+    textDelayFrames,
+    showLogo = true,
+  } = props;
 
-  const scale = 2.95;
+  const frame = useCurrentFrame();
+  const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
+
+  const isVertical = compHeight > compWidth;
+  const isSquare = compWidth === compHeight;
+  const scale = isVertical ? 2.0 : isSquare ? 2.2 : 2.95;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
-  const offsetX = (1920 - renderedWidth) / 2;
-  const offsetY = (1080 - renderedHeight) / 2 - 42;
+  const offsetX = (compWidth - renderedWidth) / 2;
+  const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 42);
+
+  const isTransparent = backgroundColor === 'transparent';
 
   const pillSpring = spring({
     frame: frame - 42,
@@ -67,7 +68,8 @@ export const KineticElasticSplit: React.FC<ArchitecturalSceneProps> = ({
         }}
       />
 
-      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+      {showLogo !== false && (
+        <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <defs>
           {SLICES.map((slice) => (
             <clipPath key={slice.id} id={`kinetic-slice-${slice.id}`}>
@@ -121,94 +123,15 @@ export const KineticElasticSplit: React.FC<ArchitecturalSceneProps> = ({
           ))}
         </g>
       </svg>
+      )}
 
-      {/* Modern Kinetic Pill & Editorial Subtitle */}
-      <div
-        style={{
-          position: 'absolute',
-          top: offsetY + renderedHeight + 52,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 16,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#0D0D10',
-            color: '#F6F4EF',
-            height: 44,
-            paddingLeft: interpolate(pillSpring, [0, 1], [0, 32]),
-            paddingRight: interpolate(pillSpring, [0, 1], [0, 32]),
-            borderRadius: 999,
-            opacity: pillSpring,
-            transform: `scale(${interpolate(pillSpring, [0, 1], [0.85, 1])})`,
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <span
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor: accentColor,
-              marginRight: 14,
-              flexShrink: 0,
-            }}
-          />
-          <span
-            style={{
-              fontFamily,
-              fontSize: headlineSize,
-              fontWeight: 600,
-              letterSpacing: `${letterSpacing}em`,
-              textTransform: 'uppercase',
-            }}
-          >
-            <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
-          </span>
-        </div>
-
-        <div
-          style={{
-            fontFamily,
-            fontSize: subtitleSize,
-            fontWeight: 500,
-            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-            color: 'rgba(13, 13, 16, 0.55)',
-            textTransform: 'uppercase',
-            opacity: subSpring,
-            transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(subSpring, [0, 1], [12, 0])}px)`,
-          }}
-        >
-          <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
-        </div>
-      </div>
+      {/* Modern Kinetic Caption */}
+      <SceneCaption
+        {...props}
+        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 42}
+        showLogo={showLogo}
+        baseTop={offsetY + renderedHeight + 58}
+      />
     </AbsoluteFill>
   );
 };

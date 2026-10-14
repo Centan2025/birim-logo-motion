@@ -1,4 +1,3 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -8,31 +7,27 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from 'remotion';
+import { SceneCaption } from '../components/SceneCaption';
 import { FULL_LOGO_PATH, LOGO_VIEWBOX } from '../data/birimLogoPaths';
 import { ArchitecturalSceneProps } from '../types/schema';
 
-export const LiquidInkSpread: React.FC<ArchitecturalSceneProps> = ({
-  headline,
-  subtitle,
-  accentColor,
-  fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
-  textOffsetX = 0,
-  textOffsetY = 0,
-  textAnimation = 'char-wave',
-}) => {
+export const LiquidInkSpread: React.FC<ArchitecturalSceneProps> = (props) => {
+  const {
+    accentColor = '#B89758',
+    logoScale = 1,
+    showLogo = true,
+    textDelayFrames,
+  } = props;
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, width: compWidth = 1920, height: compHeight = 1080 } = useVideoConfig();
 
-  const scale = 2.95;
+  const scale = 2.95 * logoScale;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;
-  const offsetX = (1920 - renderedWidth) / 2;
-  const offsetY = (1080 - renderedHeight) / 2 - 36;
+  const offsetX = (compWidth - renderedWidth) / 2;
+  const offsetY = (compHeight - renderedHeight) / 2 - 36;
 
-  const logoScale = spring({
+  const animSpring = spring({
     frame,
     fps,
     config: { damping: 20, stiffness: 85 },
@@ -45,48 +40,46 @@ export const LiquidInkSpread: React.FC<ArchitecturalSceneProps> = ({
     easing: Easing.inOut(Easing.cubic),
   });
 
-  const textSpring = spring({
-    frame: frame - 55,
-    fps,
-    config: { damping: 20, stiffness: 95 },
-  });
-
   return (
     <AbsoluteFill style={{ backgroundColor: '#F7F5F0', overflow: 'hidden' }}>
-      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+      <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <defs>
           <clipPath id="inversion-portal-clip">
-            <circle cx={960} cy={504} r={portalRadius} />
+            <circle cx={compWidth / 2} cy={compHeight / 2 - 36} r={portalRadius} />
           </clipPath>
         </defs>
 
         {/* Layer 1: Light Background + Dark Logo */}
-        <g
-          transform={`translate(960, 504) scale(${interpolate(logoScale, [0, 1], [0.86, 1])}) translate(-960, -504)`}
-          opacity={logoScale}
-        >
-          <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>
-            <path d={FULL_LOGO_PATH} fill="#0B0C0E" fillRule="evenodd" />
+        {showLogo !== false && (
+          <g
+            transform={`translate(${compWidth / 2}, ${compHeight / 2 - 36}) scale(${interpolate(animSpring, [0, 1], [0.86, 1])}) translate(-${compWidth / 2}, -${compHeight / 2 - 36})`}
+            opacity={animSpring}
+          >
+            <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>
+              <path d={FULL_LOGO_PATH} fill="#0B0C0E" fillRule="evenodd" />
+            </g>
           </g>
-        </g>
+        )}
 
         {/* Layer 2: Expanding Dark Portal + Inverted Light Logo */}
         <g clipPath="url(#inversion-portal-clip)">
-          <rect x={0} y={0} width={1920} height={1080} fill="#0B0C0E" />
-          <g
-            transform={`translate(960, 504) scale(${interpolate(logoScale, [0, 1], [0.86, 1])}) translate(-960, -504)`}
-          >
-            <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>
-              <path d={FULL_LOGO_PATH} fill="#F7F5F0" fillRule="evenodd" />
+          <rect x={0} y={0} width={compWidth} height={compHeight} fill="#0B0C0E" />
+          {showLogo !== false && (
+            <g
+              transform={`translate(${compWidth / 2}, ${compHeight / 2 - 36}) scale(${interpolate(animSpring, [0, 1], [0.86, 1])}) translate(-${compWidth / 2}, -${compHeight / 2 - 36})`}
+            >
+              <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>
+                <path d={FULL_LOGO_PATH} fill="#F7F5F0" fillRule="evenodd" />
+              </g>
             </g>
-          </g>
+          )}
         </g>
 
         {/* Expanding Accent Ring at Portal Boundary */}
         {portalRadius > 2 && portalRadius < 1200 && (
           <circle
-            cx={960}
-            cy={504}
+            cx={compWidth / 2}
+            cy={compHeight / 2 - 36}
             r={portalRadius}
             fill="none"
             stroke={accentColor}
@@ -96,64 +89,13 @@ export const LiquidInkSpread: React.FC<ArchitecturalSceneProps> = ({
       </svg>
 
       {/* Dynamic Inverted Caption */}
-      <div
-        style={{
-          position: 'absolute',
-          top: offsetY + renderedHeight + 58,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 10,
-          opacity: textSpring,
-          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [16, 0])}px)`,
-        }}
-      >
-        <div
-          style={{
-            fontFamily,
-            fontSize: headlineSize,
-            fontWeight: 500,
-            letterSpacing: `${letterSpacing}em`,
-            color: portalRadius > 450 ? '#F7F5F0' : '#0B0C0E',
-            textTransform: 'uppercase',
-          }}
-        >
-          <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
-        </div>
-        <div
-          style={{
-            fontFamily,
-            fontSize: subtitleSize,
-            fontWeight: 500,
-            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-            color: accentColor,
-            textTransform: 'uppercase',
-          }}
-        >
-          <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
-        </div>
-      </div>
+      <SceneCaption
+        {...props}
+        primaryColor={portalRadius > 450 ? '#F7F5F0' : (props.primaryColor || '#0B0C0E')}
+        delayFrames={textDelayFrames ?? 34}
+        showLogo={showLogo}
+        baseTop={offsetY + renderedHeight + 58}
+      />
     </AbsoluteFill>
   );
 };
