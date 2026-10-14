@@ -681,8 +681,10 @@ export const ShowcaseApp: React.FC = () => {
         style={{
           display: 'grid',
           gridTemplateColumns: '310px 1fr 360px',
+          gridTemplateRows: '100%',
           flex: 1,
           minHeight: 0,
+          height: 'calc(100vh - 48px)',
           overflow: 'hidden',
         }}
       >
@@ -875,12 +877,12 @@ export const ShowcaseApp: React.FC = () => {
         {/* 2. ORTA ALAN: Video Oynatıcı & Canlı Dock */}
         <main
           style={{
-            padding: '16px 24px',
+            padding: '12px 20px',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
-            gap: 12,
+            gap: 10,
             height: '100%',
+            minHeight: 0,
             overflow: 'hidden',
             backgroundColor: '#07080D',
           }}
@@ -891,6 +893,7 @@ export const ShowcaseApp: React.FC = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              flexShrink: 0,
             }}
           >
             <div>
@@ -974,7 +977,7 @@ export const ShowcaseApp: React.FC = () => {
                 fps={30}
                 compositionWidth={1920}
                 compositionHeight={1080}
-                style={{ width: '100%', height: '100%' }}
+                style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
                 controls
                 alwaysShowControls
                 showPlaybackRateControl
@@ -1016,7 +1019,7 @@ export const ShowcaseApp: React.FC = () => {
                   fps={30}
                   compositionWidth={1920}
                   compositionHeight={1080}
-                  style={{ width: '100%', height: '100%' }}
+                  style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
                   controls
                   alwaysShowControls
                   showPlaybackRateControl
@@ -1037,9 +1040,10 @@ export const ShowcaseApp: React.FC = () => {
               backgroundColor: '#0F121A',
               border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: 12,
-              padding: '10px 16px',
-              gap: 12,
+              padding: '8px 14px',
+              gap: 10,
               boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+              flexShrink: 0,
             }}
           >
             {/* Sol: Süre Hızlı Seçimi (3s, 5s, 7s, 10s) */}
@@ -1271,7 +1275,8 @@ export const ShowcaseApp: React.FC = () => {
           backgroundColor: '#0C0E13',
           display: 'flex',
           flexDirection: 'column',
-          height: '100vh',
+          height: '100%',
+          minHeight: 0,
           overflowY: 'auto',
           padding: '18px 18px 28px',
           gap: 16,
