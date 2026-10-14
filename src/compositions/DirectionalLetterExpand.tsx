@@ -30,6 +30,13 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
   accentColor,
   primaryColor,
   backgroundColor,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.4,
+  textOffsetX = 0,
+  textOffsetY = 0,
+  textAlign = 'center',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -40,7 +47,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
   const offsetX = (1920 - renderedWidth) / 2;
   const offsetY = (1080 - renderedHeight) / 2 - 36;
 
-  // Very tight overlapping stagger: each next letter starts just 4 frames (0.13s) after the previous one starts
+  // Tight overlapping stagger: each next letter starts 4 frames (0.13s) after the previous one starts
   const STAGGER_FRAMES = 4;
 
   const textSpring = spring({
@@ -48,6 +55,13 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
     fps,
     config: { damping: 20, stiffness: 95 },
   });
+
+  const alignItems =
+    textAlign === 'left'
+      ? 'flex-start'
+      : textAlign === 'right'
+        ? 'flex-end'
+        : 'center';
 
   return (
     <AbsoluteFill style={{ backgroundColor, overflow: 'hidden' }}>
@@ -121,45 +135,50 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
         </g>
       </svg>
 
-      {/* Clean Modern Caption */}
+      {/* Customizable Modern Caption (Font, Size, Spacing, X/Y Position, Alignment) */}
       <div
         style={{
           position: 'absolute',
-          top: offsetY + renderedHeight + 58,
-          left: 0,
-          right: 0,
+          top: offsetY + renderedHeight + 58 + textOffsetY,
+          left: offsetX + textOffsetX,
+          width: renderedWidth,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          alignItems,
+          textAlign,
           gap: 10,
           opacity: textSpring,
           transform: `translateY(${interpolate(textSpring, [0, 1], [16, 0])}px)`,
         }}
       >
-        <div
-          style={{
-            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-            fontSize: 19,
-            fontWeight: 500,
-            letterSpacing: '0.4em',
-            color: primaryColor,
-            textTransform: 'uppercase',
-          }}
-        >
-          {headline}
-        </div>
-        <div
-          style={{
-            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-            fontSize: 12,
-            fontWeight: 400,
-            letterSpacing: '0.28em',
-            color: accentColor,
-            textTransform: 'uppercase',
-          }}
-        >
-          {subtitle}
-        </div>
+        {headline && (
+          <div
+            style={{
+              fontFamily,
+              fontSize: headlineSize,
+              fontWeight: 500,
+              letterSpacing: `${letterSpacing}em`,
+              color: primaryColor,
+              textTransform: 'uppercase',
+            }}
+          >
+            {headline}
+          </div>
+        )}
+        {subtitle && (
+          <div
+            style={{
+              fontFamily,
+              fontSize: subtitleSize,
+              fontWeight: 400,
+              letterSpacing: `${Math.max(0.05, letterSpacing * 0.7)}em`,
+              color: accentColor,
+              textTransform: 'uppercase',
+            }}
+          >
+            {subtitle}
+          </div>
+        )}
       </div>
     </AbsoluteFill>
   );

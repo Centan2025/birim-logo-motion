@@ -16,6 +16,12 @@ export const NeonLaserContour: React.FC<ArchitecturalSceneProps> = ({
   subtitle,
   accentColor,
   primaryColor,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
+  textOffsetX = 0,
+  textOffsetY = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -157,15 +163,15 @@ export const NeonLaserContour: React.FC<ArchitecturalSceneProps> = ({
           alignItems: 'center',
           gap: 10,
           opacity: textSpring,
-          transform: `translateY(${interpolate(textSpring, [0, 1], [16, 0])}px)`,
+          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [16, 0])}px)`,
         }}
       >
         <div
           style={{
-            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-            fontSize: 19,
+            fontFamily,
+            fontSize: headlineSize,
             fontWeight: 500,
-            letterSpacing: '0.4em',
+            letterSpacing: `${letterSpacing}em`,
             color: primaryColor,
             textTransform: 'uppercase',
           }}
@@ -174,10 +180,10 @@ export const NeonLaserContour: React.FC<ArchitecturalSceneProps> = ({
         </div>
         <div
           style={{
-            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-            fontSize: 12,
+            fontFamily,
+            fontSize: subtitleSize,
             fontWeight: 400,
-            letterSpacing: '0.28em',
+            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
             color: accentColor,
             textTransform: 'uppercase',
           }}

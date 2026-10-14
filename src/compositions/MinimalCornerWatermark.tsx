@@ -16,6 +16,12 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
   locationYear,
   accentColor,
   transparentBackground,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
+  textOffsetX = 0,
+  textOffsetY = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -160,7 +166,7 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
           display: 'flex',
           justifyContent: 'center',
           opacity: bottomBarSpring,
-          transform: `translateY(${interpolate(bottomBarSpring, [0, 1], [24, 0])}px)`,
+          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(bottomBarSpring, [0, 1], [24, 0])}px)`,
         }}
       >
         <div
@@ -181,10 +187,10 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
               borderRadius: 8,
               backgroundColor: accentColor,
               color: '#0B0D12',
-              fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-              fontSize: 11,
+              fontFamily,
+              fontSize: subtitleSize,
               fontWeight: 700,
-              letterSpacing: '0.16em',
+              letterSpacing: `${letterSpacing}em`,
               textTransform: 'uppercase',
             }}
           >
@@ -192,10 +198,10 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
           </span>
           <span
             style={{
-              fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-              fontSize: 20,
+              fontFamily,
+              fontSize: headlineSize,
               fontWeight: 600,
-              letterSpacing: '0.08em',
+              letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
               color: '#FFFFFF',
             }}
           >

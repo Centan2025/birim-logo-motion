@@ -37,6 +37,13 @@ const DEFAULT_ARCH_PROPS = {
   accentColor: '#C89D66',
   primaryColor: '#F4F1EA',
   backgroundColor: '#0B0D10',
+  fontFamily: "'Inter', sans-serif",
+  headlineSize: 19,
+  subtitleSize: 12,
+  letterSpacing: 0.4,
+  textOffsetX: 0,
+  textOffsetY: 0,
+  textAlign: 'center' as const,
 };
 
 const DEFAULT_MODERN_PROPS = {
@@ -47,6 +54,13 @@ const DEFAULT_MODERN_PROPS = {
   accentColor: '#E07A5F',
   primaryColor: '#F4F1EA',
   backgroundColor: '#07080C',
+  fontFamily: "'Inter', sans-serif",
+  headlineSize: 19,
+  subtitleSize: 12,
+  letterSpacing: 0.4,
+  textOffsetX: 0,
+  textOffsetY: 0,
+  textAlign: 'center' as const,
 };
 
 export const RemotionRoot: React.FC = () => {
@@ -118,6 +132,12 @@ export const RemotionRoot: React.FC = () => {
           locationYear: 'İSTANBUL — 2026',
           accentColor: '#C89D66',
           transparentBackground: false,
+          fontFamily: "'Inter', sans-serif",
+          headlineSize: 22,
+          subtitleSize: 12,
+          letterSpacing: 0.18,
+          textOffsetX: 0,
+          textOffsetY: 0,
         }}
       />
 
@@ -176,6 +196,12 @@ export const RemotionRoot: React.FC = () => {
           locationYear: 'BİRİM STUDIO',
           accentColor: '#E07A5F',
           transparentBackground: false,
+          fontFamily: "'Inter', sans-serif",
+          headlineSize: 22,
+          subtitleSize: 12,
+          letterSpacing: 0.18,
+          textOffsetX: 0,
+          textOffsetY: 0,
         }}
       />
       <Composition
@@ -282,6 +308,12 @@ export const RemotionRoot: React.FC = () => {
           locationYear: 'BİRİM — 2026',
           accentColor: '#E07A5F',
           transparentBackground: false,
+          fontFamily: "'Inter', sans-serif",
+          headlineSize: 22,
+          subtitleSize: 12,
+          letterSpacing: 0.18,
+          textOffsetX: 0,
+          textOffsetY: 0,
         }}
       />
 

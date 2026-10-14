@@ -18,6 +18,12 @@ export const ModularKineticFacade: React.FC<ArchitecturalSceneProps> = ({
   accentColor,
   primaryColor,
   backgroundColor,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
+  textOffsetX = 0,
+  textOffsetY = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -135,8 +141,8 @@ export const ModularKineticFacade: React.FC<ArchitecturalSceneProps> = ({
       <div
         style={{
           position: 'absolute',
-          top: 138,
-          left: offsetX,
+          top: 138 + textOffsetY,
+          left: offsetX + textOffsetX,
           width: renderedWidth,
           display: 'flex',
           justifyContent: 'space-between',
@@ -147,10 +153,10 @@ export const ModularKineticFacade: React.FC<ArchitecturalSceneProps> = ({
       >
         <div
           style={{
-            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-            fontSize: 18,
+            fontFamily,
+            fontSize: headlineSize,
             fontWeight: 600,
-            letterSpacing: '0.35em',
+            letterSpacing: `${letterSpacing}em`,
             color: primaryColor,
           }}
         >
@@ -158,9 +164,9 @@ export const ModularKineticFacade: React.FC<ArchitecturalSceneProps> = ({
         </div>
         <div
           style={{
-            fontFamily: "'JetBrains Mono', 'Consolas', monospace",
-            fontSize: 13,
-            letterSpacing: '0.2em',
+            fontFamily,
+            fontSize: subtitleSize,
+            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
             color: accentColor,
           }}
         >

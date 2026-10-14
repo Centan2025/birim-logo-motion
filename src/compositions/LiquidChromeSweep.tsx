@@ -16,6 +16,12 @@ export const LiquidChromeSweep: React.FC<ArchitecturalSceneProps> = ({
   subtitle,
   accentColor,
   primaryColor,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
+  textOffsetX = 0,
+  textOffsetY = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -52,7 +58,7 @@ export const LiquidChromeSweep: React.FC<ArchitecturalSceneProps> = ({
     config: { damping: 24, stiffness: 90 },
   });
 
-  const letterSpacingEm = interpolate(textSpring, [0, 1], [0.15, 0.48]);
+  const letterSpacingEm = interpolate(textSpring, [0, 1], [0.1, letterSpacing]);
 
   return (
     <AbsoluteFill
@@ -170,13 +176,13 @@ export const LiquidChromeSweep: React.FC<ArchitecturalSceneProps> = ({
             flexDirection: 'column',
             alignItems: 'center',
             opacity: textSpring,
-            transform: `translateY(${interpolate(textSpring, [0, 1], [18, 0])}px)`,
+            transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [18, 0])}px)`,
           }}
         >
           <div
             style={{
-              fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-              fontSize: 19,
+              fontFamily,
+              fontSize: headlineSize,
               fontWeight: 300,
               letterSpacing: `${letterSpacingEm}em`,
               color: primaryColor,
@@ -197,8 +203,8 @@ export const LiquidChromeSweep: React.FC<ArchitecturalSceneProps> = ({
           />
           <div
             style={{
-              fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-              fontSize: 12,
+              fontFamily,
+              fontSize: subtitleSize,
               fontWeight: 400,
               letterSpacing: '0.32em',
               color: 'rgba(244, 241, 234, 0.55)',

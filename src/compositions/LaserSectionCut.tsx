@@ -19,6 +19,12 @@ export const LaserSectionCut: React.FC<ArchitecturalSceneProps> = ({
   accentColor,
   primaryColor,
   backgroundColor,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
+  textOffsetX = 0,
+  textOffsetY = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -257,7 +263,7 @@ export const LaserSectionCut: React.FC<ArchitecturalSceneProps> = ({
           display: 'flex',
           justifyContent: 'center',
           opacity: badgeSpring,
-          transform: `translateY(${interpolate(badgeSpring, [0, 1], [20, 0])}px)`,
+          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(badgeSpring, [0, 1], [20, 0])}px)`,
         }}
       >
         <div
@@ -283,11 +289,11 @@ export const LaserSectionCut: React.FC<ArchitecturalSceneProps> = ({
             </div>
             <div
               style={{
-                fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-                fontSize: 20,
+                fontFamily,
+                fontSize: headlineSize,
                 fontWeight: 600,
                 color: primaryColor,
-                letterSpacing: '0.32em',
+                letterSpacing: `${letterSpacing}em`,
                 marginTop: 4,
               }}
             >
@@ -297,10 +303,10 @@ export const LaserSectionCut: React.FC<ArchitecturalSceneProps> = ({
           <div style={{ width: 1, height: 38, backgroundColor: 'rgba(200, 157, 102, 0.35)' }} />
           <div
             style={{
-              fontFamily: "'JetBrains Mono', 'Consolas', monospace",
-              fontSize: 12,
+              fontFamily,
+              fontSize: subtitleSize,
               color: primaryColor,
-              letterSpacing: '0.2em',
+              letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
             }}
           >
             {subtitle}

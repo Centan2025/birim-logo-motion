@@ -17,6 +17,12 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
   locationYear,
   accentColor,
   transparentBackground,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
+  textOffsetX = 0,
+  textOffsetY = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -127,7 +133,7 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
           borderLeft: `4px solid ${accentColor}`,
           backdropFilter: 'blur(12px)',
           opacity: visibility,
-          transform: `translateX(${interpolate(visibility, [0, 1], [-40, 0])}px)`,
+          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateX(${interpolate(visibility, [0, 1], [-40, 0])}px)`,
           overflow: 'hidden',
         }}
       >
@@ -206,9 +212,9 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
         >
           <div
             style={{
-              fontFamily: "'JetBrains Mono', 'Consolas', monospace",
-              fontSize: 11,
-              letterSpacing: '0.24em',
+              fontFamily,
+              fontSize: headlineSize,
+              letterSpacing: `${letterSpacing}em`,
               color: accentColor,
               textTransform: 'uppercase',
               marginBottom: 6,
@@ -218,10 +224,10 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
           </div>
           <div
             style={{
-              fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-              fontSize: 22,
+              fontFamily,
+              fontSize: subtitleSize,
               fontWeight: 600,
-              letterSpacing: '0.18em',
+              letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
               color: '#F4F1EA',
               textTransform: 'uppercase',
             }}

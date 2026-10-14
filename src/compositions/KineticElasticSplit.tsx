@@ -19,6 +19,12 @@ export const KineticElasticSplit: React.FC<ArchitecturalSceneProps> = ({
   headline,
   subtitle,
   accentColor,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
+  textOffsetX = 0,
+  textOffsetY = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -156,10 +162,10 @@ export const KineticElasticSplit: React.FC<ArchitecturalSceneProps> = ({
           />
           <span
             style={{
-              fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-              fontSize: 15,
+              fontFamily,
+              fontSize: headlineSize,
               fontWeight: 600,
-              letterSpacing: '0.28em',
+              letterSpacing: `${letterSpacing}em`,
               textTransform: 'uppercase',
             }}
           >
@@ -169,14 +175,14 @@ export const KineticElasticSplit: React.FC<ArchitecturalSceneProps> = ({
 
         <div
           style={{
-            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-            fontSize: 14,
+            fontFamily,
+            fontSize: subtitleSize,
             fontWeight: 500,
-            letterSpacing: '0.2em',
+            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
             color: 'rgba(13, 13, 16, 0.55)',
             textTransform: 'uppercase',
             opacity: subSpring,
-            transform: `translateY(${interpolate(subSpring, [0, 1], [12, 0])}px)`,
+            transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(subSpring, [0, 1], [12, 0])}px)`,
           }}
         >
           {subtitle}

@@ -14,6 +14,12 @@ export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
   subtitle,
   accentColor,
   primaryColor,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
+  textOffsetX = 0,
+  textOffsetY = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -83,7 +89,7 @@ export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
           style={{
             display: 'flex',
             justifyContent: 'center',
-            gap: 6,
+            gap: Math.round(letterSpacing * 16),
           }}
         >
           {chars.map((ch, cIdx) => {
@@ -97,12 +103,12 @@ export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
                 key={cIdx}
                 style={{
                   display: 'inline-block',
-                  fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-                  fontSize: 20,
+                  fontFamily,
+                  fontSize: headlineSize,
                   fontWeight: 600,
                   color: primaryColor,
                   opacity: cSpring,
-                  transform: `translateY(${interpolate(cSpring, [0, 1], [18, 0])}px) scale(${interpolate(cSpring, [0, 1], [0.6, 1])})`,
+                  transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(cSpring, [0, 1], [18, 0])}px) scale(${interpolate(cSpring, [0, 1], [0.6, 1])})`,
                   minWidth: ch === ' ' ? 10 : undefined,
                 }}
               >
@@ -114,8 +120,8 @@ export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = ({
 
         <div
           style={{
-            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-            fontSize: 13,
+            fontFamily,
+            fontSize: subtitleSize,
             fontWeight: 500,
             letterSpacing: '0.28em',
             color: accentColor,

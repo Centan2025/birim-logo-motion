@@ -96,6 +96,12 @@ export const MasterShowcaseReel: React.FC<ArchitecturalSceneProps> = (props) => 
             locationYear={props.projectCode}
             accentColor={props.accentColor}
             transparentBackground={false}
+            fontFamily={props.fontFamily}
+            headlineSize={props.headlineSize}
+            subtitleSize={props.subtitleSize}
+            letterSpacing={props.letterSpacing}
+            textOffsetX={props.textOffsetX}
+            textOffsetY={props.textOffsetY}
           />
         </Series.Sequence>
         <Series.Sequence durationInFrames={150}>
@@ -105,6 +111,12 @@ export const MasterShowcaseReel: React.FC<ArchitecturalSceneProps> = (props) => 
             locationYear={props.projectCode}
             accentColor={props.accentColor}
             transparentBackground={false}
+            fontFamily={props.fontFamily}
+            headlineSize={props.headlineSize}
+            subtitleSize={props.subtitleSize}
+            letterSpacing={props.letterSpacing}
+            textOffsetX={props.textOffsetX}
+            textOffsetY={props.textOffsetY}
           />
         </Series.Sequence>
         <Series.Sequence durationInFrames={150}>
@@ -126,6 +138,12 @@ export const MasterShowcaseReel: React.FC<ArchitecturalSceneProps> = (props) => 
             locationYear={props.projectCode}
             accentColor={props.accentColor}
             transparentBackground={false}
+            fontFamily={props.fontFamily}
+            headlineSize={props.headlineSize}
+            subtitleSize={props.subtitleSize}
+            letterSpacing={props.letterSpacing}
+            textOffsetX={props.textOffsetX}
+            textOffsetY={props.textOffsetY}
           />
         </Series.Sequence>
       </Series>

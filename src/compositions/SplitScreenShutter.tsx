@@ -14,6 +14,12 @@ export const SplitScreenShutter: React.FC<ArchitecturalSceneProps> = ({
   subtitle,
   accentColor,
   primaryColor,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
+  textOffsetX = 0,
+  textOffsetY = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -83,17 +89,17 @@ export const SplitScreenShutter: React.FC<ArchitecturalSceneProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           opacity: textSpring,
-          transform: `translateY(${interpolate(textSpring, [0, 1], [20, 0])}px)`,
+          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [20, 0])}px)`,
           borderTop: '1px solid rgba(255,255,255,0.12)',
           paddingTop: 20,
         }}
       >
         <div
           style={{
-            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-            fontSize: 19,
+            fontFamily,
+            fontSize: headlineSize,
             fontWeight: 600,
-            letterSpacing: '0.34em',
+            letterSpacing: `${letterSpacing}em`,
             color: primaryColor,
             textTransform: 'uppercase',
           }}
@@ -106,10 +112,10 @@ export const SplitScreenShutter: React.FC<ArchitecturalSceneProps> = ({
             borderRadius: 999,
             backgroundColor: accentColor,
             color: '#0A0B0E',
-            fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-            fontSize: 12,
+            fontFamily,
+            fontSize: subtitleSize,
             fontWeight: 700,
-            letterSpacing: '0.2em',
+            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
             textTransform: 'uppercase',
           }}
         >

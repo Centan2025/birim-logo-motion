@@ -20,6 +20,12 @@ export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = ({
   accentColor,
   primaryColor,
   backgroundColor,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
+  textOffsetX = 0,
+  textOffsetY = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -351,7 +357,7 @@ export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = ({
           flexDirection: 'column',
           alignItems: 'center',
           opacity: textReveal,
-          transform: `translateY(${interpolate(textReveal, [0, 1], [24, 0])}px)`,
+          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textReveal, [0, 1], [24, 0])}px)`,
         }}
       >
         <div
@@ -365,10 +371,10 @@ export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = ({
           <div style={{ width: 64, height: 1, backgroundColor: accentColor }} />
           <span
             style={{
-              fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-              fontSize: 22,
+              fontFamily,
+              fontSize: headlineSize,
               fontWeight: 500,
-              letterSpacing: '0.42em',
+              letterSpacing: `${letterSpacing}em`,
               color: primaryColor,
               textTransform: 'uppercase',
             }}
@@ -379,9 +385,9 @@ export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = ({
         </div>
         <div
           style={{
-            fontFamily: "'JetBrains Mono', 'Consolas', monospace",
-            fontSize: 13,
-            letterSpacing: '0.28em',
+            fontFamily,
+            fontSize: subtitleSize,
+            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
             color: accentColor,
           }}
         >

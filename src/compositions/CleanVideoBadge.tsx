@@ -16,6 +16,12 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
   locationYear,
   accentColor,
   transparentBackground,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
+  textOffsetX = 0,
+  textOffsetY = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -115,7 +121,7 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
           boxShadow: '0 24px 60px rgba(0, 0, 0, 0.45)',
           backdropFilter: 'blur(20px)',
           opacity: masterAlpha,
-          transform: `translateY(${interpolate(masterAlpha, [0, 1], [32, 0])}px) scale(${interpolate(masterAlpha, [0, 1], [0.94, 1])})`,
+          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(masterAlpha, [0, 1], [32, 0])}px) scale(${interpolate(masterAlpha, [0, 1], [0.94, 1])})`,
         }}
       >
         {/* Dark Accent Badge with BİRİM Logo */}
@@ -169,10 +175,10 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
         >
           <div
             style={{
-              fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-              fontSize: 12,
+              fontFamily,
+              fontSize: headlineSize,
               fontWeight: 600,
-              letterSpacing: '0.2em',
+              letterSpacing: `${letterSpacing}em`,
               color: accentColor,
               textTransform: 'uppercase',
               marginBottom: 4,
@@ -182,10 +188,10 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
           </div>
           <div
             style={{
-              fontFamily: "'Inter', 'Helvetica Neue', sans-serif",
-              fontSize: 22,
+              fontFamily,
+              fontSize: subtitleSize,
               fontWeight: 600,
-              letterSpacing: '0.06em',
+              letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
               color: '#FFFFFF',
             }}
           >

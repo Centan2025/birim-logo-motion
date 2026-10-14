@@ -20,6 +20,12 @@ export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = ({
   projectCode,
   scaleText,
   accentColor,
+  fontFamily = "'Inter', sans-serif",
+  headlineSize = 19,
+  subtitleSize = 12,
+  letterSpacing = 0.38,
+  textOffsetX = 0,
+  textOffsetY = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -207,6 +213,7 @@ export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = ({
           alignItems: 'flex-end',
           borderTop: '1px solid rgba(26, 25, 23, 0.2)',
           paddingTop: 22,
+          transform: `translate(${textOffsetX}px, ${textOffsetY}px)`,
         }}
       >
         <div>
@@ -224,9 +231,9 @@ export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = ({
           </div>
           <div
             style={{
-              fontFamily: "'JetBrains Mono', 'Consolas', monospace",
-              fontSize: 13,
-              letterSpacing: '0.22em',
+              fontFamily,
+              fontSize: headlineSize,
+              letterSpacing: `${letterSpacing}em`,
               color: '#9E6B3B',
               marginTop: 6,
             }}
@@ -237,9 +244,9 @@ export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = ({
 
         <div
           style={{
-            fontFamily: "'JetBrains Mono', 'Consolas', monospace",
-            fontSize: 12,
-            letterSpacing: '0.16em',
+            fontFamily,
+            fontSize: subtitleSize,
+            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
             color: '#181715',
             textAlign: 'right',
           }}
