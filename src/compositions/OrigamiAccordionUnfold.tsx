@@ -1,4 +1,4 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
+import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -13,15 +13,28 @@ import { ArchitecturalSceneProps } from '../types/schema';
 export const OrigamiAccordionUnfold: React.FC<ArchitecturalSceneProps> = ({
   headline,
   subtitle,
+  tagline,
+  projectCode,
+  scaleText,
   accentColor,
   primaryColor,
+  taglineColor,
+  backgroundColor,
   fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
+  headlineSize = 64,
+  subtitleSize = 40,
+  taglineSize = 28,
+  letterSpacing = 0.4,
   textOffsetX = 0,
   textOffsetY = 0,
+  textAlign = 'center',
   textAnimation = 'char-wave',
+  textDelayFrames,
+  line1Delay,
+  line2Delay,
+  line3Delay,
+  showLogo = true,
+  aspectRatio = '16:9',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -49,192 +62,30 @@ export const OrigamiAccordionUnfold: React.FC<ArchitecturalSceneProps> = ({
         overflow: 'hidden',
       }}
     >
-      <div
-        style={{
-          position: 'relative',
-          width: renderedWidth,
-          height: renderedHeight,
-          transformStyle: 'preserve-3d',
-          marginTop: -36,
-        }}
-      >
-        {BIRIM_LETTERS.map((letter, idx) => {
-          const s1 = spring({
-            frame: frame - idx * 4,
-            fps,
-            config: { damping: 15, stiffness: 110 },
-          });
-          const s2 = spring({
-            frame: frame - 10 - idx * 4,
-            fps,
-            config: { damping: 14, stiffness: 105 },
-          });
-          const s3 = spring({
-            frame: frame - 20 - idx * 4,
-            fps,
-            config: { damping: 13, stiffness: 100 },
-          });
-
-          const rot1 = interpolate(s1, [0, 1], [-92, 0]);
-          const rot2 = interpolate(s2, [0, 1], [150, 0]);
-          const rot3 = interpolate(s3, [0, 1], [-150, 0]);
-
-          return (
-            <React.Fragment key={letter.id}>
-              {/* STAGE 1: Top 1/3 Unfolds Down */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: renderedWidth,
-                  height: bandHeight + 0.5,
-                  overflow: 'hidden',
-                  transformOrigin: 'center top',
-                  transform: `rotateX(${rot1}deg)`,
-                }}
-              >
-                <svg
-                  width={renderedWidth}
-                  height={renderedHeight}
-                  viewBox={`0 0 ${LOGO_VIEWBOX.width} ${LOGO_VIEWBOX.height}`}
-                >
-                  <path
-                    d={letter.compoundPath}
-                    fill={primaryColor}
-                    fillRule="evenodd"
-                  />
-                </svg>
-              </div>
-
-              {/* STAGE 2: Middle 1/3 Unfolds Down from Stage 1 */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: bandHeight,
-                  left: 0,
-                  width: renderedWidth,
-                  height: bandHeight + 0.5,
-                  overflow: 'hidden',
-                  transformOrigin: 'center top',
-                  transform: `rotateX(${rot2}deg)`,
-                  opacity: interpolate(s2, [0, 0.15, 1], [0, 1, 1]),
-                }}
-              >
-                <svg
-                  width={renderedWidth}
-                  height={renderedHeight}
-                  viewBox={`0 0 ${LOGO_VIEWBOX.width} ${LOGO_VIEWBOX.height}`}
-                  style={{ transform: `translateY(${-bandHeight}px)` }}
-                >
-                  <path
-                    d={letter.compoundPath}
-                    fill={s2 < 0.4 ? accentColor : primaryColor}
-                    fillRule="evenodd"
-                  />
-                  <path
-                    d={letter.compoundPath}
-                    fill="#000000"
-                    fillRule="evenodd"
-                    opacity={interpolate(s2, [0, 1], [0.55, 0])}
-                  />
-                </svg>
-              </div>
-
-              {/* STAGE 3: Bottom 1/3 Unfolds Down from Stage 2 */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: bandHeight * 2,
-                  left: 0,
-                  width: renderedWidth,
-                  height: bandHeight + 1,
-                  overflow: 'hidden',
-                  transformOrigin: 'center top',
-                  transform: `rotateX(${rot3}deg)`,
-                  opacity: interpolate(s3, [0, 0.15, 1], [0, 1, 1]),
-                }}
-              >
-                <svg
-                  width={renderedWidth}
-                  height={renderedHeight}
-                  viewBox={`0 0 ${LOGO_VIEWBOX.width} ${LOGO_VIEWBOX.height}`}
-                  style={{ transform: `translateY(${-bandHeight * 2}px)` }}
-                >
-                  <path
-                    d={letter.compoundPath}
-                    fill={s3 < 0.4 ? accentColor : primaryColor}
-                    fillRule="evenodd"
-                  />
-                  <path
-                    d={letter.compoundPath}
-                    fill="#000000"
-                    fillRule="evenodd"
-                    opacity={interpolate(s3, [0, 1], [0.65, 0])}
-                  />
-                </svg>
-              </div>
-            </React.Fragment>
-          );
-        })}
-      </div>
-
-      {/* Caption */}
-      <div
-        style={{
-          marginTop: 64,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 10,
-          opacity: textSpring,
-          transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [16, 0])}px)`,
-        }}
-      >
-        <div
-          style={{
-            fontFamily,
-            fontSize: headlineSize,
-            fontWeight: 500,
-            letterSpacing: `${letterSpacing}em`,
-            color: primaryColor,
-            textTransform: 'uppercase',
-          }}
-        >
-          <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
-        </div>
-        <div
-          style={{
-            fontFamily,
-            fontSize: subtitleSize,
-            fontWeight: 400,
-            letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-            color: accentColor,
-            textTransform: 'uppercase',
-          }}
-        >
-          <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
-        </div>
-      </div>
+            {/* Customizable Architectural Kinetic Caption */}
+      <SceneCaption
+        headline={headline}
+        subtitle={subtitle}
+        tagline={tagline}
+        primaryColor={primaryColor}
+        accentColor={accentColor}
+        taglineColor={taglineColor}
+        fontFamily={fontFamily}
+        headlineSize={headlineSize}
+        subtitleSize={subtitleSize}
+        taglineSize={taglineSize}
+        letterSpacing={letterSpacing}
+        textOffsetX={textOffsetX}
+        textOffsetY={textOffsetY}
+        textAlign={textAlign}
+        textAnimation={textAnimation}
+        baseTop={678}
+        delayFrames={textDelayFrames !== undefined ? textDelayFrames : 32}
+        line1Delay={line1Delay}
+        line2Delay={line2Delay}
+        line3Delay={line3Delay}
+        showLogo={showLogo}
+      />
     </AbsoluteFill>
   );
 };

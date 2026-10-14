@@ -70,6 +70,7 @@ function remotionRenderPlugin(): Plugin {
                 line2Delay,
                 line3Delay,
                 durationInFrames = 150,
+                playbackSpeed = 1,
                 showLogo = true,
                 format = 'webm',
                 aspectRatio = '16:9',
@@ -86,7 +87,7 @@ function remotionRenderPlugin(): Plugin {
                 fs.mkdirSync(outDir, { recursive: true });
               }
 
-              const totalFrames = Math.max(30, Math.min(600, Number(durationInFrames) || 150));
+              const totalFrames = Math.max(30, Math.min(3600, Number(durationInFrames) || 150));
               const framesFlag = `--frames=0-${totalFrames - 1}`;
 
               const safeScene = String(sceneId).replace(/[^a-zA-Z0-9_-]/g, '');
@@ -127,6 +128,8 @@ function remotionRenderPlugin(): Plugin {
                 transparentBackground: !!transparent,
                 backgroundColor: transparent ? 'transparent' : '#0B0D10',
                 aspectRatio: aspectRatio || '16:9',
+                playbackSpeed: Number(playbackSpeed) || 1,
+                durationInFrames: totalFrames,
               };
 
               // Windows komut satırında tırnak bozulmasını önlemek için geçici JSON dosyası kullan

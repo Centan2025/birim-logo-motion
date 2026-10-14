@@ -1,4 +1,4 @@
-import { AnimatedTextLine } from '../components/SceneCaption';
+import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -14,15 +14,28 @@ import { ArchitecturalSceneProps } from '../types/schema';
 export const GlassPrismRefraction: React.FC<ArchitecturalSceneProps> = ({
   headline,
   subtitle,
+  tagline,
+  projectCode,
+  scaleText,
   accentColor,
   primaryColor,
+  taglineColor,
+  backgroundColor,
   fontFamily = "'Inter', sans-serif",
-  headlineSize = 19,
-  subtitleSize = 12,
-  letterSpacing = 0.38,
+  headlineSize = 64,
+  subtitleSize = 40,
+  taglineSize = 28,
+  letterSpacing = 0.4,
   textOffsetX = 0,
   textOffsetY = 0,
+  textAlign = 'center',
   textAnimation = 'char-wave',
+  textDelayFrames,
+  line1Delay,
+  line2Delay,
+  line3Delay,
+  showLogo = true,
+  aspectRatio = '16:9',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -161,62 +174,30 @@ export const GlassPrismRefraction: React.FC<ArchitecturalSceneProps> = ({
           })}
         </svg>
 
-        {/* Clean Modern Typography Inside Glass Card */}
-        <div
-          style={{
-            marginTop: 48,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 10,
-            opacity: textSpring,
-            transform: `translate(${textOffsetX}px, ${textOffsetY}px) translateY(${interpolate(textSpring, [0, 1], [14, 0])}px)`,
-          }}
-        >
-          <div
-            style={{
-              fontFamily,
-              fontSize: headlineSize,
-              fontWeight: 500,
-              letterSpacing: `${letterSpacing}em`,
-              color: primaryColor,
-              textTransform: 'uppercase',
-            }}
-          >
-            <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
-          </div>
-          <div
-            style={{
-              fontFamily,
-              fontSize: subtitleSize,
-              fontWeight: 400,
-              letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-              color: accentColor,
-              textTransform: 'uppercase',
-            }}
-          >
-            <AnimatedTextLine
-            text={subtitle}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
-          </div>
-        </div>
+        {/* Customizable Architectural Kinetic Caption */}
+        <SceneCaption
+          headline={headline}
+          subtitle={subtitle}
+          tagline={tagline}
+          primaryColor={primaryColor}
+          accentColor={accentColor}
+          taglineColor={taglineColor}
+          fontFamily={fontFamily}
+          headlineSize={headlineSize}
+          subtitleSize={subtitleSize}
+          taglineSize={taglineSize}
+          letterSpacing={letterSpacing}
+          textOffsetX={textOffsetX}
+          textOffsetY={textOffsetY}
+          textAlign={textAlign}
+          textAnimation={textAnimation}
+          baseTop={678}
+          delayFrames={textDelayFrames !== undefined ? textDelayFrames : 34}
+          line1Delay={line1Delay}
+          line2Delay={line2Delay}
+          line3Delay={line3Delay}
+          showLogo={showLogo}
+        />
       </div>
     </AbsoluteFill>
   );

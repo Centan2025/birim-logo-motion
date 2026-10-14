@@ -358,6 +358,7 @@ interface SceneCustomConfig {
   line2Delay: number;
   line3Delay: number;
   durationInFrames: number;
+  playbackSpeed: number;
   transparentBg: boolean;
   showLogo: boolean;
   aspectRatio: AspectRatioType;
@@ -385,6 +386,7 @@ const DEFAULT_SCENE_CONFIG: SceneCustomConfig = {
   line2Delay: 32,
   line3Delay: 44,
   durationInFrames: 150,
+  playbackSpeed: 1.0,
   transparentBg: true,
   showLogo: true,
   aspectRatio: '16:9',
@@ -413,6 +415,17 @@ const SvgIcons = {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
+    </svg>
+  ),
+  Zap: ({ size = 14, ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  ),
+  Gauge: ({ size = 14, ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <polyline points="12 12 16 8" />
     </svg>
   ),
   Sliders: ({ size = 14, ...props }: IconProps) => (
@@ -496,23 +509,6 @@ export const ShowcaseApp: React.FC = () => {
   // Her sahnenin kendine özgü ayarları burada saklanır
   const [sceneConfigs, setSceneConfigs] = useState<Record<string, SceneCustomConfig>>({});
 
-  const cfg = sceneConfigs[selectedId] ?? DEFAULT_SCENE_CONFIG;
-
-  const updateConfig = (patch: Partial<SceneCustomConfig>) => {
-    setSceneConfigs((prev) => ({
-      ...prev,
-      [selectedId]: {
-        ...(prev[selectedId] ?? DEFAULT_SCENE_CONFIG),
-        ...patch,
-      },
-    }));
-  };
-
-  const [renderStatus, setRenderStatus] = useState<
-    'idle' | 'rendering' | 'success' | 'error'
-  >('idle');
-  const [renderMessage, setRenderMessage] = useState<string>('');
-
   const filteredScenes = SCENES.filter((s) => {
     const matchesCategory =
       selectedCategory === 'all' || s.category === selectedCategory;
@@ -527,6 +523,31 @@ export const ShowcaseApp: React.FC = () => {
 
   const activeScene =
     SCENES.find((s) => s.id === selectedId) ?? SCENES[0];
+
+  const sceneCustom = sceneConfigs[selectedId];
+  const cfg: SceneCustomConfig = {
+    ...DEFAULT_SCENE_CONFIG,
+    ...sceneCustom,
+  };
+
+  const updateConfig = (patch: Partial<SceneCustomConfig>) => {
+    setSceneConfigs((prev) => ({
+      ...prev,
+      [selectedId]: {
+        ...(prev[selectedId] ?? {
+          ...DEFAULT_SCENE_CONFIG,
+          durationInFrames: activeScene.durationInFrames ?? 150,
+          playbackSpeed: 1.0,
+        }),
+        ...patch,
+      },
+    }));
+  };
+
+  const [renderStatus, setRenderStatus] = useState<
+    'idle' | 'rendering' | 'success' | 'error'
+  >('idle');
+  const [renderMessage, setRenderMessage] = useState<string>('');
 
   const handleRenderVideo = async (format: 'webm' | 'mp4' | 'mov') => {
     if (renderStatus === 'rendering') return;
@@ -623,6 +644,7 @@ export const ShowcaseApp: React.FC = () => {
           line2Delay: cfg.line2Delay,
           line3Delay: cfg.line3Delay,
           durationInFrames: cfg.durationInFrames,
+          playbackSpeed: cfg.playbackSpeed ?? 1.0,
           showLogo: cfg.showLogo,
           aspectRatio: cfg.aspectRatio,
           format,
@@ -854,7 +876,7 @@ export const ShowcaseApp: React.FC = () => {
               color: 'rgba(255,255,255,0.7)',
             }}
           >
-            {(cfg.durationInFrames / 30).toFixed(1)}s • 30 FPS •{' '}
+            {(cfg.durationInFrames / 30).toFixed(1)}s • ⚡ {(cfg.playbackSpeed ?? 1.0).toFixed(2)}x • 30 FPS •{' '}
             {cfg.aspectRatio === '9:16' ? '1080×1920' : cfg.aspectRatio === '1:1' ? '1080×1080' : '1920×1080'}
           </div>
 
@@ -1168,7 +1190,7 @@ export const ShowcaseApp: React.FC = () => {
                 }}
               >
                 <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10B981' }} />
-                {cfg.aspectRatio === '9:16' ? '1080×1920 (9:16 Dikey)' : cfg.aspectRatio === '1:1' ? '1080×1080 (1:1 Kare)' : '1920×1080 (16:9 Yatay)'} • 30 FPS • {(cfg.durationInFrames / 30).toFixed(1)}s
+                {cfg.aspectRatio === '9:16' ? '1080×1920 (9:16 Dikey)' : cfg.aspectRatio === '1:1' ? '1080×1080 (1:1 Kare)' : '1920×1080 (16:9 Yatay)'} • 30 FPS • {(cfg.durationInFrames / 30).toFixed(1)}s • ⚡ {(cfg.playbackSpeed ?? 1.0).toFixed(2)}x
               </div>
             </div>
           </div>
@@ -1197,7 +1219,7 @@ export const ShowcaseApp: React.FC = () => {
           >
             {activeScene.isOverlay && activeScene.overlayComponent ? (
               <Player
-                key={`${activeScene.id}-${cfg.aspectRatio}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.tagline}-${cfg.durationInFrames}-${cfg.showLogo}`}
+                key={`${activeScene.id}-${cfg.aspectRatio}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.fontFamily}-${cfg.textAlign}-${cfg.textOffsetX}-${cfg.textOffsetY}-${cfg.letterSpacing}-${cfg.headline}-${cfg.subtitle}-${cfg.tagline}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.durationInFrames}-${cfg.showLogo}`}
                 component={activeScene.overlayComponent}
                 inputProps={{
                   projectTitle: cfg.headline,
@@ -1222,9 +1244,12 @@ export const ShowcaseApp: React.FC = () => {
                   line3Delay: cfg.line3Delay,
                   showLogo: cfg.showLogo,
                   aspectRatio: cfg.aspectRatio,
+                  playbackSpeed: cfg.playbackSpeed ?? 1.0,
+                  durationInFrames: cfg.durationInFrames,
                 }}
                 durationInFrames={cfg.durationInFrames}
                 fps={30}
+                playbackRate={cfg.playbackSpeed ?? 1.0}
                 compositionWidth={cfg.aspectRatio === '9:16' ? 1080 : cfg.aspectRatio === '1:1' ? 1080 : 1920}
                 compositionHeight={cfg.aspectRatio === '9:16' ? 1920 : cfg.aspectRatio === '1:1' ? 1080 : 1080}
                 style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
@@ -1238,7 +1263,7 @@ export const ShowcaseApp: React.FC = () => {
             ) : (
               activeScene.archComponent && (
                 <Player
-                  key={`${activeScene.id}-${cfg.aspectRatio}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.tagline}-${cfg.durationInFrames}-${cfg.showLogo}`}
+                  key={`${activeScene.id}-${cfg.aspectRatio}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.fontFamily}-${cfg.textAlign}-${cfg.textOffsetX}-${cfg.textOffsetY}-${cfg.letterSpacing}-${cfg.headline}-${cfg.subtitle}-${cfg.tagline}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.durationInFrames}-${cfg.showLogo}`}
                   component={activeScene.archComponent}
                   inputProps={{
                     headline: cfg.headline,
@@ -1265,9 +1290,12 @@ export const ShowcaseApp: React.FC = () => {
                     line3Delay: cfg.line3Delay,
                     showLogo: cfg.showLogo,
                     aspectRatio: cfg.aspectRatio,
+                    playbackSpeed: cfg.playbackSpeed ?? 1.0,
+                    durationInFrames: cfg.durationInFrames,
                   }}
                   durationInFrames={cfg.durationInFrames}
                   fps={30}
+                  playbackRate={cfg.playbackSpeed ?? 1.0}
                   compositionWidth={cfg.aspectRatio === '9:16' ? 1080 : cfg.aspectRatio === '1:1' ? 1080 : 1920}
                   compositionHeight={cfg.aspectRatio === '9:16' ? 1920 : cfg.aspectRatio === '1:1' ? 1080 : 1080}
                   style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
@@ -1417,6 +1445,70 @@ export const ShowcaseApp: React.FC = () => {
                   {d.label}
                 </button>
               ))}
+            </div>
+
+            {/* Bağımsız Geçerli Animasyon Hızı Seçimi */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '3px 6px',
+                borderRadius: 8,
+                backgroundColor: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.06)',
+              }}
+            >
+              <span
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontSize: 11,
+                  color: 'rgba(255,255,255,0.5)',
+                  fontWeight: 600,
+                  marginRight: 4,
+                }}
+              >
+                <SvgIcons.Zap size={12} color="#F59E0B" />
+                Hız:
+              </span>
+              {[
+                { label: '0.5x', speed: 0.5 },
+                { label: '0.75x', speed: 0.75 },
+                { label: '1x', speed: 1.0 },
+                { label: '1.25x', speed: 1.25 },
+                { label: '1.5x', speed: 1.5 },
+                { label: '2x', speed: 2.0 },
+              ].map((s) => {
+                const isActive = Math.abs((cfg.playbackSpeed ?? 1.0) - s.speed) < 0.01;
+                return (
+                  <button
+                    key={s.speed}
+                    onClick={() => updateConfig({ playbackSpeed: s.speed })}
+                    title={`Geçerli animasyon hızı: ${s.label} (Toplam süreden bağımsız)`}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: 6,
+                      border: isActive
+                        ? '1px solid #F59E0B'
+                        : '1px solid transparent',
+                      backgroundColor: isActive
+                        ? 'rgba(245, 158, 11, 0.2)'
+                        : 'transparent',
+                      color: isActive
+                        ? '#FCD34D'
+                        : 'rgba(255,255,255,0.65)',
+                      fontSize: 11.5,
+                      fontWeight: isActive ? 700 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Şeffaflık Düğmesi */}
@@ -2547,26 +2639,109 @@ export const ShowcaseApp: React.FC = () => {
                 </button>
               </div>
 
-              {/* Toplam Süre */}
+              {/* KART 1: Geçerli Animasyon Hızı (Bağımsız Tempo) */}
               <div
                 style={{
                   padding: '12px',
                   borderRadius: 10,
                   backgroundColor: '#0F121A',
-                  border: '1px solid rgba(255,255,255,0.07)',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 10,
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
-                    Video Toplam Süresi
-                  </label>
-                  <strong style={{ fontSize: 11, color: '#A5B4FC', fontFamily: 'monospace' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: '#FBBF24', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    <SvgIcons.Zap size={13} color="#F59E0B" />
+                    <span>Geçerli Animasyon Hızı</span>
+                  </div>
+                  <strong style={{ fontSize: 11, color: '#FCD34D', fontFamily: "'JetBrains Mono', monospace", backgroundColor: 'rgba(245, 158, 11, 0.15)', padding: '2px 7px', borderRadius: 4, border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                    {(cfg.playbackSpeed ?? 1.0).toFixed(2)}x
+                  </strong>
+                </div>
+
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
+                  Geçerli sahnenin oynatılma temposu. Videonun toplam süresinden tamamen bağımsızdır.
+                </div>
+
+                {/* Hız Slider */}
+                <input
+                  type="range"
+                  min={0.25}
+                  max={3.0}
+                  step={0.05}
+                  value={cfg.playbackSpeed ?? 1.0}
+                  onChange={(e) => updateConfig({ playbackSpeed: Number(e.target.value) })}
+                  style={{ width: '100%', cursor: 'pointer', accentColor: '#F59E0B' }}
+                />
+
+                {/* Hız Hızlı Butonları */}
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {[
+                    { label: '0.5x', speed: 0.5, desc: 'Yavaş' },
+                    { label: '0.75x', speed: 0.75, desc: 'Akıcı' },
+                    { label: '1.0x', speed: 1.0, desc: 'Normal' },
+                    { label: '1.25x', speed: 1.25, desc: 'Seri' },
+                    { label: '1.5x', speed: 1.5, desc: 'Hızlı' },
+                    { label: '2.0x', speed: 2.0, desc: 'Çift' },
+                  ].map((btn) => {
+                    const isActive = Math.abs((cfg.playbackSpeed ?? 1.0) - btn.speed) < 0.01;
+                    return (
+                      <button
+                        key={btn.speed}
+                        onClick={() => updateConfig({ playbackSpeed: btn.speed })}
+                        title={`${btn.label} - ${btn.desc} oynatma hızı`}
+                        style={{
+                          flex: 1,
+                          padding: '5px 2px',
+                          borderRadius: 4,
+                          border: isActive
+                            ? '1px solid #F59E0B'
+                            : '1px solid rgba(255,255,255,0.08)',
+                          backgroundColor: isActive
+                            ? 'rgba(245, 158, 11, 0.22)'
+                            : 'rgba(255,255,255,0.03)',
+                          color: isActive ? '#FCD34D' : 'rgba(255,255,255,0.8)',
+                          fontSize: 10,
+                          fontWeight: isActive ? 700 : 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {btn.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* KART 2: Animasyon / Video Toplam Süresi (Bağımsız Zaman Çizelgesi) */}
+              <div
+                style={{
+                  padding: '12px',
+                  borderRadius: 10,
+                  backgroundColor: '#0F121A',
+                  border: '1px solid rgba(99, 102, 241, 0.25)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: '#A5B4FC', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    <SvgIcons.Clock size={13} color="#818CF8" />
+                    <span>Animasyon Toplam Süresi</span>
+                  </div>
+                  <strong style={{ fontSize: 11, color: '#A5B4FC', fontFamily: "'JetBrains Mono', monospace", backgroundColor: 'rgba(99, 102, 241, 0.15)', padding: '2px 7px', borderRadius: 4, border: '1px solid rgba(99, 102, 241, 0.3)' }}>
                     {(cfg.durationInFrames / 30).toFixed(1)}s ({cfg.durationInFrames}f)
                   </strong>
                 </div>
+
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
+                  Videonun zaman çizelgesi uzunluğu. Geçerli animasyon hızından tamamen bağımsızdır.
+                </div>
+
                 <input
                   type="range"
                   min={60}
@@ -2574,7 +2749,7 @@ export const ShowcaseApp: React.FC = () => {
                   step={15}
                   value={cfg.durationInFrames}
                   onChange={(e) => updateConfig({ durationInFrames: Number(e.target.value) })}
-                  style={{ width: '100%', cursor: 'pointer' }}
+                  style={{ width: '100%', cursor: 'pointer', accentColor: '#6366F1' }}
                 />
                 <div style={{ display: 'flex', gap: 4 }}>
                   {[
@@ -2589,7 +2764,7 @@ export const ShowcaseApp: React.FC = () => {
                       onClick={() => updateConfig({ durationInFrames: btn.frames })}
                       style={{
                         flex: 1,
-                        padding: '4px 2px',
+                        padding: '5px 2px',
                         borderRadius: 4,
                         border:
                           cfg.durationInFrames === btn.frames
@@ -2603,11 +2778,42 @@ export const ShowcaseApp: React.FC = () => {
                         fontSize: 10,
                         fontWeight: cfg.durationInFrames === btn.frames ? 700 : 500,
                         cursor: 'pointer',
+                        transition: 'all 0.15s ease',
                       }}
                     >
                       {btn.label}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* KART 3: Süre & Hız Bağımsızlık Durum Özeti */}
+              <div
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: 8,
+                  backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px dashed rgba(255, 255, 255, 0.12)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10.5 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.6)' }}>⏱️ Toplam Süre:</span>
+                  <span style={{ color: '#A5B4FC', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
+                    {(cfg.durationInFrames / 30).toFixed(1)} sn ({cfg.durationInFrames} kare)
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10.5 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.6)' }}>⚡ Geçerli Hız:</span>
+                  <span style={{ color: '#FCD34D', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
+                    {(cfg.playbackSpeed ?? 1.0).toFixed(2)}x
+                  </span>
+                </div>
+                <div style={{ fontSize: 9.5, color: '#34D399', lineHeight: 1.35, marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span>✓</span>
+                  <span>Süre ve hız bağımsızdır: Hızı değiştirmek süreyi, süreyi değiştirmek hızı etkilemez.</span>
                 </div>
               </div>
 
@@ -2903,9 +3109,15 @@ export const ShowcaseApp: React.FC = () => {
                   <span style={{ color: '#FFFFFF', fontFamily: 'monospace' }}>30 FPS</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255,255,255,0.5)' }}>
-                  <span>Süre:</span>
+                  <span>Animasyon Süresi:</span>
                   <span style={{ color: '#FFFFFF', fontFamily: 'monospace' }}>
                     {(cfg.durationInFrames / 30).toFixed(1)} sn ({cfg.durationInFrames} frames)
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255,255,255,0.5)' }}>
+                  <span>Animasyon Hızı:</span>
+                  <span style={{ color: '#FCD34D', fontFamily: 'monospace', fontWeight: 600 }}>
+                    {(cfg.playbackSpeed ?? 1.0).toFixed(2)}x (Bağımsız)
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255,255,255,0.5)' }}>

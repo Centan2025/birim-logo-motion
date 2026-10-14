@@ -51,6 +51,8 @@ const DEFAULT_ARCH_PROPS = {
   textOffsetY: 0,
   textAlign: 'left' as const,
   textAnimation: 'char-wave' as const,
+  playbackSpeed: 1,
+  durationInFrames: 150,
 };
 
 const DEFAULT_MODERN_PROPS = {
@@ -69,6 +71,8 @@ const DEFAULT_MODERN_PROPS = {
   textOffsetY: 0,
   textAlign: 'left' as const,
   textAnimation: 'char-wave' as const,
+  playbackSpeed: 1,
+  durationInFrames: 150,
 };
 
 const DEFAULT_TYPOGRAPHY_PROPS = {
@@ -99,6 +103,7 @@ const calculateDynamicMetadata: CalculateMetadataFunction<ArchitecturalSceneProp
   return {
     width,
     height,
+    durationInFrames: Number(props.durationInFrames) || 150,
   };
 };
 
@@ -110,6 +115,7 @@ const calculateLowerThirdMetadata: CalculateMetadataFunction<LowerThirdProps> = 
   return {
     width,
     height,
+    durationInFrames: Number(props.durationInFrames) || 150,
   };
 };
 

@@ -81,6 +81,8 @@ export const ArchitecturalSceneSchema = z.object({
   line3Delay: z.number().min(0).max(300).optional(),
   aspectRatio: z.enum(['16:9', '9:16', '1:1']).optional(),
   showLogo: z.boolean().optional(),
+  playbackSpeed: z.number().min(0.1).max(5).optional(),
+  durationInFrames: z.number().min(30).max(3600).optional(),
 });
 
 export type ArchitecturalSceneProps = z.infer<typeof ArchitecturalSceneSchema>;
@@ -108,6 +110,8 @@ export const LowerThirdSchema = z.object({
   line3Delay: z.number().min(0).max(300).optional(),
   aspectRatio: z.enum(['16:9', '9:16', '1:1']).optional(),
   showLogo: z.boolean().optional(),
+  playbackSpeed: z.number().min(0.1).max(5).optional(),
+  durationInFrames: z.number().min(30).max(3600).optional(),
 });
 
 export type LowerThirdProps = z.infer<typeof LowerThirdSchema>;
