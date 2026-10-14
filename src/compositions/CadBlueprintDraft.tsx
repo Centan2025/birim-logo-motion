@@ -28,6 +28,7 @@ export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = ({
   textOffsetX = 0,
   textOffsetY = 0,
   textAnimation = 'char-wave',
+  textDelayFrames,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -382,15 +383,15 @@ export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = ({
             }}
           >
             <AnimatedTextLine
-            text={headline}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
+              text={headline}
+              fontFamily={fontFamily}
+              fontSize={headlineSize}
+              letterSpacing={letterSpacing}
+              color="inherit"
+              accentColor={accentColor}
+              animation={textAnimation}
+              startFrame={textDelayFrames ?? 34}
+            />
           </span>
           <div style={{ width: 64, height: 1, backgroundColor: accentColor }} />
         </div>
@@ -410,7 +411,7 @@ export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = ({
             color="inherit"
             accentColor={accentColor}
             animation={textAnimation}
-            startFrame={42}
+            startFrame={(textDelayFrames ?? 34) + 8}
             isSubtitle
           />
         </div>

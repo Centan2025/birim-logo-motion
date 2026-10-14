@@ -305,28 +305,65 @@ const TEXT_ANIMATION_CHOICES: ReadonlyArray<{
   { label: '12. Klasik Yumuşak Yükseliş (Fade Up)', value: 'fade-up' },
 ];
 
+interface SceneCustomConfig {
+  headline: string;
+  subtitle: string;
+  projectCode: string;
+  accentColor: string;
+  textColor: string;
+  fontFamily: (typeof FONT_CHOICES)[number]['value'];
+  textAnimation: TextAnimationType;
+  headlineSize: number;
+  subtitleSize: number;
+  letterSpacing: number;
+  textOffsetX: number;
+  textOffsetY: number;
+  textAlign: 'left' | 'center' | 'right';
+  textDelayFrames: number;
+  transparentBg: boolean;
+}
+
+const DEFAULT_SCENE_CONFIG: SceneCustomConfig = {
+  headline: 'YENİLİKÇİ TASARIM & ÜRETİM',
+  subtitle: 'MODERN ÇÖZÜMLER // İSTANBUL',
+  projectCode: 'BİRİM — 2026',
+  accentColor: '#E07A5F',
+  textColor: '#F4F1EA',
+  fontFamily: "'Inter', sans-serif",
+  textAnimation: 'char-wave',
+  headlineSize: 19,
+  subtitleSize: 12,
+  letterSpacing: 0.4,
+  textOffsetX: 0,
+  textOffsetY: 0,
+  textAlign: 'center',
+  textDelayFrames: 30,
+  transparentBg: false,
+};
+
 export const ShowcaseApp: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
   const [selectedId, setSelectedId] = useState<string>('26-Directional-Letter-Expand');
 
-  const [headline, setHeadline] = useState('YENİLİKÇİ TASARIM & ÜRETİM');
-  const [subtitle, setSubtitle] = useState('MODERN ÇÖZÜMLER // İSTANBUL');
-  const [projectCode, setProjectCode] = useState('BİRİM — 2026');
-  const [accentColor, setAccentColor] = useState('#E07A5F');
+  // Her sahnenin kendine özgü ayarları burada saklanır
+  const [sceneConfigs, setSceneConfigs] = useState<Record<string, SceneCustomConfig>>({});
 
-  const [fontFamily, setFontFamily] = useState<
-    (typeof FONT_CHOICES)[number]['value']
-  >("'Inter', sans-serif");
-  const [textAnimation, setTextAnimation] =
-    useState<TextAnimationType>('char-wave');
-  const [headlineSize, setHeadlineSize] = useState<number>(19);
-  const [subtitleSize, setSubtitleSize] = useState<number>(12);
-  const [letterSpacing, setLetterSpacing] = useState<number>(0.4);
-  const [textOffsetX, setTextOffsetX] = useState<number>(0);
-  const [textOffsetY, setTextOffsetY] = useState<number>(0);
-  const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right'>('center');
-  const [transparentBg, setTransparentBg] = useState<boolean>(false);
-  const [copiedFormat, setCopiedFormat] = useState<string | null>(null);
+  const cfg = sceneConfigs[selectedId] ?? DEFAULT_SCENE_CONFIG;
+
+  const updateConfig = (patch: Partial<SceneCustomConfig>) => {
+    setSceneConfigs((prev) => ({
+      ...prev,
+      [selectedId]: {
+        ...(prev[selectedId] ?? DEFAULT_SCENE_CONFIG),
+        ...patch,
+      },
+    }));
+  };
+
+  const [renderStatus, setRenderStatus] = useState<
+    'idle' | 'rendering' | 'success' | 'error'
+  >('idle');
+  const [renderMessage, setRenderMessage] = useState<string>('');
 
   const filteredScenes =
     selectedCategory === 'all'
@@ -335,6 +372,75 @@ export const ShowcaseApp: React.FC = () => {
 
   const activeScene =
     SCENES.find((s) => s.id === selectedId) ?? SCENES[0];
+
+  const handleRenderVideo = async (format: 'webm' | 'mp4' | 'mov') => {
+    if (renderStatus === 'rendering') return;
+    try {
+      setRenderStatus('rendering');
+      const isTrans = format === 'mov' ? true : format === 'webm' ? cfg.transparentBg : false;
+      setRenderMessage(
+        format === 'mov'
+          ? '🎬 Şeffaf ProRes 4444 (.mov) işleniyor... (Birkaç saniye sürebilir)'
+          : format === 'webm'
+          ? (cfg.transparentBg ? '🟢 Şeffaf WebM (Alpha) işleniyor...' : 'WebM video işleniyor...')
+          : 'MP4 Full HD video işleniyor...'
+      );
+
+      const res = await fetch('/api/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sceneId: activeScene.id,
+          transparent: isTrans,
+          headline: cfg.headline,
+          subtitle: cfg.subtitle,
+          projectCode: cfg.projectCode,
+          accentColor: cfg.accentColor,
+          primaryColor: cfg.textColor,
+          format,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Render sunucu hatası (${res.status})`);
+      }
+
+      const json = (await res.json()) as {
+        success?: boolean;
+        downloadUrl?: string;
+        filename?: string;
+        error?: string;
+      };
+
+      if (!json.success || !json.downloadUrl) {
+        throw new Error(json.error || 'Video oluşturulamadı');
+      }
+
+      setRenderStatus('success');
+      setRenderMessage(`✓ Video hazır! İndiriliyor: ${json.filename}`);
+
+      // Otomatik dosya indirmesi başlat
+      const link = document.createElement('a');
+      link.href = json.downloadUrl;
+      link.download = json.filename ?? 'video';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setTimeout(() => {
+        setRenderStatus('idle');
+        setRenderMessage('');
+      }, 6000);
+    } catch (err: unknown) {
+      setRenderStatus('error');
+      const msg = err instanceof Error ? err.message : String(err);
+      setRenderMessage(`Hata: ${msg}`);
+      setTimeout(() => {
+        setRenderStatus('idle');
+        setRenderMessage('');
+      }, 7000);
+    }
+  };
 
   return (
     <div
@@ -369,7 +475,7 @@ export const ShowcaseApp: React.FC = () => {
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: 10.5,
               letterSpacing: '0.2em',
-              color: accentColor,
+              color: cfg.accentColor,
               marginBottom: 4,
             }}
           >
@@ -404,10 +510,10 @@ export const ShowcaseApp: React.FC = () => {
                     padding: '5px 8px',
                     borderRadius: 7,
                     border: active
-                      ? `1px solid ${accentColor}`
+                      ? `1px solid ${cfg.accentColor}`
                       : '1px solid rgba(255,255,255,0.1)',
                     backgroundColor: active
-                      ? `${accentColor}22`
+                      ? `${cfg.accentColor}22`
                       : 'rgba(255,255,255,0.03)',
                     color: active ? '#FFFFFF' : 'rgba(255,255,255,0.65)',
                     fontSize: 10.5,
@@ -444,7 +550,7 @@ export const ShowcaseApp: React.FC = () => {
                   padding: '10px 12px',
                   borderRadius: 10,
                   border: isSelected
-                    ? `1px solid ${accentColor}`
+                    ? `1px solid ${cfg.accentColor}`
                     : '1px solid rgba(255,255,255,0.06)',
                   backgroundColor: isSelected
                     ? 'rgba(224, 122, 95, 0.14)'
@@ -531,37 +637,42 @@ export const ShowcaseApp: React.FC = () => {
         <div
           style={{
             width: '100%',
-            maxHeight: 'calc(100vh - 130px)',
-            aspectRatio: '16 / 9',
-            margin: '0 auto',
+            flex: 1,
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
             borderRadius: 16,
-            overflow: 'hidden',
             border: '1px solid rgba(255,255,255,0.14)',
             boxShadow: '0 24px 70px rgba(0,0,0,0.65)',
-            backgroundColor: transparentBg ? '#101218' : '#050507',
-            backgroundImage: transparentBg
+            backgroundColor: cfg.transparentBg ? '#101218' : '#050507',
+            backgroundImage: cfg.transparentBg
               ? 'radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px)'
               : undefined,
             backgroundSize: '16px 16px',
+            overflow: 'hidden',
           }}
         >
           {activeScene.isOverlay && activeScene.overlayComponent ? (
             <Player
-              key={`${activeScene.id}-${transparentBg}-${textAnimation}`}
+              key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.textDelayFrames}`}
               component={activeScene.overlayComponent}
               inputProps={{
-                projectTitle: headline,
-                architecturalPhase: subtitle,
-                locationYear: projectCode,
-                accentColor,
-                transparentBackground: transparentBg,
-                fontFamily,
-                headlineSize,
-                subtitleSize,
-                letterSpacing,
-                textOffsetX,
-                textOffsetY,
-                textAnimation,
+                projectTitle: cfg.headline,
+                architecturalPhase: cfg.subtitle,
+                locationYear: cfg.projectCode,
+                accentColor: cfg.accentColor,
+                primaryColor: cfg.textColor,
+                transparentBackground: cfg.transparentBg,
+                fontFamily: cfg.fontFamily,
+                headlineSize: cfg.headlineSize,
+                subtitleSize: cfg.subtitleSize,
+                letterSpacing: cfg.letterSpacing,
+                textOffsetX: cfg.textOffsetX,
+                textOffsetY: cfg.textOffsetY,
+                textAnimation: cfg.textAnimation,
+                textDelayFrames: cfg.textDelayFrames,
               }}
               durationInFrames={activeScene.durationInFrames}
               fps={30}
@@ -569,30 +680,34 @@ export const ShowcaseApp: React.FC = () => {
               compositionHeight={1080}
               style={{ width: '100%', height: '100%' }}
               controls
+              alwaysShowControls
+              showPlaybackRateControl
+              allowFullscreen
               autoPlay
               loop
             />
           ) : (
             activeScene.archComponent && (
               <Player
-                key={`${activeScene.id}-${transparentBg}-${textAnimation}`}
+                key={`${activeScene.id}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.textDelayFrames}`}
                 component={activeScene.archComponent}
                 inputProps={{
-                  headline,
-                  subtitle,
-                  projectCode,
+                  headline: cfg.headline,
+                  subtitle: cfg.subtitle,
+                  projectCode: cfg.projectCode,
                   scaleText: 'ÖLÇEK 1:50 // BİRİM: MM',
-                  accentColor,
-                  primaryColor: '#F4F1EA',
-                  backgroundColor: transparentBg ? 'transparent' : '#0B0D10',
-                  fontFamily,
-                  headlineSize,
-                  subtitleSize,
-                  letterSpacing,
-                  textOffsetX,
-                  textOffsetY,
-                  textAlign,
-                  textAnimation,
+                  accentColor: cfg.accentColor,
+                  primaryColor: cfg.textColor,
+                  backgroundColor: cfg.transparentBg ? 'transparent' : '#0B0D10',
+                  fontFamily: cfg.fontFamily,
+                  headlineSize: cfg.headlineSize,
+                  subtitleSize: cfg.subtitleSize,
+                  letterSpacing: cfg.letterSpacing,
+                  textOffsetX: cfg.textOffsetX,
+                  textOffsetY: cfg.textOffsetY,
+                  textAlign: cfg.textAlign,
+                  textAnimation: cfg.textAnimation,
+                  textDelayFrames: cfg.textDelayFrames,
                 }}
                 durationInFrames={activeScene.durationInFrames}
                 fps={30}
@@ -600,11 +715,143 @@ export const ShowcaseApp: React.FC = () => {
                 compositionHeight={1080}
                 style={{ width: '100%', height: '100%' }}
                 controls
+                alwaysShowControls
+                showPlaybackRateControl
+                allowFullscreen
                 autoPlay
                 loop
               />
             )
           )}
+        </div>
+
+        {/* HIZLI KONTROL & İNDİRME ÇUBUĞU (Videonun Tam Altında - Göz Önünde) */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: '#0F121A',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 14,
+            padding: '12px 18px',
+            gap: 14,
+            boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+          }}
+        >
+          {/* Sol: Büyük Şeffaflık Düğmesi */}
+          <button
+            onClick={() => updateConfig({ transparentBg: !cfg.transparentBg })}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '9px 18px',
+              borderRadius: 8,
+              border: cfg.transparentBg ? '1px solid #2ecc71' : '1px solid rgba(255,255,255,0.2)',
+              backgroundColor: cfg.transparentBg ? 'rgba(46, 204, 113, 0.22)' : 'rgba(255,255,255,0.06)',
+              color: '#FFFFFF',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            <span style={{ fontSize: 16 }}>{cfg.transparentBg ? '🟢' : '⚪'}</span>
+            <span>Şeffaf Arka Plan:</span>
+            <strong style={{ color: cfg.transparentBg ? '#2ecc71' : 'rgba(255,255,255,0.6)' }}>
+              {cfg.transparentBg ? 'AÇIK' : 'KAPALI'}
+            </strong>
+          </button>
+
+          {/* Orta: Canlı Durum / Bildirim */}
+          {renderStatus !== 'idle' ? (
+            <div
+              style={{
+                flex: 1,
+                padding: '8px 14px',
+                borderRadius: 8,
+                fontSize: 12.5,
+                fontWeight: 600,
+                textAlign: 'center',
+                backgroundColor:
+                  renderStatus === 'rendering'
+                    ? 'rgba(243, 156, 18, 0.2)'
+                    : renderStatus === 'success'
+                    ? 'rgba(46, 204, 113, 0.2)'
+                    : 'rgba(231, 76, 60, 0.2)',
+                border:
+                  renderStatus === 'rendering'
+                    ? '1px solid #f39c12'
+                    : renderStatus === 'success'
+                    ? '1px solid #2ecc71'
+                    : '1px solid #e74c3c',
+                color:
+                  renderStatus === 'rendering'
+                    ? '#f39c12'
+                    : renderStatus === 'success'
+                    ? '#2ecc71'
+                    : '#e74c3c',
+              }}
+            >
+              {renderStatus === 'rendering' ? '⏳ ' : renderStatus === 'success' ? '✓ ' : '⚠ '}
+              {renderMessage}
+            </div>
+          ) : (
+            <div style={{ flex: 1, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+              {cfg.transparentBg
+                ? '🟢 Şeffaf mod açık. Butona basarak videoyu transparan indirin:'
+                : 'Standart mod. Videonuzu tek tıkla bilgisayara indirin:'}
+            </div>
+          )}
+
+          {/* Sağ: Büyük İndirme Düğmeleri */}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              disabled={renderStatus === 'rendering'}
+              onClick={() => handleRenderVideo('webm')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 18px',
+                borderRadius: 8,
+                border: '1px solid #2ecc71',
+                backgroundColor: '#2ecc71',
+                color: '#000000',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
+                opacity: renderStatus === 'rendering' ? 0.6 : 1,
+                boxShadow: '0 4px 14px rgba(46, 204, 113, 0.3)',
+              }}
+            >
+              <span>⬇</span>
+              <span>{cfg.transparentBg ? 'Şeffaf WebM İndir' : 'WebM İndir'}</span>
+            </button>
+
+            <button
+              disabled={renderStatus === 'rendering'}
+              onClick={() => handleRenderVideo('mp4')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 16px',
+                borderRadius: 8,
+                border: `1px solid ${cfg.accentColor}`,
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                color: '#FFFFFF',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
+                opacity: renderStatus === 'rendering' ? 0.6 : 1,
+              }}
+            >
+              <span>🎬</span>
+              <span>MP4 İndir</span>
+            </button>
+          </div>
         </div>
       </main>
 
@@ -621,9 +868,10 @@ export const ShowcaseApp: React.FC = () => {
           gap: 16,
         }}
       >
+        {/* Üst Başlık & Sıfırla */}
         <div
           style={{
-            paddingBottom: 12,
+            paddingBottom: 10,
             borderBottom: '1px solid rgba(255,255,255,0.08)',
             display: 'flex',
             justifyContent: 'space-between',
@@ -634,31 +882,27 @@ export const ShowcaseApp: React.FC = () => {
             <div
               style={{
                 fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 10.5,
-                letterSpacing: '0.18em',
-                color: accentColor,
+                fontSize: 10,
+                letterSpacing: '0.15em',
+                color: cfg.accentColor,
               }}
             >
-              CANLI AYAR PANELİ
+              KONTROL PANELİ
             </div>
-            <div style={{ fontSize: 15, fontWeight: 600, marginTop: 2 }}>
-              Metin, Font &amp; Konum
+            <div style={{ fontSize: 14, fontWeight: 700, marginTop: 1 }}>
+              {activeScene.title.split('//')[1]?.trim() ?? activeScene.title}
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
+              Her animasyon kendi ayarını saklar
             </div>
           </div>
           <button
-            onClick={() => {
-              setTextOffsetX(0);
-              setTextOffsetY(0);
-              setHeadlineSize(19);
-              setSubtitleSize(12);
-              setLetterSpacing(0.4);
-              setTextAlign('center');
-              setFontFamily("'Inter', sans-serif");
-            }}
+            onClick={() => updateConfig(DEFAULT_SCENE_CONFIG)}
+            title="Bu sahnenin ayarlarını varsayılana sıfırla"
             style={{
-              padding: '6px 10px',
+              padding: '5px 10px',
               borderRadius: 6,
-              border: `1px solid ${accentColor}`,
+              border: `1px solid ${cfg.accentColor}`,
               backgroundColor: 'rgba(224, 122, 95, 0.12)',
               color: '#FFFFFF',
               fontSize: 11,
@@ -670,469 +914,532 @@ export const ShowcaseApp: React.FC = () => {
           </button>
         </div>
 
-        {/* Şeffaf Arka Plan (Alpha Transparan Modu) */}
+        {/* 1. BÖLÜM: METİNLER VE RENKLERİ (Yan Yana & Kolay Erişilebilir) */}
         <div
           style={{
-            padding: '12px 14px',
+            padding: '12px',
             borderRadius: 10,
-            backgroundColor: transparentBg
-              ? 'rgba(46, 204, 113, 0.12)'
-              : 'rgba(255, 255, 255, 0.04)',
-            border: transparentBg
-              ? '1px solid rgba(46, 204, 113, 0.45)'
-              : '1px solid rgba(255, 255, 255, 0.1)',
+            backgroundColor: '#12151D',
+            border: '1px solid rgba(255,255,255,0.08)',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            transition: 'all 0.2s ease',
+            flexDirection: 'column',
+            gap: 12,
           }}
         >
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: '#F4F1EA',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span>✏️ 1. METİNLER VE RENKLERİ</span>
+          </div>
+
+          {/* 1A: Ana Metin & Rengi */}
           <div>
-            <div
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
+                Ana Metin
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 10, color: cfg.textColor, fontFamily: 'monospace' }}>
+                  {cfg.textColor}
+                </span>
+                <input
+                  type="color"
+                  value={cfg.textColor}
+                  onChange={(e) => updateConfig({ textColor: e.target.value })}
+                  title="Ana Metin Rengi Seç"
+                  style={{
+                    width: 22,
+                    height: 22,
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    padding: 0,
+                    backgroundColor: 'transparent',
+                  }}
+                />
+              </div>
+            </div>
+            <input
+              type="text"
+              value={cfg.headline}
+              onChange={(e) => updateConfig({ headline: e.target.value })}
+              placeholder="Ana metin girin..."
               style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: 6,
+                border: '1px solid rgba(255,255,255,0.16)',
+                backgroundColor: '#1A1E29',
+                color: cfg.textColor,
+                fontSize: 12.5,
+                fontWeight: 600,
+              }}
+            />
+            {/* Hızlı Ana Renk Paleti */}
+            <div style={{ display: 'flex', gap: 4, marginTop: 6, alignItems: 'center' }}>
+              <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.45)', marginRight: 2 }}>
+                Renk:
+              </span>
+              {[
+                { label: 'Beyaz', color: '#FFFFFF' },
+                { label: 'Krem', color: '#F4F1EA' },
+                { label: 'Altın', color: '#C89D66' },
+                { label: 'Turkuaz', color: '#00E5FF' },
+                { label: 'Koyu', color: '#1A1A1A' },
+              ].map((c) => (
+                <button
+                  key={c.color}
+                  onClick={() => updateConfig({ textColor: c.color })}
+                  title={`Ana metni ${c.label} yap`}
+                  style={{
+                    flex: 1,
+                    height: 20,
+                    borderRadius: 4,
+                    backgroundColor: c.color,
+                    border:
+                      cfg.textColor.toLowerCase() === c.color.toLowerCase()
+                        ? `2px solid ${cfg.accentColor}`
+                        : '1px solid rgba(255,255,255,0.2)',
+                    cursor: 'pointer',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 1B: Alt Metin & Rengi */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
+                Alt Metin
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 10, color: cfg.accentColor, fontFamily: 'monospace' }}>
+                  {cfg.accentColor}
+                </span>
+                <input
+                  type="color"
+                  value={cfg.accentColor}
+                  onChange={(e) => updateConfig({ accentColor: e.target.value })}
+                  title="Alt Metin / Vurgu Rengi Seç"
+                  style={{
+                    width: 22,
+                    height: 22,
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    padding: 0,
+                    backgroundColor: 'transparent',
+                  }}
+                />
+              </div>
+            </div>
+            <input
+              type="text"
+              value={cfg.subtitle}
+              onChange={(e) => updateConfig({ subtitle: e.target.value })}
+              placeholder="Alt metin girin..."
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: 6,
+                border: '1px solid rgba(255,255,255,0.16)',
+                backgroundColor: '#1A1E29',
+                color: cfg.accentColor,
+                fontSize: 12,
+              }}
+            />
+            {/* Hızlı Alt Metin Renk Paleti */}
+            <div style={{ display: 'flex', gap: 4, marginTop: 6, alignItems: 'center' }}>
+              <span style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.45)', marginRight: 2 }}>
+                Vurgu:
+              </span>
+              {[
+                { label: 'Bakır', color: '#E07A5F' },
+                { label: 'Altın', color: '#C89D66' },
+                { label: 'Zümrüt', color: '#2ECC71' },
+                { label: 'Mavi', color: '#3498DB' },
+                { label: 'Beyaz', color: '#FFFFFF' },
+              ].map((c) => (
+                <button
+                  key={c.color}
+                  onClick={() => updateConfig({ accentColor: c.color })}
+                  title={`Alt metni ${c.label} yap`}
+                  style={{
+                    flex: 1,
+                    height: 20,
+                    borderRadius: 4,
+                    backgroundColor: c.color,
+                    border:
+                      cfg.accentColor.toLowerCase() === c.color.toLowerCase()
+                        ? '2px solid #FFFFFF'
+                        : '1px solid rgba(255,255,255,0.2)',
+                    cursor: 'pointer',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 1C: Künye Metni */}
+          <div>
+            <label style={{ display: 'block', fontSize: 10.5, color: 'rgba(255,255,255,0.55)', marginBottom: 3 }}>
+              Künye Metni (Alt Köşe / Detay)
+            </label>
+            <input
+              type="text"
+              value={cfg.projectCode}
+              onChange={(e) => updateConfig({ projectCode: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '7px 10px',
+                borderRadius: 6,
+                border: '1px solid rgba(255,255,255,0.12)',
+                backgroundColor: '#1A1E29',
+                color: '#FFFFFF',
+                fontSize: 11.5,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* 2. BÖLÜM: ANİMASYON VE GECİKME ZAMANI */}
+        <div
+          style={{
+            padding: '12px',
+            borderRadius: 10,
+            backgroundColor: '#12151D',
+            border: '1px solid rgba(255,255,255,0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: '#F4F1EA',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            ⏱️ 2. ANİMASYON VE ZAMANLAMA
+          </div>
+
+          {/* Metin Başlama Gecikmesi */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
+                Metin Başlama Gecikmesi
+              </label>
+              <strong style={{ fontSize: 11, color: cfg.accentColor, fontFamily: 'monospace' }}>
+                {(cfg.textDelayFrames / 30).toFixed(1)} sn ({cfg.textDelayFrames} frame)
+              </strong>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={90}
+              step={3}
+              value={cfg.textDelayFrames}
+              onChange={(e) => updateConfig({ textDelayFrames: Number(e.target.value) })}
+              style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
+            />
+            <div style={{ display: 'flex', gap: 5, marginTop: 6 }}>
+              {[
+                { label: 'Hemen (0s)', frames: 0 },
+                { label: '0.8s (24f)', frames: 24 },
+                { label: '1.0s (30f)', frames: 30 },
+                { label: '1.5s (45f)', frames: 45 },
+              ].map((btn) => (
+                <button
+                  key={btn.frames}
+                  onClick={() => updateConfig({ textDelayFrames: btn.frames })}
+                  style={{
+                    flex: 1,
+                    padding: '4px 2px',
+                    borderRadius: 4,
+                    border:
+                      cfg.textDelayFrames === btn.frames
+                        ? `1px solid ${cfg.accentColor}`
+                        : '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor:
+                      cfg.textDelayFrames === btn.frames
+                        ? `${cfg.accentColor}25`
+                        : 'rgba(255,255,255,0.04)',
+                    color: '#FFFFFF',
+                    fontSize: 10,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {btn.label}
+                </button>
+              ))}
+            </div>
+            <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.42)', marginTop: 4 }}>
+              * Logo animasyonu başladıktan ne kadar süre sonra metinlerin gireceğini belirler.
+            </div>
+          </div>
+
+          {/* Alt Metin Animasyonu Seçici */}
+          <div>
+            <label style={{ display: 'block', fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 600, marginBottom: 4 }}>
+              Metin Animasyon Efekti
+            </label>
+            <select
+              value={cfg.textAnimation}
+              onChange={(e) =>
+                updateConfig({ textAnimation: e.target.value as TextAnimationType })
+              }
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: 6,
+                border: `1.5px solid ${cfg.accentColor}`,
+                backgroundColor: '#1A1E29',
+                color: '#FFFFFF',
                 fontSize: 12,
                 fontWeight: 600,
-                color: transparentBg ? '#2ecc71' : '#FFFFFF',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <span>{transparentBg ? '🟢' : '⚪'}</span>
-              Şeffaf Arka Plan (Alpha)
-            </div>
-            <div
-              style={{
-                fontSize: 10.5,
-                color: 'rgba(255, 255, 255, 0.55)',
-                marginTop: 2,
-              }}
-            >
-              {transparentBg
-                ? 'Arka plan şeffaf yapıldı (Video üstüne koymaya hazır)'
-                : 'Arka plan koyu renkte'}
-            </div>
-          </div>
-          <button
-            onClick={() => setTransparentBg(!transparentBg)}
-            style={{
-              padding: '6px 12px',
-              borderRadius: 6,
-              border: 'none',
-              backgroundColor: transparentBg ? '#2ecc71' : 'rgba(255,255,255,0.15)',
-              color: transparentBg ? '#000000' : '#FFFFFF',
-              fontSize: 11,
-              fontWeight: 700,
-              cursor: 'pointer',
-              letterSpacing: '0.04em',
-            }}
-          >
-            {transparentBg ? 'AÇIK' : 'KAPALI'}
-          </button>
-        </div>
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.6)',
-              marginBottom: 6,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-            }}
-          >
-            1. Ana Metin (Headline)
-          </label>
-          <input
-            type="text"
-            value={headline}
-            onChange={(e) => setHeadline(e.target.value)}
-            placeholder="Ana metin yazın..."
-            style={{
-              width: '100%',
-              padding: '9px 12px',
-              borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.16)',
-              backgroundColor: '#14171F',
-              color: '#FFFFFF',
-              fontSize: 13,
-            }}
-          />
-        </div>
-
-        {/* Alt Metin */}
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.6)',
-              marginBottom: 6,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-            }}
-          >
-            2. Alt Metin (Subtitle)
-          </label>
-          <input
-            type="text"
-            value={subtitle}
-            onChange={(e) => setSubtitle(e.target.value)}
-            placeholder="Alt metin yazın..."
-            style={{
-              width: '100%',
-              padding: '9px 12px',
-              borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.16)',
-              backgroundColor: '#14171F',
-              color: '#FFFFFF',
-              fontSize: 13,
-            }}
-          />
-        </div>
-
-        {/* Alt Metin Animasyonu Seçici */}
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 11,
-              color: accentColor,
-              fontWeight: 700,
-              marginBottom: 6,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-            }}
-          >
-            ★ Alt Metin Animasyonu (12 Efekt)
-          </label>
-          <select
-            value={textAnimation}
-            onChange={(e) =>
-              setTextAnimation(e.target.value as TextAnimationType)
-            }
-            style={{
-              width: '100%',
-              padding: '9px 12px',
-              borderRadius: 8,
-              border: `1.5px solid ${accentColor}`,
-              backgroundColor: '#14171F',
-              color: '#FFFFFF',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            {TEXT_ANIMATION_CHOICES.map((anim) => (
-              <option key={anim.value} value={anim.value}>
-                {anim.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Font Seçici */}
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.6)',
-              marginBottom: 6,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-            }}
-          >
-            3. Yazı Tipi (Font Seçimi)
-          </label>
-          <select
-            value={fontFamily}
-            onChange={(e) =>
-              setFontFamily(
-                e.target.value as (typeof FONT_CHOICES)[number]['value']
-              )
-            }
-            style={{
-              width: '100%',
-              padding: '9px 12px',
-              borderRadius: 8,
-              border: `1px solid ${accentColor}`,
-              backgroundColor: '#14171F',
-              color: '#FFFFFF',
-              fontSize: 13,
-              cursor: 'pointer',
-            }}
-          >
-            {FONT_CHOICES.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Ana Metin Boyutu */}
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.65)',
-              marginBottom: 5,
-            }}
-          >
-            <span>4. ANA METİN BOYUTU</span>
-            <strong style={{ color: accentColor }}>{headlineSize} px</strong>
-          </div>
-          <input
-            type="range"
-            min={8}
-            max={72}
-            value={headlineSize}
-            onChange={(e) => setHeadlineSize(Number(e.target.value))}
-            style={{ width: '100%', accentColor, cursor: 'pointer' }}
-          />
-        </div>
-
-        {/* Alt Metin Boyutu */}
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.65)',
-              marginBottom: 5,
-            }}
-          >
-            <span>5. ALT METİN BOYUTU</span>
-            <strong style={{ color: accentColor }}>{subtitleSize} px</strong>
-          </div>
-          <input
-            type="range"
-            min={6}
-            max={48}
-            value={subtitleSize}
-            onChange={(e) => setSubtitleSize(Number(e.target.value))}
-            style={{ width: '100%', accentColor, cursor: 'pointer' }}
-          />
-        </div>
-
-        {/* Harf Aralığı */}
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.65)',
-              marginBottom: 5,
-            }}
-          >
-            <span>6. HARF ARALIĞI</span>
-            <strong style={{ color: accentColor }}>
-              {letterSpacing.toFixed(2)} em
-            </strong>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={1.2}
-            step={0.02}
-            value={letterSpacing}
-            onChange={(e) => setLetterSpacing(Number(e.target.value))}
-            style={{ width: '100%', accentColor, cursor: 'pointer' }}
-          />
-        </div>
-
-        {/* Yatay Konum (X) */}
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.65)',
-              marginBottom: 5,
-            }}
-          >
-            <span>7. YATAY KONUM (SOL / SAĞ)</span>
-            <strong style={{ color: accentColor }}>{textOffsetX} px</strong>
-          </div>
-          <input
-            type="range"
-            min={-650}
-            max={650}
-            step={5}
-            value={textOffsetX}
-            onChange={(e) => setTextOffsetX(Number(e.target.value))}
-            style={{ width: '100%', accentColor, cursor: 'pointer' }}
-          />
-        </div>
-
-        {/* Dikey Konum (Y) */}
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.65)',
-              marginBottom: 5,
-            }}
-          >
-            <span>8. DİKEY KONUM (YUKARI / AŞAĞI)</span>
-            <strong style={{ color: accentColor }}>{textOffsetY} px</strong>
-          </div>
-          <input
-            type="range"
-            min={-560}
-            max={260}
-            step={5}
-            value={textOffsetY}
-            onChange={(e) => setTextOffsetY(Number(e.target.value))}
-            style={{ width: '100%', accentColor, cursor: 'pointer' }}
-          />
-          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-            <button
-              onClick={() => {
-                setTextOffsetX(0);
-                setTextOffsetY(-380);
-              }}
-              style={{
-                flex: 1,
-                padding: '7px 8px',
-                borderRadius: 6,
-                border: '1px solid rgba(255,255,255,0.14)',
-                backgroundColor: 'rgba(255,255,255,0.05)',
-                color: '#FFFFFF',
-                fontSize: 11,
                 cursor: 'pointer',
               }}
             >
-              ↑ Logonun Üstüne Al
-            </button>
-            <button
-              onClick={() => {
-                setTextOffsetX(0);
-                setTextOffsetY(0);
-              }}
-              style={{
-                flex: 1,
-                padding: '7px 8px',
-                borderRadius: 6,
-                border: '1px solid rgba(255,255,255,0.14)',
-                backgroundColor: 'rgba(255,255,255,0.05)',
-                color: '#FFFFFF',
-                fontSize: 11,
-                cursor: 'pointer',
-              }}
-            >
-              ↓ Logonun Altına Al
-            </button>
+              {TEXT_ANIMATION_CHOICES.map((anim) => (
+                <option key={anim.value} value={anim.value}>
+                  {anim.label}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
-        {/* Hizalama */}
-        <div>
+        {/* 3. BÖLÜM: YAZI TİPİ, BOYUT & KONUM */}
+        <div
+          style={{
+            padding: '12px',
+            borderRadius: 10,
+            backgroundColor: '#12151D',
+            border: '1px solid rgba(255,255,255,0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
           <div
             style={{
               fontSize: 11,
-              color: 'rgba(255,255,255,0.65)',
-              marginBottom: 6,
+              fontWeight: 700,
+              color: '#F4F1EA',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
             }}
           >
-            9. METİN HİZALAMA
+            📐 3. YAZI TİPİ, BOYUT &amp; KONUM
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {(
-              [
-                ['left', 'Sola Yasla'],
-                ['center', 'Ortala'],
-                ['right', 'Sağa Yasla'],
-              ] as const
-            ).map(([al, lbl]) => (
+
+          {/* Font Seçici */}
+          <div>
+            <label style={{ display: 'block', fontSize: 10.5, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>
+              Yazı Tipi (Font)
+            </label>
+            <select
+              value={cfg.fontFamily}
+              onChange={(e) =>
+                updateConfig({
+                  fontFamily: e.target.value as (typeof FONT_CHOICES)[number]['value'],
+                })
+              }
+              style={{
+                width: '100%',
+                padding: '7px 10px',
+                borderRadius: 6,
+                border: '1px solid rgba(255,255,255,0.18)',
+                backgroundColor: '#1A1E29',
+                color: '#FFFFFF',
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
+            >
+              {FONT_CHOICES.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Ana Metin Boyutu */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
+              <span>Ana Metin Boyutu</span>
+              <strong style={{ color: cfg.accentColor }}>{cfg.headlineSize} px</strong>
+            </div>
+            <input
+              type="range"
+              min={8}
+              max={64}
+              value={cfg.headlineSize}
+              onChange={(e) => updateConfig({ headlineSize: Number(e.target.value) })}
+              style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
+            />
+          </div>
+
+          {/* Alt Metin Boyutu */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
+              <span>Alt Metin Boyutu</span>
+              <strong style={{ color: cfg.accentColor }}>{cfg.subtitleSize} px</strong>
+            </div>
+            <input
+              type="range"
+              min={6}
+              max={40}
+              value={cfg.subtitleSize}
+              onChange={(e) => updateConfig({ subtitleSize: Number(e.target.value) })}
+              style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
+            />
+          </div>
+
+          {/* Harf Aralığı */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
+              <span>Harf Aralığı</span>
+              <strong style={{ color: cfg.accentColor }}>{cfg.letterSpacing.toFixed(2)} em</strong>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={1.0}
+              step={0.02}
+              value={cfg.letterSpacing}
+              onChange={(e) => updateConfig({ letterSpacing: Number(e.target.value) })}
+              style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
+            />
+          </div>
+
+          {/* Dikey Konum (Y) */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
+              <span>Dikey Konum (Y)</span>
+              <strong style={{ color: cfg.accentColor }}>{cfg.textOffsetY} px</strong>
+            </div>
+            <input
+              type="range"
+              min={-560}
+              max={260}
+              step={5}
+              value={cfg.textOffsetY}
+              onChange={(e) => updateConfig({ textOffsetY: Number(e.target.value) })}
+              style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
+            />
+            <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
               <button
-                key={al}
-                onClick={() => setTextAlign(al)}
+                onClick={() => updateConfig({ textOffsetX: 0, textOffsetY: -380 })}
                 style={{
                   flex: 1,
-                  padding: '7px 8px',
-                  borderRadius: 6,
-                  border:
-                    textAlign === al
-                      ? `1px solid ${accentColor}`
-                      : '1px solid rgba(255,255,255,0.12)',
-                  backgroundColor:
-                    textAlign === al
-                      ? `${accentColor}28`
-                      : 'rgba(255,255,255,0.04)',
+                  padding: '5px',
+                  borderRadius: 4,
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  backgroundColor: 'rgba(255,255,255,0.04)',
                   color: '#FFFFFF',
-                  fontSize: 11,
+                  fontSize: 10.5,
                   cursor: 'pointer',
                 }}
               >
-                {lbl}
+                ↑ Logonun Üstüne Al
               </button>
-            ))}
+              <button
+                onClick={() => updateConfig({ textOffsetX: 0, textOffsetY: 0 })}
+                style={{
+                  flex: 1,
+                  padding: '5px',
+                  borderRadius: 4,
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  backgroundColor: 'rgba(255,255,255,0.04)',
+                  color: '#FFFFFF',
+                  fontSize: 10.5,
+                  cursor: 'pointer',
+                }}
+              >
+                ↓ Logonun Altına Al
+              </button>
+            </div>
+          </div>
+
+          {/* Yatay Konum (X) */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'rgba(255,255,255,0.65)', marginBottom: 3 }}>
+              <span>Yatay Konum (X)</span>
+              <strong style={{ color: cfg.accentColor }}>{cfg.textOffsetX} px</strong>
+            </div>
+            <input
+              type="range"
+              min={-500}
+              max={500}
+              step={5}
+              value={cfg.textOffsetX}
+              onChange={(e) => updateConfig({ textOffsetX: Number(e.target.value) })}
+              style={{ width: '100%', accentColor: cfg.accentColor, cursor: 'pointer' }}
+            />
+          </div>
+
+          {/* Hizalama */}
+          <div>
+            <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.6)', marginBottom: 5 }}>
+              Metin Hizalama
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {(
+                [
+                  ['left', 'Sola'],
+                  ['center', 'Ortala'],
+                  ['right', 'Sağa'],
+                ] as const
+              ).map(([al, lbl]) => (
+                <button
+                  key={al}
+                  onClick={() => updateConfig({ textAlign: al })}
+                  style={{
+                    flex: 1,
+                    padding: '6px',
+                    borderRadius: 4,
+                    border:
+                      cfg.textAlign === al
+                        ? `1px solid ${cfg.accentColor}`
+                        : '1px solid rgba(255,255,255,0.12)',
+                    backgroundColor:
+                      cfg.textAlign === al
+                        ? `${cfg.accentColor}28`
+                        : 'rgba(255,255,255,0.04)',
+                    color: '#FFFFFF',
+                    fontSize: 11,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Vurgu Rengi & Künye */}
+        {/* 4. BÖLÜM: VİDEO DIŞA AKTARMA VE İNDİRME */}
         <div
           style={{
-            paddingTop: 12,
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
-          <label
-            style={{
-              display: 'block',
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.6)',
-              marginBottom: 6,
-              textTransform: 'uppercase',
-            }}
-          >
-            10. Vurgu Rengi &amp; Künye
-          </label>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input
-              type="text"
-              value={projectCode}
-              onChange={(e) => setProjectCode(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '8px 10px',
-                borderRadius: 8,
-                border: '1px solid rgba(255,255,255,0.15)',
-                backgroundColor: '#14171F',
-                color: '#FFFFFF',
-                fontSize: 12,
-              }}
-            />
-            <input
-              type="color"
-              value={accentColor}
-              onChange={(e) => setAccentColor(e.target.value)}
-              style={{
-                width: 36,
-                height: 36,
-                border: 'none',
-                borderRadius: 6,
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
-              }}
-            />
-          </div>
-        </div>
-
-        {/* 11. Şeffaf Video Aktarma Menüsü */}
-        <div
-          style={{
-            paddingTop: 14,
-            borderTop: '1px solid rgba(255,255,255,0.08)',
+            padding: '14px',
+            borderRadius: 12,
+            backgroundColor: '#12151D',
+            border: '1px solid rgba(46, 204, 113, 0.35)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
             display: 'flex',
             flexDirection: 'column',
             gap: 10,
@@ -1140,115 +1447,170 @@ export const ShowcaseApp: React.FC = () => {
         >
           <div
             style={{
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.6)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}
           >
-            <span>11. ŞEFFAF VİDEO DIŞA AKTAR</span>
-            {copiedFormat && (
-              <span
-                style={{
-                  color: '#2ecc71',
-                  fontWeight: 600,
-                  fontSize: 10.5,
-                  textTransform: 'none',
-                }}
-              >
-                ✓ {copiedFormat} Kopyalandı!
-              </span>
-            )}
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                color: '#2ecc71',
+                textTransform: 'uppercase',
+              }}
+            >
+              📥 4. VİDEO DIŞA AKTARMA
+            </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {/* WebM Butonu */}
+          {/* Şeffaflık Aç/Kapa Düğmesi */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 10px',
+              borderRadius: 8,
+              backgroundColor: cfg.transparentBg
+                ? 'rgba(46, 204, 113, 0.15)'
+                : 'rgba(255,255,255,0.04)',
+              border: cfg.transparentBg
+                ? '1px solid rgba(46, 204, 113, 0.4)'
+                : '1px solid rgba(255,255,255,0.1)',
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#FFFFFF' }}>
+                Şeffaf Arka Plan
+              </div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+                {cfg.transparentBg ? 'Alpha kanallı (arka plansız)' : 'Normal siyah zemin'}
+              </div>
+            </div>
             <button
-              onClick={() => {
-                const cmd = `npx remotion render src/index.ts ${activeScene.id} out/${activeScene.id}-seffaf.webm --image-format=png --pixel-format=yuva420p --props="{\\"transparentBackground\\":true,\\"headline\\":\\"${headline}\\",\\"subtitle\\":\\"${subtitle}\\"}"`;
-                navigator.clipboard?.writeText(cmd);
-                setCopiedFormat('WebM (CapCut/Web)');
-                setTimeout(() => setCopiedFormat(null), 3000);
+              onClick={() => updateConfig({ transparentBg: !cfg.transparentBg })}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 6,
+                border: 'none',
+                backgroundColor: cfg.transparentBg ? '#2ecc71' : 'rgba(255,255,255,0.15)',
+                color: cfg.transparentBg ? '#000000' : '#FFFFFF',
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
               }}
+            >
+              {cfg.transparentBg ? 'AÇIK 🟢' : 'KAPALI ⚪'}
+            </button>
+          </div>
+
+          {/* İndirme Butonları */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <button
+              disabled={renderStatus === 'rendering'}
+              onClick={() => handleRenderVideo('webm')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '9px 12px',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '10px',
                 borderRadius: 8,
-                border: '1px solid rgba(255,255,255,0.12)',
+                border: 'none',
+                backgroundColor: '#2ecc71',
+                color: '#000000',
+                fontSize: 12.5,
+                fontWeight: 700,
+                cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
+                opacity: renderStatus === 'rendering' ? 0.6 : 1,
+              }}
+            >
+              <span>⬇</span>
+              <span>{cfg.transparentBg ? 'Şeffaf WebM İndir' : 'WebM İndir'}</span>
+            </button>
+
+            <button
+              disabled={renderStatus === 'rendering'}
+              onClick={() => handleRenderVideo('mp4')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '9px',
+                borderRadius: 8,
+                border: `1px solid ${cfg.accentColor}`,
+                backgroundColor: `${cfg.accentColor}18`,
+                color: '#FFFFFF',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
+                opacity: renderStatus === 'rendering' ? 0.6 : 1,
+              }}
+            >
+              <span>🎬</span>
+              <span>Full HD MP4 İndir</span>
+            </button>
+
+            <button
+              disabled={renderStatus === 'rendering'}
+              onClick={() => handleRenderVideo('mov')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '8px',
+                borderRadius: 8,
+                border: '1px solid rgba(255,255,255,0.15)',
                 backgroundColor: 'rgba(255,255,255,0.05)',
                 color: '#FFFFFF',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                textAlign: 'left',
+                fontSize: 11.5,
+                fontWeight: 600,
+                cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
+                opacity: renderStatus === 'rendering' ? 0.6 : 1,
               }}
             >
-              <div>
-                <div style={{ fontWeight: 600 }}>WebM Alpha (.webm)</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
-                  CapCut, DaVinci, Web ve Tarayıcılar İçin
-                </div>
-              </div>
-              <span
-                style={{
-                  fontSize: 11,
-                  padding: '3px 8px',
-                  borderRadius: 4,
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                }}
-              >
-                Komutu Al
-              </span>
-            </button>
-
-            {/* ProRes Butonu */}
-            <button
-              onClick={() => {
-                const cmd = `npx remotion render src/index.ts ${activeScene.id} out/${activeScene.id}-seffaf.mov --codec=prores --prores-profile=4444 --pixel-format=yuva444p10le --props="{\\"transparentBackground\\":true,\\"headline\\":\\"${headline}\\",\\"subtitle\\":\\"${subtitle}\\"}"`;
-                navigator.clipboard?.writeText(cmd);
-                setCopiedFormat('ProRes (Premiere/AE)');
-                setTimeout(() => setCopiedFormat(null), 3000);
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '9px 12px',
-                borderRadius: 8,
-                border: `1px solid ${accentColor}40`,
-                backgroundColor: `${accentColor}15`,
-                color: '#FFFFFF',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                textAlign: 'left',
-              }}
-            >
-              <div>
-                <div style={{ fontWeight: 600 }}>Apple ProRes 4444 (.mov)</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
-                  Premiere Pro, After Effects, Final Cut
-                </div>
-              </div>
-              <span
-                style={{
-                  fontSize: 11,
-                  padding: '3px 8px',
-                  borderRadius: 4,
-                  backgroundColor: `${accentColor}30`,
-                  color: accentColor,
-                  fontWeight: 600,
-                }}
-              >
-                Komutu Al
-              </span>
+              <span>🍎</span>
+              <span>Apple ProRes 4444 (.mov) İndir</span>
             </button>
           </div>
+
+          {/* Durum Mesajı */}
+          {renderStatus !== 'idle' && (
+            <div
+              style={{
+                fontSize: 11,
+                padding: '7px 9px',
+                borderRadius: 6,
+                backgroundColor:
+                  renderStatus === 'error'
+                    ? 'rgba(231,76,60,0.15)'
+                    : renderStatus === 'success'
+                    ? 'rgba(46,204,113,0.15)'
+                    : 'rgba(241,196,15,0.15)',
+                color:
+                  renderStatus === 'error'
+                    ? '#e74c3c'
+                    : renderStatus === 'success'
+                    ? '#2ecc71'
+                    : '#f1c40f',
+                border: `1px solid ${
+                  renderStatus === 'error'
+                    ? 'rgba(231,76,60,0.3)'
+                    : renderStatus === 'success'
+                    ? 'rgba(46,204,113,0.3)'
+                    : 'rgba(241,196,15,0.3)'
+                }`,
+                textAlign: 'center',
+              }}
+            >
+              {renderStatus === 'rendering' ? '⏳ ' : renderStatus === 'success' ? '✓ ' : '⚠ '}
+              {renderMessage}
+            </div>
+          )}
         </div>
       </aside>
     </div>

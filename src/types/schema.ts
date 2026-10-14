@@ -45,6 +45,7 @@ export const ArchitecturalSceneSchema = z.object({
   textOffsetY: z.number().min(-700).max(500).optional().default(0),
   textAlign: z.enum(['left', 'center', 'right']).optional().default('center'),
   textAnimation: z.enum(TEXT_ANIMATION_OPTIONS).optional().default('char-wave'),
+  textDelayFrames: z.number().min(0).max(180).optional(),
 });
 
 export type ArchitecturalSceneProps = z.infer<typeof ArchitecturalSceneSchema>;
@@ -54,6 +55,7 @@ export const LowerThirdSchema = z.object({
   architecturalPhase: z.string().default('UYGULAMA PROJESİ // KESİT A-A'),
   locationYear: z.string().default('İSTANBUL — 2026'),
   accentColor: zColor().default('#C89D66'),
+  primaryColor: zColor().optional(),
   transparentBackground: z.boolean().default(false),
   fontFamily: z.enum(FONT_OPTIONS).optional().default("'Inter', sans-serif"),
   headlineSize: z.number().min(8).max(96).optional().default(22),
@@ -62,6 +64,7 @@ export const LowerThirdSchema = z.object({
   textOffsetX: z.number().min(-900).max(900).optional().default(0),
   textOffsetY: z.number().min(-700).max(500).optional().default(0),
   textAnimation: z.enum(TEXT_ANIMATION_OPTIONS).optional().default('char-wave'),
+  textDelayFrames: z.number().min(0).max(180).optional(),
 });
 
 export type LowerThirdProps = z.infer<typeof LowerThirdSchema>;

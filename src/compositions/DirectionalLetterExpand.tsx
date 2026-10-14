@@ -39,6 +39,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
   textOffsetY = 0,
   textAlign = 'center',
   textAnimation = 'char-wave',
+  textDelayFrames,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -139,7 +140,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = ({
         textAlign={textAlign}
         textAnimation={textAnimation}
         baseTop={offsetY + renderedHeight + 58}
-        delayFrames={BIRIM_LETTERS.length * STAGGER_FRAMES + 10}
+        delayFrames={textDelayFrames !== undefined ? textDelayFrames : BIRIM_LETTERS.length * STAGGER_FRAMES + 10}
       />
     </AbsoluteFill>
   );

@@ -17,6 +17,7 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
   architecturalPhase,
   locationYear,
   accentColor,
+  primaryColor,
   transparentBackground,
   fontFamily = "'Inter', sans-serif",
   headlineSize = 19,
@@ -25,6 +26,7 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
   textOffsetX = 0,
   textOffsetY = 0,
   textAnimation = 'char-wave',
+  textDelayFrames,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -223,16 +225,16 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
             }}
           >
             <AnimatedTextLine
-            text={architecturalPhase}
-            fontFamily={fontFamily}
-            fontSize={subtitleSize}
-            letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={42}
-            isSubtitle
-          />
+              text={architecturalPhase}
+              fontFamily={fontFamily}
+              fontSize={subtitleSize}
+              letterSpacing={Math.max(0.04, letterSpacing * 0.7)}
+              color="inherit"
+              accentColor={accentColor}
+              animation={textAnimation}
+              startFrame={(textDelayFrames ?? 34) + 8}
+              isSubtitle
+            />
           </div>
           <div
             style={{
@@ -240,20 +242,20 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
               fontSize: subtitleSize,
               fontWeight: 600,
               letterSpacing: `${Math.max(0.04, letterSpacing * 0.7)}em`,
-              color: '#F4F1EA',
+              color: primaryColor ?? '#F4F1EA',
               textTransform: 'uppercase',
             }}
           >
             <AnimatedTextLine
-            text={projectTitle}
-            fontFamily={fontFamily}
-            fontSize={headlineSize}
-            letterSpacing={letterSpacing}
-            color="inherit"
-            accentColor={accentColor}
-            animation={textAnimation}
-            startFrame={34}
-          />
+              text={projectTitle}
+              fontFamily={fontFamily}
+              fontSize={headlineSize}
+              letterSpacing={letterSpacing}
+              color="inherit"
+              accentColor={accentColor}
+              animation={textAnimation}
+              startFrame={textDelayFrames ?? 34}
+            />
           </div>
         </div>
       </div>
