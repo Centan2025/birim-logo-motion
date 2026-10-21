@@ -655,6 +655,7 @@ export const ShowcaseApp: React.FC = () => {
     const targetFps = 30;
     const frameIntervalMs = 1000 / targetFps;
 
+    // 1. Ana Akış Canvas'ı (Yalnızca tamamlanmış kareleri MediaRecorder'a aktarır)
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
@@ -663,7 +664,20 @@ export const ShowcaseApp: React.FC = () => {
       throw new Error('Canvas render katmanı oluşturulamadı');
     }
 
-    const stream = canvas.captureStream(targetFps);
+    // 2. Arka Plan Tampon Canvas (Flicker/Refresh titremesini tamamen sıfırlar)
+    const offscreenCanvas = document.createElement('canvas');
+    offscreenCanvas.width = width;
+    offscreenCanvas.height = height;
+    const offCtx = offscreenCanvas.getContext('2d');
+    if (!offCtx) {
+      throw new Error('Offscreen buffer katmanı oluşturulamadı');
+    }
+
+    const stream = canvas.captureStream(0);
+    const track = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack | undefined;
+    const canRequestFrame = Boolean(track && typeof track.requestFrame === 'function');
+    const activeStream = canRequestFrame ? stream : canvas.captureStream(targetFps);
+
     let mimeType = 'video/webm;codecs=vp9';
     if (typeof MediaRecorder !== 'undefined') {
       if (!MediaRecorder.isTypeSupported(mimeType)) {
@@ -674,9 +688,9 @@ export const ShowcaseApp: React.FC = () => {
     }
 
     const chunks: Blob[] = [];
-    const recorder = new MediaRecorder(stream, {
+    const recorder = new MediaRecorder(activeStream, {
       mimeType,
-      videoBitsPerSecond: 3000000, // 3 Mbps - yüksek kaliteli 1080p, hafif dosya (~1.5 MB)
+      videoBitsPerSecond: 1800000, // ~1.8 Mbps: Vektör animasyonlar için kayıpsız netlik ve ultra hafif (~300-400 KB) dosya
     });
 
     recorder.ondataavailable = (e) => {
@@ -688,6 +702,10 @@ export const ShowcaseApp: React.FC = () => {
     const initialFrame = player.getCurrentFrame();
     player.pause();
     recorder.start(100);
+
+    // Kompozisyon DOM alanı (Player kontrolleri, play butonu ve arayüz kesinlikle hariç tutulur)
+    const compContainer =
+      (container.querySelector('.__remotion-player') as HTMLElement) || container;
 
     try {
       for (let f = 0; f < totalFrames; f++) {
@@ -703,24 +721,25 @@ export const ShowcaseApp: React.FC = () => {
           });
         });
 
-        ctx.clearRect(0, 0, width, height);
+        // Tüm çizim önce gizli offscreen buffer üzerinde hazırlanır (Asla boş kare yakalanmaz)
+        offCtx.clearRect(0, 0, width, height);
         if (!cfg.transparentBg) {
-          ctx.fillStyle = '#0B0D10';
-          ctx.fillRect(0, 0, width, height);
+          offCtx.fillStyle = '#0B0D10';
+          offCtx.fillRect(0, 0, width, height);
         }
 
-        const contRect = container.getBoundingClientRect();
-        const scaleX = width / (contRect.width || 1);
-        const scaleY = height / (contRect.height || 1);
+        const compRect = compContainer.getBoundingClientRect();
+        const scaleX = width / (compRect.width || 1);
+        const scaleY = height / (compRect.height || 1);
 
-        // 1. Kök SVG Vektörlerini Çiz
-        const allSvgs = Array.from(container.querySelectorAll('svg'));
+        // 1. SADECE kompozisyon içindeki SVG Vektörlerini Çiz (Player play/pause butonları kesinlikle hariçtir)
+        const allSvgs = Array.from(compContainer.querySelectorAll('svg'));
         const rootSvgs = allSvgs.filter((svg) => !svg.parentElement?.closest('svg'));
 
         for (const svgEl of rootSvgs) {
           const sRect = svgEl.getBoundingClientRect();
-          const x = (sRect.left - contRect.left) * scaleX;
-          const y = (sRect.top - contRect.top) * scaleY;
+          const x = (sRect.left - compRect.left) * scaleX;
+          const y = (sRect.top - compRect.top) * scaleY;
           const w = sRect.width * scaleX;
           const h = sRect.height * scaleY;
 
@@ -735,7 +754,7 @@ export const ShowcaseApp: React.FC = () => {
 
           await new Promise<void>((resolve) => {
             img.onload = () => {
-              ctx.drawImage(img, x, y, w, h);
+              offCtx.drawImage(img, x, y, w, h);
               URL.revokeObjectURL(svgUrl);
               resolve();
             };
@@ -747,37 +766,49 @@ export const ShowcaseApp: React.FC = () => {
           });
         }
 
-        // 2. Metin Katmanlarını Çiz (Canvas 2D - Güvenli & Tainting Olmayan)
-        const textNodes = Array.from(container.querySelectorAll('span, p, h1, h2, h3'));
+        // 2. SADECE kompozisyon içindeki Metin Katmanlarını Çiz (Oynatıcı zaman göstergeleri kesinlikle hariçtir)
+        const textNodes = Array.from(compContainer.querySelectorAll('span, p, h1, h2, h3'));
         const leafTextNodes = textNodes.filter(
-          (node) => node.children.length === 0 || !node.querySelector('span, p, h1, h2, h3')
+          (node) => node.children.length === 0 && (node.textContent?.trim() || '').length > 0
         );
 
         if (leafTextNodes.length > 0) {
-          ctx.save();
+          offCtx.save();
+          offCtx.textBaseline = 'top';
           for (const node of leafTextNodes) {
             const text = node.textContent?.trim();
             if (!text) continue;
             const style = window.getComputedStyle(node);
             if (
               style.display === 'none' ||
-              style.visibility === 'hidden' ||
-              style.opacity === '0'
+              style.visibility === 'hidden'
             ) {
               continue;
             }
 
-            const sRect = node.getBoundingClientRect();
-            const x = (sRect.left - contRect.left) * scaleX;
-            const fontSize = parseFloat(style.fontSize) * scaleY;
-            const y = (sRect.top - contRect.top) * scaleY + fontSize * 0.88;
+            const opacity = parseFloat(style.opacity || '1');
+            if (opacity <= 0.01) continue;
 
-            ctx.font = `${style.fontWeight || '600'} ${fontSize}px ${style.fontFamily || cfg.fontFamily}`;
-            ctx.fillStyle = style.color || cfg.textColor;
-            ctx.globalAlpha = parseFloat(style.opacity || '1');
-            ctx.fillText(text, x, y);
+            const sRect = node.getBoundingClientRect();
+            const x = (sRect.left - compRect.left) * scaleX;
+            const y = (sRect.top - compRect.top) * scaleY;
+            const fontSize = parseFloat(style.fontSize) * scaleY;
+
+            offCtx.font = `${style.fontWeight || '600'} ${fontSize}px ${style.fontFamily || cfg.fontFamily}`;
+            offCtx.fillStyle = style.color || cfg.textColor;
+            offCtx.globalAlpha = opacity;
+            offCtx.fillText(text, x, y);
           }
-          ctx.restore();
+          offCtx.restore();
+        }
+
+        // Tamamlanmış kareyi tek atomik işlemde ana akış canvas'ına kopyala
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(offscreenCanvas, 0, 0);
+
+        // Doğrudan kare yakalama tetikle (0 atlama, 0 titreme)
+        if (canRequestFrame && track) {
+          track.requestFrame();
         }
 
         const pct = Math.round(((f + 1) / totalFrames) * 100);
@@ -786,7 +817,7 @@ export const ShowcaseApp: React.FC = () => {
 
         // Kararlı 30 FPS akışı için zamanlama hizalama
         const elapsed = performance.now() - frameStart;
-        const sleepMs = Math.max(8, Math.round(frameIntervalMs - elapsed));
+        const sleepMs = Math.max(12, Math.round(frameIntervalMs - elapsed));
         await new Promise((r) => setTimeout(r, sleepMs));
       }
 
@@ -1666,12 +1697,13 @@ export const ShowcaseApp: React.FC = () => {
                 compositionWidth={cfg.aspectRatio === '9:16' ? 1080 : cfg.aspectRatio === '1:1' ? 1080 : 1920}
                 compositionHeight={cfg.aspectRatio === '9:16' ? 1920 : cfg.aspectRatio === '1:1' ? 1080 : 1080}
                 style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
-                controls
-                alwaysShowControls
-                showPlaybackRateControl
-                allowFullscreen
-                autoPlay
-                loop
+                controls={renderStatus !== 'rendering'}
+                alwaysShowControls={renderStatus !== 'rendering'}
+                showPlaybackRateControl={renderStatus !== 'rendering'}
+                allowFullscreen={renderStatus !== 'rendering'}
+                showPosterWhenPaused={false}
+                autoPlay={renderStatus !== 'rendering'}
+                loop={renderStatus !== 'rendering'}
               />
             ) : (
               activeScene.archComponent && (
@@ -1721,12 +1753,13 @@ export const ShowcaseApp: React.FC = () => {
                   compositionWidth={cfg.aspectRatio === '9:16' ? 1080 : cfg.aspectRatio === '1:1' ? 1080 : 1920}
                   compositionHeight={cfg.aspectRatio === '9:16' ? 1920 : cfg.aspectRatio === '1:1' ? 1080 : 1080}
                   style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
-                  controls
-                  alwaysShowControls
-                  showPlaybackRateControl
-                  allowFullscreen
-                  autoPlay
-                  loop
+                  controls={renderStatus !== 'rendering'}
+                  alwaysShowControls={renderStatus !== 'rendering'}
+                  showPlaybackRateControl={renderStatus !== 'rendering'}
+                  allowFullscreen={renderStatus !== 'rendering'}
+                  showPosterWhenPaused={false}
+                  autoPlay={renderStatus !== 'rendering'}
+                  loop={renderStatus !== 'rendering'}
                 />
               )
             )}
