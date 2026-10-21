@@ -114,6 +114,34 @@ export const ArchitecturalSceneSchema = z.object({
   exitStartFrame: z.number().min(0).max(3600).optional(),
   exitTimingMode: z.enum(['before-end', 'after-appear', 'custom']).optional(),
   exitDelayFrames: z.number().min(0).max(600).optional(),
+  customLogo: z.object({
+    id: z.string(),
+    name: z.string(),
+    svgContent: z.string(),
+    viewBox: z.string(),
+    width: z.number(),
+    height: z.number(),
+    compoundPath: z.string().optional(),
+    letters: z.array(z.object({
+      id: z.string(),
+      char: z.string().optional(),
+      code: z.string().optional(),
+      compoundPath: z.string(),
+      outerPath: z.string().optional(),
+      holePaths: z.array(z.string()).optional(),
+      bounds: z.object({
+        xMin: z.number(),
+        xMax: z.number(),
+        yMin: z.number(),
+        yMax: z.number(),
+        width: z.number(),
+        height: z.number(),
+      }).optional(),
+      centerX: z.number().optional(),
+      centerY: z.number().optional(),
+    })).optional(),
+    createdAt: z.number().optional(),
+  }).nullable().optional(),
 });
 
 export type ArchitecturalSceneProps = z.infer<typeof ArchitecturalSceneSchema>;
@@ -150,6 +178,34 @@ export const LowerThirdSchema = z.object({
   exitStartFrame: z.number().min(0).max(3600).optional(),
   exitTimingMode: z.enum(['before-end', 'after-appear', 'custom']).optional(),
   exitDelayFrames: z.number().min(0).max(600).optional(),
+  customLogo: z.object({
+    id: z.string(),
+    name: z.string(),
+    svgContent: z.string(),
+    viewBox: z.string(),
+    width: z.number(),
+    height: z.number(),
+    compoundPath: z.string().optional(),
+    letters: z.array(z.object({
+      id: z.string(),
+      char: z.string().optional(),
+      code: z.string().optional(),
+      compoundPath: z.string(),
+      outerPath: z.string().optional(),
+      holePaths: z.array(z.string()).optional(),
+      bounds: z.object({
+        xMin: z.number(),
+        xMax: z.number(),
+        yMin: z.number(),
+        yMax: z.number(),
+        width: z.number(),
+        height: z.number(),
+      }).optional(),
+      centerX: z.number().optional(),
+      centerY: z.number().optional(),
+    })).optional(),
+    createdAt: z.number().optional(),
+  }).nullable().optional(),
 });
 
 export type LowerThirdProps = z.infer<typeof LowerThirdSchema>;

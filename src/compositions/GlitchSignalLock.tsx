@@ -8,6 +8,7 @@ import {
 } from 'remotion';
 import { SceneCaption } from '../components/SceneCaption';
 import { FULL_LOGO_PATH, LOGO_VIEWBOX } from '../data/birimLogoPaths';
+import { getEffectiveLogo } from '../data/logoAdapter';
 import { ArchitecturalSceneProps } from '../types/schema';
 
 const BANDS = [
@@ -33,6 +34,7 @@ export const GlitchSignalLock: React.FC<ArchitecturalSceneProps> = (props) => {
   const frame = useCurrentFrame();
   const { fps, width: compWidth = 1920, height: compHeight = 1080 } = useVideoConfig();
 
+  const { viewBox: LOGO_VIEWBOX, fullPath: FULL_LOGO_PATH } = getEffectiveLogo(props.customLogo);
   const scale = 2.95 * logoScale;
   const renderedWidth = LOGO_VIEWBOX.width * scale;
   const renderedHeight = LOGO_VIEWBOX.height * scale;

@@ -6,7 +6,8 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from 'remotion';
-import { BIRIM_LETTERS, LOGO_VIEWBOX, LogoLetterData } from '../data/birimLogoPaths';
+import { BIRIM_LETTERS as DEFAULT_BIRIM_LETTERS, LOGO_VIEWBOX as DEFAULT_LOGO_VIEWBOX, LogoLetterData } from '../data/birimLogoPaths';
+import { getEffectiveLogo } from '../data/logoAdapter';
 import { SceneCaption } from '../components/SceneCaption';
 import { ArchitecturalSceneProps } from '../types/schema';
 
@@ -51,6 +52,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = (props
     showLogo = true,
   } = props;
 
+  const { viewBox: LOGO_VIEWBOX, letters: BIRIM_LETTERS } = getEffectiveLogo(props.customLogo);
   const isTransparent = transparentBackground || backgroundColor === 'transparent';
   const frame = useCurrentFrame();
   const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
@@ -96,7 +98,8 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = (props
               },
             });
 
-            const dir = LETTER_DIRECTIONS[letter.id];
+            const DIRS: ExpandDirection[] = ['left', 'bottom', 'right', 'top'];
+            const dir = (LETTER_DIRECTIONS as Record<string, ExpandDirection>)[letter.id] || DIRS[idx % 4];
             const { xMin, xMax, yMin, yMax } = letter.bounds;
 
             let anchorX = xMin;

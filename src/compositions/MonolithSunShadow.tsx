@@ -9,6 +9,7 @@ import {
   useVideoConfig,
 } from 'remotion';
 import { BIRIM_LETTERS, LOGO_VIEWBOX } from '../data/birimLogoPaths';
+import { getEffectiveLogo } from '../data/logoAdapter';
 import { ArchitecturalGrid } from '../components/ArchitecturalGrid';
 import { ArchitecturalSceneProps } from '../types/schema';
 
@@ -30,6 +31,7 @@ export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = (props) => {
   const frame = useCurrentFrame();
   const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
 
+  const { viewBox: LOGO_VIEWBOX, letters: BIRIM_LETTERS } = getEffectiveLogo(props.customLogo);
   const isVertical = compHeight > compWidth;
   const isSquare = compWidth === compHeight;
   const scale = isVertical ? 1.8 : isSquare ? 2.0 : 2.8;

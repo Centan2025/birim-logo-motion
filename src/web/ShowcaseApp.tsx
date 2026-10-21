@@ -1,6 +1,15 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
 import fixWebmDuration from 'fix-webm-duration';
+import {
+  CustomLogo,
+  getStoredCustomLogos,
+  saveCustomLogo,
+  deleteCustomLogo,
+  getActiveLogoId,
+  setActiveLogoId,
+  parseSvgFile,
+} from '../utils/logoStorage';
 import { DirectionalLetterExpand } from '../compositions/DirectionalLetterExpand';
 import { CadBlueprintDraft } from '../compositions/CadBlueprintDraft';
 import { MonolithSunShadow } from '../compositions/MonolithSunShadow';
@@ -504,6 +513,21 @@ const SvgIcons = {
       <path d="M3 3v5h5" />
     </svg>
   ),
+  Upload: ({ size = 14, ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  ),
+  Trash2: ({ size = 14, ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
+  ),
   X: ({ size = 12, ...props }: IconProps) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -574,7 +598,58 @@ export const ShowcaseApp: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
   const [selectedId, setSelectedId] = useState<string>('26-Directional-Letter-Expand');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [inspectorTab, setInspectorTab] = useState<'content' | 'timing' | 'export'>('content');
+  const [inspectorTab, setInspectorTab] = useState<'content' | 'logo' | 'timing' | 'export'>('content');
+
+  // Logo Depolama & Aktif Seçim (Birim her zaman varsayılan ana logodur)
+  const [customLogos, setCustomLogos] = useState<CustomLogo[]>(() => getStoredCustomLogos());
+  const [activeLogoId, setActiveLogoIdState] = useState<string>(() => getActiveLogoId());
+  const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
+  const [logoUploadSuccess, setLogoUploadSuccess] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const activeCustomLogo = useMemo(() => {
+    if (activeLogoId === 'birim') return null;
+    return customLogos.find((l) => l.id === activeLogoId) || null;
+  }, [activeLogoId, customLogos]);
+
+  const handleSelectLogo = (id: string) => {
+    setActiveLogoIdState(id);
+    setActiveLogoId(id);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoUploadError(null);
+    setLogoUploadSuccess(null);
+
+    try {
+      const parsed = await parseSvgFile(file);
+      const updated = saveCustomLogo(parsed);
+      setCustomLogos(updated);
+      setActiveLogoIdState(parsed.id);
+      setActiveLogoId(parsed.id);
+      setLogoUploadSuccess(`✓ "${parsed.name}" başarıyla yüklendi ve aktif edildi!`);
+      setTimeout(() => setLogoUploadSuccess(null), 4000);
+    } catch (err) {
+      setLogoUploadError(err instanceof Error ? err.message : 'SVG dosyası işlenirken hata oluştu.');
+      setTimeout(() => setLogoUploadError(null), 5000);
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeleteLogo = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = deleteCustomLogo(id);
+    setCustomLogos(updated);
+    if (activeLogoId === id) {
+      setActiveLogoIdState('birim');
+      setActiveLogoId('birim');
+    }
+  };
 
   // Her sahnede ortak stüdyo ayarları (metinler, logo durumu, animasyon, font, renkler)
   const [studioConfig, setStudioConfig] = useState<SceneCustomConfig>(DEFAULT_SCENE_CONFIG);
@@ -1690,6 +1765,7 @@ export const ShowcaseApp: React.FC = () => {
                   exitStartFrame: cfg.exitStartFrame,
                   exitTimingMode: cfg.exitTimingMode,
                   exitDelayFrames: cfg.exitDelayFrames,
+                  customLogo: activeCustomLogo,
                 }}
                 durationInFrames={cfg.durationInFrames}
                 fps={30}
@@ -1746,6 +1822,7 @@ export const ShowcaseApp: React.FC = () => {
                     exitStartFrame: cfg.exitStartFrame,
                     exitTimingMode: cfg.exitTimingMode,
                     exitDelayFrames: cfg.exitDelayFrames,
+                    customLogo: activeCustomLogo,
                   }}
                   durationInFrames={cfg.durationInFrames}
                   fps={30}
@@ -2402,8 +2479,9 @@ export const ShowcaseApp: React.FC = () => {
           }}
         >
           {[
-            { id: 'content', label: 'İçerik & Tipografi', icon: SvgIcons.Type },
-            { id: 'timing', label: 'Zaman & Efekt', icon: SvgIcons.Clock },
+            { id: 'content', label: 'İçerik', icon: SvgIcons.Type },
+            { id: 'logo', label: 'Logo', icon: SvgIcons.Layers },
+            { id: 'timing', label: 'Zaman', icon: SvgIcons.Clock },
             { id: 'export', label: 'Dışa Aktar', icon: SvgIcons.Download },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -2411,7 +2489,7 @@ export const ShowcaseApp: React.FC = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setInspectorTab(tab.id as 'content' | 'timing' | 'export')}
+                onClick={() => setInspectorTab(tab.id as 'content' | 'logo' | 'timing' | 'export')}
                 style={{
                   flex: 1,
                   display: 'flex',
@@ -3182,6 +3260,255 @@ export const ShowcaseApp: React.FC = () => {
                 </div>
               </div>
             </>
+          )}
+
+          {/* SEKME: LOGO & MARKA YÖNETİMİ */}
+          {inspectorTab === 'logo' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Başlık & Bilgilendirme */}
+              <div
+                style={{
+                  padding: '12px',
+                  borderRadius: 10,
+                  backgroundColor: '#0F121A',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <SvgIcons.Layers size={14} color="#818CF8" />
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: '#FFFFFF' }}>Marka &amp; Logo Havuzu</span>
+                </div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.4 }}>
+                  Tüm hareketli mimari sahnelerde kullanılacak logoyu seçin veya bilgisayarınızdan özel bir SVG yükleyin.
+                </div>
+              </div>
+
+              {/* Bildirim Mesajları */}
+              {logoUploadSuccess && (
+                <div
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                    color: '#34D399',
+                    fontSize: 11,
+                    fontWeight: 600,
+                  }}
+                >
+                  {logoUploadSuccess}
+                </div>
+              )}
+              {logoUploadError && (
+                <div
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    color: '#F87171',
+                    fontSize: 11,
+                    fontWeight: 600,
+                  }}
+                >
+                  ⚠ {logoUploadError}
+                </div>
+              )}
+
+              {/* Logo Kartları Listesi */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {/* 1. BİRİM LOGOSU (Her zaman sabit ana logo) */}
+                <div
+                  onClick={() => handleSelectLogo('birim')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 14px',
+                    borderRadius: 10,
+                    border: activeLogoId === 'birim' ? '1.5px solid #6366F1' : '1px solid rgba(255,255,255,0.08)',
+                    backgroundColor: activeLogoId === 'birim' ? 'rgba(99, 102, 241, 0.16)' : '#0F121A',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div
+                      style={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: '50%',
+                        border: activeLogoId === 'birim' ? '4.5px solid #818CF8' : '2px solid rgba(255,255,255,0.3)',
+                        backgroundColor: '#000',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: '#FFFFFF' }}>BİRİM</span>
+                        <span
+                          style={{
+                            fontSize: 9.5,
+                            padding: '1px 6px',
+                            borderRadius: 4,
+                            backgroundColor: '#6366F1',
+                            color: '#FFFFFF',
+                            fontWeight: 700,
+                          }}
+                        >
+                          ANA LOGO
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>
+                        Orijinal mimari CAD vektörleri (5 Harf)
+                      </div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 16 }}>⭐</span>
+                </div>
+
+                {/* 2. Kullanıcının Yüklediği Özel Logolar */}
+                {customLogos.map((cLogo) => {
+                  const isSelected = activeLogoId === cLogo.id;
+                  return (
+                    <div
+                      key={cLogo.id}
+                      onClick={() => handleSelectLogo(cLogo.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 14px',
+                        borderRadius: 10,
+                        border: isSelected ? '1.5px solid #10B981' : '1px solid rgba(255,255,255,0.08)',
+                        backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.15)' : '#0F121A',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        <div
+                          style={{
+                            width: 14,
+                            height: 14,
+                            borderRadius: '50%',
+                            border: isSelected ? '4.5px solid #34D399' : '2px solid rgba(255,255,255,0.3)',
+                            backgroundColor: '#000',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span
+                              style={{
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: '#FFFFFF',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {cLogo.name}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: 9,
+                                padding: '1px 5px',
+                                borderRadius: 4,
+                                backgroundColor: 'rgba(16, 185, 129, 0.3)',
+                                color: '#34D399',
+                                fontWeight: 600,
+                              }}
+                            >
+                              ÖZEL
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 10,
+                              color: 'rgba(255,255,255,0.45)',
+                              marginTop: 2,
+                              fontFamily: 'monospace',
+                            }}
+                          >
+                            {Math.round(cLogo.width)}×{Math.round(cLogo.height)} px ({cLogo.letters?.length || 1} parça)
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={(e) => handleDeleteLogo(cLogo.id, e)}
+                        title="Bu logoyu tarayıcı hafızasından sil"
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'rgba(239, 68, 68, 0.6)',
+                          cursor: 'pointer',
+                          padding: '5px',
+                          borderRadius: 4,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          transition: 'color 0.15s ease',
+                        }}
+                      >
+                        <SvgIcons.Trash2 size={13} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Yeni SVG Yükleme Düğmesi */}
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".svg,image/svg+xml"
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    padding: '11px 14px',
+                    borderRadius: 8,
+                    border: '1.5px dashed rgba(99, 102, 241, 0.5)',
+                    backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                    color: '#A5B4FC',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <SvgIcons.Upload size={14} />
+                  <span>＋ Yeni SVG Logo Yükle</span>
+                </button>
+              </div>
+
+              {/* Bilgilendirme Notu */}
+              <div
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: 8,
+                  backgroundColor: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  fontSize: 10.5,
+                  color: 'rgba(255,255,255,0.45)',
+                  lineHeight: 1.5,
+                }}
+              >
+                💡 <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Kalıcı Depolama:</strong> Yüklediğiniz logolar tarayıcınızın yerel belleğinde saklanır. Sayfayı yenilediğinizde veya tekrar girdiğinizde korunur. Birim logosu her zaman varsayılan ana logo olarak kalır.
+              </div>
+            </div>
           )}
 
           {/* SEKME 2: ZAMANLAMA & EFEKT */}
