@@ -77,6 +77,7 @@ function registerRenderMiddlewares(server: ViteDevServer | PreviewServer) {
                 exitStartFrame,
                 exitTimingMode = 'before-end',
                 exitDelayFrames = 30,
+                customLogo = null,
               } = data;
 
               if (!sceneId) {
@@ -139,6 +140,7 @@ function registerRenderMiddlewares(server: ViteDevServer | PreviewServer) {
                 exitStartFrame: exitStartFrame !== undefined ? Number(exitStartFrame) : undefined,
                 exitTimingMode: exitTimingMode || 'before-end',
                 exitDelayFrames: Number(exitDelayFrames) || 30,
+                customLogo: customLogo || undefined,
               };
 
               // Windows komut satırında tırnak bozulmasını önlemek için geçici JSON dosyası kullan

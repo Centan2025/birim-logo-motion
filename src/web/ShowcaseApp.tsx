@@ -782,6 +782,25 @@ export const ShowcaseApp: React.FC = () => {
     const compContainer =
       (container.querySelector('.__remotion-player') as HTMLElement) || container;
 
+    // Hiyerarşik saydamlık hesaplama (SceneExitWrapper ve kaybolma animasyonlarının gerçek opacity değerini alır)
+    const getAccumulatedAlpha = (el: Element): number => {
+      let alpha = 1;
+      let curr: Element | null = el;
+      while (curr && curr !== compContainer.parentElement) {
+        const s = window.getComputedStyle(curr);
+        if (s.display === 'none' || s.visibility === 'hidden') {
+          return 0;
+        }
+        const val = parseFloat(s.opacity || '1');
+        if (!isNaN(val)) {
+          alpha *= val;
+        }
+        if (alpha <= 0.001) return 0;
+        curr = curr.parentElement;
+      }
+      return Math.max(0, Math.min(1, alpha));
+    };
+
     try {
       for (let f = 0; f < totalFrames; f++) {
         const frameStart = performance.now();
@@ -807,12 +826,17 @@ export const ShowcaseApp: React.FC = () => {
         const scaleX = width / (compRect.width || 1);
         const scaleY = height / (compRect.height || 1);
 
-        // 1. SADECE kompozisyon içindeki SVG Vektörlerini Çiz (Player play/pause butonları kesinlikle hariçtir)
+        // 1. SADECE kompozisyon içindeki SVG Vektörlerini Çiz (Ters kaybolma animasyonu ve saydamlık tam uygulanır)
         const allSvgs = Array.from(compContainer.querySelectorAll('svg'));
         const rootSvgs = allSvgs.filter((svg) => !svg.parentElement?.closest('svg'));
 
         for (const svgEl of rootSvgs) {
+          const svgOpacity = getAccumulatedAlpha(svgEl);
+          if (svgOpacity <= 0.001) continue;
+
           const sRect = svgEl.getBoundingClientRect();
+          if (sRect.width <= 0 || sRect.height <= 0) continue;
+
           const x = (sRect.left - compRect.left) * scaleX;
           const y = (sRect.top - compRect.top) * scaleY;
           const w = sRect.width * scaleX;
@@ -829,7 +853,10 @@ export const ShowcaseApp: React.FC = () => {
 
           await new Promise<void>((resolve) => {
             img.onload = () => {
+              offCtx.save();
+              offCtx.globalAlpha = svgOpacity;
               offCtx.drawImage(img, x, y, w, h);
+              offCtx.restore();
               URL.revokeObjectURL(svgUrl);
               resolve();
             };
@@ -841,7 +868,7 @@ export const ShowcaseApp: React.FC = () => {
           });
         }
 
-        // 2. SADECE kompozisyon içindeki Metin Katmanlarını Çiz (Oynatıcı zaman göstergeleri kesinlikle hariçtir)
+        // 2. SADECE kompozisyon içindeki Metin Katmanlarını Çiz (Ters animasyon ve saydamlık tam uygulanır)
         const textNodes = Array.from(compContainer.querySelectorAll('span, p, h1, h2, h3'));
         const leafTextNodes = textNodes.filter(
           (node) => node.children.length === 0 && (node.textContent?.trim() || '').length > 0
@@ -853,26 +880,24 @@ export const ShowcaseApp: React.FC = () => {
           for (const node of leafTextNodes) {
             const text = node.textContent?.trim();
             if (!text) continue;
-            const style = window.getComputedStyle(node);
-            if (
-              style.display === 'none' ||
-              style.visibility === 'hidden'
-            ) {
-              continue;
-            }
 
-            const opacity = parseFloat(style.opacity || '1');
-            if (opacity <= 0.01) continue;
+            const textOpacity = getAccumulatedAlpha(node);
+            if (textOpacity <= 0.001) continue;
 
             const sRect = node.getBoundingClientRect();
+            if (sRect.width <= 0 || sRect.height <= 0) continue;
+
+            const style = window.getComputedStyle(node);
             const x = (sRect.left - compRect.left) * scaleX;
             const y = (sRect.top - compRect.top) * scaleY;
             const fontSize = parseFloat(style.fontSize) * scaleY;
 
+            offCtx.save();
+            offCtx.globalAlpha = textOpacity;
             offCtx.font = `${style.fontWeight || '600'} ${fontSize}px ${style.fontFamily || cfg.fontFamily}`;
             offCtx.fillStyle = style.color || cfg.textColor;
-            offCtx.globalAlpha = opacity;
             offCtx.fillText(text, x, y);
+            offCtx.restore();
           }
           offCtx.restore();
         }
@@ -1077,6 +1102,7 @@ export const ShowcaseApp: React.FC = () => {
             exitStartFrame: cfg.exitStartFrame,
             exitTimingMode: cfg.exitTimingMode,
             exitDelayFrames: cfg.exitDelayFrames,
+            customLogo: activeCustomLogo,
             format,
           }),
         });
