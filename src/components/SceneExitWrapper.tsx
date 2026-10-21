@@ -212,10 +212,10 @@ export const SceneExitWrapper: React.FC<SceneExitWrapperProps> = ({
       break;
     }
     case 'blur-dissolve': {
-      const blurPx = interpolate(progress, [0, 1], [0, 24]);
-      const scale = interpolate(progress, [0, 1], [1, 1.05]);
+      const blurPx = interpolate(progress, [0, 1], [0, 8]);
+      const scale = interpolate(progress, [0, 1], [1, 1.03]);
       opacity = 1 - progress;
-      filter = `blur(${blurPx}px)`;
+      filter = `blur(${blurPx}px) brightness(${Math.max(0, opacity)})`;
       transform = `scale(${scale})`;
       break;
     }
