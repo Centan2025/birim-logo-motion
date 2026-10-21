@@ -1379,7 +1379,7 @@ export const ShowcaseApp: React.FC = () => {
             {activeScene.isOverlay && activeScene.overlayComponent ? (
               <Player
                 acknowledgeRemotionLicense
-                key={`${activeScene.id}-${cfg.aspectRatio}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.fontFamily}-${cfg.textAlign}-${cfg.textOffsetX}-${cfg.textOffsetY}-${cfg.letterSpacing}-${cfg.headline}-${cfg.subtitle}-${cfg.tagline}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.durationInFrames}-${cfg.showLogo}-${cfg.exitAnimation}-${cfg.exitTarget}-${cfg.exitDurationFrames}-${cfg.exitTimingMode}-${cfg.exitDelayFrames}`}
+                key={`${activeScene.id}-${cfg.aspectRatio}`}
                 component={getOrCreateExitWrapped(activeScene.overlayComponent)}
                 inputProps={{
                   projectTitle: cfg.headline,
@@ -1430,7 +1430,7 @@ export const ShowcaseApp: React.FC = () => {
               activeScene.archComponent && (
                 <Player
                   acknowledgeRemotionLicense
-                  key={`${activeScene.id}-${cfg.aspectRatio}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.fontFamily}-${cfg.textAlign}-${cfg.textOffsetX}-${cfg.textOffsetY}-${cfg.letterSpacing}-${cfg.headline}-${cfg.subtitle}-${cfg.tagline}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.durationInFrames}-${cfg.showLogo}-${cfg.exitAnimation}-${cfg.exitTarget}-${cfg.exitDurationFrames}-${cfg.exitTimingMode}-${cfg.exitDelayFrames}`}
+                  key={`${activeScene.id}-${cfg.aspectRatio}`}
                   component={getOrCreateExitWrapped(activeScene.archComponent)}
                   inputProps={{
                     headline: cfg.headline,
