@@ -646,7 +646,7 @@ export const ShowcaseApp: React.FC = () => {
 
     setRenderStatus('rendering');
     setRenderProgress(0);
-    setRenderMessage('Canlı ortam: Tarayıcı içi video render motoru hazırlanıyor...');
+    setRenderMessage('Tarayıcı içi video motoru hazırlanıyor...');
 
     const width = cfg.aspectRatio === '9:16' ? 1080 : cfg.aspectRatio === '1:1' ? 1080 : 1920;
     const height = cfg.aspectRatio === '9:16' ? 1920 : cfg.aspectRatio === '1:1' ? 1080 : 1080;
@@ -661,12 +661,12 @@ export const ShowcaseApp: React.FC = () => {
     }
 
     const stream = canvas.captureStream(30);
-    let mimeType = 'video/webm';
+    let mimeType = 'video/webm;codecs=vp9';
     if (typeof MediaRecorder !== 'undefined') {
-      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-        mimeType = 'video/webm;codecs=vp9';
-      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-        mimeType = 'video/webm;codecs=vp8';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
+          ? 'video/webm;codecs=vp8'
+          : 'video/webm';
       }
     }
 
@@ -684,14 +684,14 @@ export const ShowcaseApp: React.FC = () => {
 
     const initialFrame = player.getCurrentFrame();
     player.pause();
-    recorder.start();
+    recorder.start(100);
 
     try {
       for (let f = 0; f < totalFrames; f++) {
         player.seekTo(f);
         await new Promise<void>((resolve) => {
           requestAnimationFrame(() => {
-            setTimeout(resolve, 22);
+            setTimeout(resolve, 34);
           });
         });
 
@@ -701,15 +701,20 @@ export const ShowcaseApp: React.FC = () => {
           ctx.fillRect(0, 0, width, height);
         }
 
+        // 1. SVG Vektörlerini Çiz
         const svgEl = container.querySelector('svg');
         if (svgEl) {
-          const svgClone = svgEl.cloneNode(true) as SVGSVGElement;
-          svgClone.setAttribute('width', String(width));
-          svgClone.setAttribute('height', String(height));
-          const svgData = new XMLSerializer().serializeToString(svgClone);
-          const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+          const clone = svgEl.cloneNode(true) as SVGSVGElement;
+          clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+          clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+          clone.setAttribute('width', String(width));
+          clone.setAttribute('height', String(height));
+
+          const svgString = new XMLSerializer().serializeToString(clone);
+          const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
           const svgUrl = URL.createObjectURL(svgBlob);
           const img = new Image();
+
           await new Promise<void>((resolve) => {
             img.onload = () => {
               ctx.drawImage(img, 0, 0, width, height);
@@ -724,38 +729,34 @@ export const ShowcaseApp: React.FC = () => {
           });
         }
 
-        // HTML yazı katmanı (foreignObject ile tam font & stil desteği)
-        const htmlContainer = container.innerHTML;
-        if (htmlContainer) {
-          const textSvg = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-              <foreignObject width="100%" height="100%">
-                <div xmlns="http://www.w3.org/1999/xhtml" style="width: 100%; height: 100%; position: relative; font-family: ${cfg.fontFamily}; color: ${cfg.textColor};">
-                  ${htmlContainer}
-                </div>
-              </foreignObject>
-            </svg>
-          `;
-          const textBlob = new Blob([textSvg], { type: 'image/svg+xml;charset=utf-8' });
-          const textUrl = URL.createObjectURL(textBlob);
-          const textImg = new Image();
-          await new Promise<void>((resolve) => {
-            textImg.onload = () => {
-              ctx.drawImage(textImg, 0, 0, width, height);
-              URL.revokeObjectURL(textUrl);
-              resolve();
-            };
-            textImg.onerror = () => {
-              URL.revokeObjectURL(textUrl);
-              resolve();
-            };
-            textImg.src = textUrl;
-          });
+        // 2. Metin Katmanlarını Çiz (Canvas 2D - Güvenli & Net)
+        const textSpans = container.querySelectorAll('span');
+        if (textSpans.length > 0) {
+          const contRect = container.getBoundingClientRect();
+          const scaleX = width / (contRect.width || 1);
+          const scaleY = height / (contRect.height || 1);
+
+          ctx.save();
+          for (const span of Array.from(textSpans)) {
+            const text = span.textContent?.trim();
+            if (!text) continue;
+            const sRect = span.getBoundingClientRect();
+            const style = window.getComputedStyle(span);
+            const x = (sRect.left - contRect.left) * scaleX;
+            const y = (sRect.bottom - contRect.top) * scaleY;
+            const fontSize = parseFloat(style.fontSize) * scaleY;
+
+            ctx.font = `${style.fontWeight || '600'} ${fontSize}px ${style.fontFamily || cfg.fontFamily}`;
+            ctx.fillStyle = style.color || cfg.textColor;
+            ctx.globalAlpha = parseFloat(style.opacity || '1');
+            ctx.fillText(text, x, y);
+          }
+          ctx.restore();
         }
 
         const pct = Math.round(((f + 1) / totalFrames) * 100);
         setRenderProgress(pct);
-        setRenderMessage(`Canlı tarayıcıda işleniyor: %${pct} (${f + 1}/${totalFrames})`);
+        setRenderMessage(`Tarayıcıda işleniyor: %${pct} (${f + 1}/${totalFrames})`);
       }
 
       await new Promise<void>((resolve) => {
@@ -852,6 +853,20 @@ export const ShowcaseApp: React.FC = () => {
     try {
       setRenderStatus('rendering');
       setRenderProgress(0);
+
+      const isLocalHost = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.port === '5173'
+      );
+
+      // Canlı ortamda (Vercel vb.) doğrudan tarayıcı içi render motoruna geç, /api/render çağrısı yapma
+      if (!isLocalHost) {
+        console.log('[Render] Canlı statik ortam (Vercel): Doğrudan tarayıcı içi render motoru başlatılıyor...');
+        await recordInBrowser(suggestedFilename, fileHandle);
+        return;
+      }
+
       setRenderMessage(
         fileHandle
           ? `⏳ Video işleniyor ve seçtiğiniz klasöre kaydedilecek...`
@@ -912,8 +927,7 @@ export const ShowcaseApp: React.FC = () => {
 
       if (!res || !res.ok) {
         if (!res || res.status === 404 || res.status === 502 || res.status === 503) {
-          // Vercel / Netlify veya statik hosting ortamı tespit edildi: Tarayıcı içi kayıt motorunu başlat
-          console.log('[Render] Statik barındırma ortamı (404), tarayıcı içi render motoru başlatılıyor...');
+          console.log('[Render] Sunucu bulunamadı, tarayıcı render motoru devreye giriyor...');
           await recordInBrowser(suggestedFilename, fileHandle);
           return;
         }
