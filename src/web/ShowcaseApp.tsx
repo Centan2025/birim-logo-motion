@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Player } from '@remotion/player';
+import React, { useState, useRef } from 'react';
+import { Player, PlayerRef } from '@remotion/player';
 import { DirectionalLetterExpand } from '../compositions/DirectionalLetterExpand';
 import { CadBlueprintDraft } from '../compositions/CadBlueprintDraft';
 import { MonolithSunShadow } from '../compositions/MonolithSunShadow';
@@ -569,6 +569,7 @@ function getOrCreateExitWrapped(Comp: React.ComponentType<any>): React.Component
 }
 
 export const ShowcaseApp: React.FC = () => {
+  const playerRef = useRef<PlayerRef>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
   const [selectedId, setSelectedId] = useState<string>('26-Directional-Letter-Expand');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -622,6 +623,183 @@ export const ShowcaseApp: React.FC = () => {
   const [renderMessage, setRenderMessage] = useState<string>('');
   const [renderProgress, setRenderProgress] = useState<number>(0);
 
+  interface NativeSaveHandle {
+    createWritable: () => Promise<WritableStream & {
+      write?: (chunk: unknown) => Promise<void>;
+      close?: () => Promise<void>;
+    }>;
+  }
+
+  const recordInBrowser = async (
+    suggestedFilename: string,
+    fileHandle: NativeSaveHandle | null
+  ) => {
+    const player = playerRef.current;
+    if (!player) {
+      throw new Error('Oynatıcı bulunamadı');
+    }
+
+    const container = player.getContainerNode();
+    if (!container) {
+      throw new Error('Oynatıcı DOM alanı bulunamadı');
+    }
+
+    setRenderStatus('rendering');
+    setRenderProgress(0);
+    setRenderMessage('Canlı ortam: Tarayıcı içi video render motoru hazırlanıyor...');
+
+    const width = cfg.aspectRatio === '9:16' ? 1080 : cfg.aspectRatio === '1:1' ? 1080 : 1920;
+    const height = cfg.aspectRatio === '9:16' ? 1920 : cfg.aspectRatio === '1:1' ? 1080 : 1080;
+    const totalFrames = cfg.durationInFrames;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Canvas render katmanı oluşturulamadı');
+    }
+
+    const stream = canvas.captureStream(30);
+    let mimeType = 'video/webm';
+    if (typeof MediaRecorder !== 'undefined') {
+      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+        mimeType = 'video/webm;codecs=vp9';
+      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+        mimeType = 'video/webm;codecs=vp8';
+      }
+    }
+
+    const chunks: Blob[] = [];
+    const recorder = new MediaRecorder(stream, {
+      mimeType,
+      videoBitsPerSecond: 16000000,
+    });
+
+    recorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        chunks.push(e.data);
+      }
+    };
+
+    const initialFrame = player.getCurrentFrame();
+    player.pause();
+    recorder.start();
+
+    try {
+      for (let f = 0; f < totalFrames; f++) {
+        player.seekTo(f);
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => {
+            setTimeout(resolve, 22);
+          });
+        });
+
+        ctx.clearRect(0, 0, width, height);
+        if (!cfg.transparentBg) {
+          ctx.fillStyle = '#0B0D10';
+          ctx.fillRect(0, 0, width, height);
+        }
+
+        const svgEl = container.querySelector('svg');
+        if (svgEl) {
+          const svgClone = svgEl.cloneNode(true) as SVGSVGElement;
+          svgClone.setAttribute('width', String(width));
+          svgClone.setAttribute('height', String(height));
+          const svgData = new XMLSerializer().serializeToString(svgClone);
+          const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+          const svgUrl = URL.createObjectURL(svgBlob);
+          const img = new Image();
+          await new Promise<void>((resolve) => {
+            img.onload = () => {
+              ctx.drawImage(img, 0, 0, width, height);
+              URL.revokeObjectURL(svgUrl);
+              resolve();
+            };
+            img.onerror = () => {
+              URL.revokeObjectURL(svgUrl);
+              resolve();
+            };
+            img.src = svgUrl;
+          });
+        }
+
+        // HTML yazı katmanı (foreignObject ile tam font & stil desteği)
+        const htmlContainer = container.innerHTML;
+        if (htmlContainer) {
+          const textSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+              <foreignObject width="100%" height="100%">
+                <div xmlns="http://www.w3.org/1999/xhtml" style="width: 100%; height: 100%; position: relative; font-family: ${cfg.fontFamily}; color: ${cfg.textColor};">
+                  ${htmlContainer}
+                </div>
+              </foreignObject>
+            </svg>
+          `;
+          const textBlob = new Blob([textSvg], { type: 'image/svg+xml;charset=utf-8' });
+          const textUrl = URL.createObjectURL(textBlob);
+          const textImg = new Image();
+          await new Promise<void>((resolve) => {
+            textImg.onload = () => {
+              ctx.drawImage(textImg, 0, 0, width, height);
+              URL.revokeObjectURL(textUrl);
+              resolve();
+            };
+            textImg.onerror = () => {
+              URL.revokeObjectURL(textUrl);
+              resolve();
+            };
+            textImg.src = textUrl;
+          });
+        }
+
+        const pct = Math.round(((f + 1) / totalFrames) * 100);
+        setRenderProgress(pct);
+        setRenderMessage(`Canlı tarayıcıda işleniyor: %${pct} (${f + 1}/${totalFrames})`);
+      }
+
+      await new Promise<void>((resolve) => {
+        recorder.onstop = () => resolve();
+        recorder.stop();
+      });
+
+      const finalBlob = new Blob(chunks, { type: mimeType });
+      const outFilename = suggestedFilename.replace(/\.mp4$/i, '.webm');
+
+      if (fileHandle && typeof fileHandle.createWritable === 'function') {
+        const writable = await fileHandle.createWritable();
+        if (typeof writable.write === 'function') {
+          await writable.write(finalBlob);
+        }
+        if (typeof writable.close === 'function') {
+          await writable.close();
+        }
+        setRenderStatus('success');
+        setRenderProgress(100);
+        setRenderMessage(`✓ Video seçtiğiniz konuma kaydedildi! (%100)`);
+      } else {
+        const downloadUrl = URL.createObjectURL(finalBlob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = outFilename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setRenderStatus('success');
+        setRenderProgress(100);
+        setRenderMessage(`✓ Video tarayıcıda hazırlandı ve indirildi: ${outFilename}`);
+      }
+    } finally {
+      player.seekTo(initialFrame);
+      setTimeout(() => {
+        setRenderStatus('idle');
+        setRenderMessage('');
+        setRenderProgress(0);
+      }, 6000);
+    }
+  };
+
   const handleRenderVideo = async (format: 'webm' | 'mp4' | 'mov') => {
     if (renderStatus === 'rendering') return;
 
@@ -630,13 +808,6 @@ export const ShowcaseApp: React.FC = () => {
     const safeScene = String(activeScene.id).replace(/[^a-zA-Z0-9_-]/g, '');
     const ratioTag = cfg.aspectRatio === '9:16' ? 'dikey-9x16-' : cfg.aspectRatio === '1:1' ? 'kare-1x1-' : 'yatay-16x9-';
     const suggestedFilename = `${safeScene}-${ratioTag}${isTrans ? 'seffaf-' : ''}${Date.now()}.${ext}`;
-
-    interface NativeSaveHandle {
-      createWritable: () => Promise<WritableStream & {
-        write?: (chunk: unknown) => Promise<void>;
-        close?: () => Promise<void>;
-      }>;
-    }
 
     let fileHandle: NativeSaveHandle | null = null;
 
@@ -691,52 +862,60 @@ export const ShowcaseApp: React.FC = () => {
           : (cfg.transparentBg ? 'ℹ️ MP4 işleniyor (Opak siyah zemin)...' : 'MP4 video işleniyor...')
       );
 
-      const res = await fetch('/api/render', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/event-stream',
-        },
-        body: JSON.stringify({
-          sceneId: activeScene.id,
-          transparent: isTrans,
-          headline: cfg.headline,
-          subtitle: cfg.subtitle,
-          tagline: cfg.tagline,
-          projectCode: cfg.projectCode,
-          accentColor: cfg.accentColor,
-          primaryColor: cfg.textColor,
-          taglineColor: cfg.taglineColor,
-          fontFamily: cfg.fontFamily,
-          headlineSize: cfg.headlineSize,
-          subtitleSize: cfg.subtitleSize,
-          taglineSize: cfg.taglineSize,
-          letterSpacing: cfg.letterSpacing,
-          textOffsetX: cfg.textOffsetX,
-          textOffsetY: cfg.textOffsetY,
-          textAlign: cfg.textAlign,
-          textAnimation: cfg.textAnimation,
-          textDelayFrames: cfg.textDelayFrames,
-          line1Delay: cfg.line1Delay,
-          line2Delay: cfg.line2Delay,
-          line3Delay: cfg.line3Delay,
-          durationInFrames: cfg.durationInFrames,
-          playbackSpeed: cfg.playbackSpeed ?? 1.0,
-          showLogo: cfg.showLogo,
-          aspectRatio: cfg.aspectRatio,
-          exitAnimation: cfg.exitAnimation,
-          exitTarget: cfg.exitTarget,
-          exitDurationFrames: cfg.exitDurationFrames,
-          exitStartFrame: cfg.exitStartFrame,
-          exitTimingMode: cfg.exitTimingMode,
-          exitDelayFrames: cfg.exitDelayFrames,
-          format,
-        }),
-      });
+      let res: Response | null = null;
+      try {
+        res = await fetch('/api/render', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
+          },
+          body: JSON.stringify({
+            sceneId: activeScene.id,
+            transparent: isTrans,
+            headline: cfg.headline,
+            subtitle: cfg.subtitle,
+            tagline: cfg.tagline,
+            projectCode: cfg.projectCode,
+            accentColor: cfg.accentColor,
+            primaryColor: cfg.textColor,
+            taglineColor: cfg.taglineColor,
+            fontFamily: cfg.fontFamily,
+            headlineSize: cfg.headlineSize,
+            subtitleSize: cfg.subtitleSize,
+            taglineSize: cfg.taglineSize,
+            letterSpacing: cfg.letterSpacing,
+            textOffsetX: cfg.textOffsetX,
+            textOffsetY: cfg.textOffsetY,
+            textAlign: cfg.textAlign,
+            textAnimation: cfg.textAnimation,
+            textDelayFrames: cfg.textDelayFrames,
+            line1Delay: cfg.line1Delay,
+            line2Delay: cfg.line2Delay,
+            line3Delay: cfg.line3Delay,
+            durationInFrames: cfg.durationInFrames,
+            playbackSpeed: cfg.playbackSpeed ?? 1.0,
+            showLogo: cfg.showLogo,
+            aspectRatio: cfg.aspectRatio,
+            exitAnimation: cfg.exitAnimation,
+            exitTarget: cfg.exitTarget,
+            exitDurationFrames: cfg.exitDurationFrames,
+            exitStartFrame: cfg.exitStartFrame,
+            exitTimingMode: cfg.exitTimingMode,
+            exitDelayFrames: cfg.exitDelayFrames,
+            format,
+          }),
+        });
+      } catch (netErr: unknown) {
+        console.warn('[Render] Sunucu API erişilemedi, tarayıcı render motoruna geçiliyor:', netErr);
+      }
 
-      if (!res.ok) {
-        if (res.status === 404) {
-          throw new Error('Canlı ortamda (Vercel/Netlify gibi statik hostinglerde) Node.js/Chromium arka plan render servisi bulunmamaktadır. Video kaydı yerel sunucuda (localhost:5173) veya Node.js sunucusunda çalışmaktadır.');
+      if (!res || !res.ok) {
+        if (!res || res.status === 404 || res.status === 502 || res.status === 503) {
+          // Vercel / Netlify veya statik hosting ortamı tespit edildi: Tarayıcı içi kayıt motorunu başlat
+          console.log('[Render] Statik barındırma ortamı (404), tarayıcı içi render motoru başlatılıyor...');
+          await recordInBrowser(suggestedFilename, fileHandle);
+          return;
         }
         throw new Error(`Render sunucu hatası (${res.status})`);
       }
@@ -1378,6 +1557,7 @@ export const ShowcaseApp: React.FC = () => {
           >
             {activeScene.isOverlay && activeScene.overlayComponent ? (
               <Player
+                ref={playerRef}
                 acknowledgeRemotionLicense
                 key={`${activeScene.id}-${cfg.aspectRatio}`}
                 component={getOrCreateExitWrapped(activeScene.overlayComponent)}
@@ -1429,6 +1609,7 @@ export const ShowcaseApp: React.FC = () => {
             ) : (
               activeScene.archComponent && (
                 <Player
+                  ref={playerRef}
                   acknowledgeRemotionLicense
                   key={`${activeScene.id}-${cfg.aspectRatio}`}
                   component={getOrCreateExitWrapped(activeScene.archComponent)}
