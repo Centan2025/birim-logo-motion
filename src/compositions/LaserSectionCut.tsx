@@ -19,6 +19,7 @@ export const LaserSectionCut: React.FC<ArchitecturalSceneProps> = (props) => {
     accentColor,
     primaryColor,
     backgroundColor,
+    transparentBackground,
     textDelayFrames,
     showLogo = true,
   } = props;
@@ -34,7 +35,7 @@ export const LaserSectionCut: React.FC<ArchitecturalSceneProps> = (props) => {
   const offsetX = (compWidth - renderedWidth) / 2;
   const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 30);
 
-  const isTransparent = backgroundColor === 'transparent';
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
 
   // Section line X in logo coordinate space (0 -> LOGO_VIEWBOX.width)
   const cutProgress = interpolate(frame, [10, 95], [0, 1.05], {
@@ -60,7 +61,7 @@ export const LaserSectionCut: React.FC<ArchitecturalSceneProps> = (props) => {
   });
 
   return (
-    <AbsoluteFill style={{ backgroundColor }}>
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#0B0D10') }}>
       <ArchitecturalGrid
         accentColor={accentColor}
         projectCode={projectCode}

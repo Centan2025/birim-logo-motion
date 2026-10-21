@@ -30,7 +30,9 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
   textAnimation = 'char-wave',
   textDelayFrames,
   showLogo = true,
-}) => {
+  ...restProps
+}: LowerThirdProps & { backgroundColor?: string }) => {
+  const isTransparent = transparentBackground || restProps.backgroundColor === 'transparent';
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
@@ -56,11 +58,11 @@ export const ArchitecturalLowerThird: React.FC<LowerThirdProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: transparentBackground ? 'transparent' : '#111418',
+        backgroundColor: isTransparent ? 'transparent' : (restProps.backgroundColor || '#111418'),
       }}
     >
       {/* Simulated Architectural Camera Viewport (hidden when exporting transparent overlay) */}
-      {!transparentBackground && (
+      {!isTransparent && (
         <AbsoluteFill
           style={{
             background:

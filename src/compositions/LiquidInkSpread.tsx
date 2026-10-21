@@ -14,10 +14,13 @@ import { ArchitecturalSceneProps } from '../types/schema';
 export const LiquidInkSpread: React.FC<ArchitecturalSceneProps> = (props) => {
   const {
     accentColor = '#B89758',
+    backgroundColor,
+    transparentBackground,
     logoScale = 1,
     showLogo = true,
     textDelayFrames,
   } = props;
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
   const frame = useCurrentFrame();
   const { fps, width: compWidth = 1920, height: compHeight = 1080 } = useVideoConfig();
 
@@ -41,7 +44,7 @@ export const LiquidInkSpread: React.FC<ArchitecturalSceneProps> = (props) => {
   });
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#F7F5F0', overflow: 'hidden' }}>
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#F7F5F0'), overflow: 'hidden' }}>
       <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <defs>
           <clipPath id="inversion-portal-clip">
@@ -56,20 +59,20 @@ export const LiquidInkSpread: React.FC<ArchitecturalSceneProps> = (props) => {
             opacity={animSpring}
           >
             <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>
-              <path d={FULL_LOGO_PATH} fill="#0B0C0E" fillRule="evenodd" />
+              <path d={FULL_LOGO_PATH} fill={isTransparent ? (props.primaryColor || '#F4F1EA') : '#0B0C0E'} fillRule="evenodd" />
             </g>
           </g>
         )}
 
         {/* Layer 2: Expanding Dark Portal + Inverted Light Logo */}
         <g clipPath="url(#inversion-portal-clip)">
-          <rect x={0} y={0} width={compWidth} height={compHeight} fill="#0B0C0E" />
+          {!isTransparent && <rect x={0} y={0} width={compWidth} height={compHeight} fill="#0B0C0E" />}
           {showLogo !== false && (
             <g
               transform={`translate(${compWidth / 2}, ${compHeight / 2 - 36}) scale(${interpolate(animSpring, [0, 1], [0.86, 1])}) translate(-${compWidth / 2}, -${compHeight / 2 - 36})`}
             >
               <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>
-                <path d={FULL_LOGO_PATH} fill="#F7F5F0" fillRule="evenodd" />
+                <path d={FULL_LOGO_PATH} fill={isTransparent ? accentColor : "#F7F5F0"} fillRule="evenodd" />
               </g>
             </g>
           )}
@@ -91,7 +94,7 @@ export const LiquidInkSpread: React.FC<ArchitecturalSceneProps> = (props) => {
       {/* Dynamic Inverted Caption */}
       <SceneCaption
         {...props}
-        primaryColor={portalRadius > 450 ? '#F7F5F0' : (props.primaryColor || '#0B0C0E')}
+        primaryColor={isTransparent ? (props.primaryColor || '#F4F1EA') : (portalRadius > 450 ? '#F7F5F0' : (props.primaryColor || '#0B0C0E'))}
         delayFrames={textDelayFrames ?? 34}
         showLogo={showLogo}
         baseTop={offsetY + renderedHeight + 58}

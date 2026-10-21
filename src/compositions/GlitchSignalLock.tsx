@@ -23,10 +23,13 @@ export const GlitchSignalLock: React.FC<ArchitecturalSceneProps> = (props) => {
   const {
     accentColor = '#38EF7D',
     primaryColor = '#F0F6FC',
+    backgroundColor,
+    transparentBackground,
     logoScale = 1,
     showLogo = true,
     textDelayFrames,
   } = props;
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
   const frame = useCurrentFrame();
   const { fps, width: compWidth = 1920, height: compHeight = 1080 } = useVideoConfig();
 
@@ -45,9 +48,8 @@ export const GlitchSignalLock: React.FC<ArchitecturalSceneProps> = (props) => {
     frame >= 92 && frame <= 97 ? Math.sin((frame - 92) * 1.8) * 0.45 : 0;
   const glitchAmp = initialDecay + microBurst;
 
-
   return (
-    <AbsoluteFill style={{ backgroundColor: '#07080A', overflow: 'hidden' }}>
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#07080A'), overflow: 'hidden' }}>
       {showLogo !== false && (
         <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
           <defs>

@@ -20,10 +20,12 @@ export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = (props) => {
     accentColor,
     primaryColor,
     backgroundColor,
+    transparentBackground,
     textDelayFrames,
     showLogo = true,
   } = props;
 
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
   const frame = useCurrentFrame();
   const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
 
@@ -62,7 +64,7 @@ export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = (props) => {
   });
 
   return (
-    <AbsoluteFill style={{ backgroundColor }}>
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#0B0D10') }}>
       <ArchitecturalGrid
         accentColor={accentColor}
         projectCode={projectCode}

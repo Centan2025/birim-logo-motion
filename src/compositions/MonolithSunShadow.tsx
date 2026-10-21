@@ -22,6 +22,7 @@ export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = (props) => {
     accentColor,
     primaryColor,
     backgroundColor,
+    transparentBackground,
     textDelayFrames,
     showLogo = true,
   } = props;
@@ -37,7 +38,7 @@ export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = (props) => {
   const offsetX = (compWidth - renderedWidth) / 2;
   const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 40);
 
-  const isTransparent = backgroundColor === 'transparent';
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
 
   // Simulated Sun Azimuth sweeping across the architectural monolith
   const sunAngleDeg = interpolate(frame, [0, 150], [122, 228], {
@@ -53,11 +54,11 @@ export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = (props) => {
   const solarMin = Math.floor(interpolate(frame, [0, 150], [0, 480]) % 60);
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#EAE4DC' }}>
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#EAE4DC') }}>
       <ArchitecturalGrid
-        lineColor="rgba(26, 25, 23, 0.08)"
+        lineColor={isTransparent ? 'rgba(255, 255, 255, 0.08)' : "rgba(26, 25, 23, 0.08)"}
         accentColor="#9E6B3B"
-        textColor="rgba(26, 25, 23, 0.62)"
+        textColor={isTransparent ? 'rgba(255, 255, 255, 0.62)' : "rgba(26, 25, 23, 0.62)"}
         projectCode={projectCode}
         scaleText={scaleText}
         modeLabel={`ÖNERİ 02 // MONOLİT & GÜNEŞ ETÜDÜ [AZM ${sunAngleDeg.toFixed(1)}°]`}
@@ -73,11 +74,11 @@ export const MonolithSunShadow: React.FC<ArchitecturalSceneProps> = (props) => {
           alignItems: 'center',
           gap: 16,
           padding: '10px 18px',
-          border: '1px solid rgba(26, 25, 23, 0.16)',
-          backgroundColor: 'rgba(234, 228, 220, 0.85)',
+          border: isTransparent ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid rgba(26, 25, 23, 0.16)',
+          backgroundColor: isTransparent ? 'rgba(15, 17, 23, 0.85)' : 'rgba(234, 228, 220, 0.85)',
           fontFamily: "'JetBrains Mono', 'Consolas', monospace",
           fontSize: 12,
-          color: '#1A1917',
+          color: isTransparent ? '#F4F1EA' : '#1A1917',
           letterSpacing: '0.14em',
         }}
       >

@@ -14,10 +14,13 @@ export const MagneticParticleSnap: React.FC<ArchitecturalSceneProps> = (props) =
   const {
     accentColor = '#B89758',
     primaryColor = '#E6EDF3',
+    backgroundColor,
+    transparentBackground,
     logoScale = 1,
     showLogo = true,
     textDelayFrames,
   } = props;
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
   const frame = useCurrentFrame();
   const { fps, width: compWidth = 1920, height: compHeight = 1080 } = useVideoConfig();
 
@@ -37,9 +40,8 @@ export const MagneticParticleSnap: React.FC<ArchitecturalSceneProps> = (props) =
     extrapolateRight: 'clamp',
   });
 
-
   return (
-    <AbsoluteFill style={{ backgroundColor: '#06080E', overflow: 'hidden' }}>
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#06080E'), overflow: 'hidden' }}>
       {showLogo !== false && (
         <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
           <g transform={`translate(${offsetX}, ${offsetY}) scale(${scale})`}>

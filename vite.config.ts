@@ -1,6 +1,6 @@
 import { defineConfig, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
@@ -154,7 +154,7 @@ function remotionRenderPlugin(): Plugin {
                 cmd = `npx remotion render src/index.ts "${sceneId}" "${outPath}" ${framesFlag} --image-format=png --pixel-format=yuva420p --props="${propsFile}"`;
               } else if (isMov) {
                 // Şeffaf Apple ProRes 4444 MOV
-                cmd = `npx remotion render src/index.ts "${sceneId}" "${outPath}" ${framesFlag} --codec=prores --prores-profile=4444 --pixel-format=yuva444p10le --props="${propsFile}"`;
+                cmd = `npx remotion render src/index.ts "${sceneId}" "${outPath}" ${framesFlag} --codec=prores --prores-profile=4444 --pixel-format=yuva444p10le --image-format=png --props="${propsFile}"`;
               } else {
                 // Standart H264 MP4
                 cmd = `npx remotion render src/index.ts "${sceneId}" "${outPath}" ${framesFlag} --props="${propsFile}"`;
@@ -162,7 +162,108 @@ function remotionRenderPlugin(): Plugin {
 
               console.log(`[Remotion API] Render başlatıldı: ${sceneId} -> ${filename}`);
 
-              exec(cmd, { cwd: process.cwd() }, (err, stdout, stderr) => {
+              // Child process spawn & gerçek zamanlı SSE ilerleme akışı
+              const child = spawn(cmd, {
+                cwd: process.cwd(),
+                shell: true,
+              });
+
+              let currentPercent = 0;
+              let stderrData = '';
+              let ended = false;
+
+              const sendEvent = (event: string, data: object) => {
+                if (ended || res.writableEnded) return;
+                res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+                if (typeof (res as unknown as { flush?: () => void }).flush === 'function') {
+                  (res as unknown as { flush: () => void }).flush();
+                }
+              };
+
+              res.writeHead(200, {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache, no-transform',
+                'Connection': 'keep-alive',
+                'X-Accel-Buffering': 'no',
+              });
+
+              sendEvent('progress', {
+                percent: 0,
+                stage: 'start',
+                message: 'Render başlatılıyor...',
+              });
+
+              const handleChunk = (chunk: Buffer | string) => {
+                const text = chunk.toString();
+                const lines = text.split(/[\r\n]+/);
+
+                for (const line of lines) {
+                  const trimmed = line.trim();
+                  if (!trimmed) continue;
+
+                  // 1. Paketleme (Bundling 0% - 100%) -> %0 - %15
+                  const bundleMatch = trimmed.match(/Bundling\s+(\d+)%/i);
+                  if (bundleMatch) {
+                    const bundlePct = parseInt(bundleMatch[1], 10);
+                    const mapped = Math.min(15, Math.round(bundlePct * 0.15));
+                    if (mapped >= currentPercent) {
+                      currentPercent = mapped;
+                      sendEvent('progress', {
+                        percent: currentPercent,
+                        stage: 'bundling',
+                        message: `Paketleniyor: %${bundlePct}`,
+                      });
+                    }
+                    continue;
+                  }
+
+                  // 2. Kareler işleniyor (Rendered X/Y) -> %15 - %85
+                  const renderMatch = trimmed.match(/Rendered\s+(\d+)\/(\d+)(?:,\s*time remaining:\s*([^,\n\r]+))?/i);
+                  if (renderMatch) {
+                    const current = parseInt(renderMatch[1], 10);
+                    const total = parseInt(renderMatch[2], 10);
+                    const timeRem = renderMatch[3]?.trim();
+                    const framePct = Math.round((current / (total || 1)) * 100);
+                    const mapped = 15 + Math.round((current / (total || 1)) * 70);
+                    if (mapped >= currentPercent) {
+                      currentPercent = Math.min(85, mapped);
+                      const remText = timeRem ? ` (${timeRem} kaldı)` : '';
+                      sendEvent('progress', {
+                        percent: currentPercent,
+                        stage: 'rendering',
+                        message: `Kareler işleniyor: %${framePct} (${current}/${total})${remText}`,
+                      });
+                    }
+                    continue;
+                  }
+
+                  // 3. Birleştirme (Stitched X/Y) -> %85 - %99
+                  const stitchMatch = trimmed.match(/Stitched\s+(\d+)\/(\d+)/i);
+                  if (stitchMatch) {
+                    const current = parseInt(stitchMatch[1], 10);
+                    const total = parseInt(stitchMatch[2], 10);
+                    const stitchPct = Math.round((current / (total || 1)) * 100);
+                    const mapped = 85 + Math.round((current / (total || 1)) * 14);
+                    if (mapped >= currentPercent) {
+                      currentPercent = Math.min(99, mapped);
+                      sendEvent('progress', {
+                        percent: currentPercent,
+                        stage: 'stitching',
+                        message: `Video derleniyor: %${stitchPct} (${current}/${total})`,
+                      });
+                    }
+                    continue;
+                  }
+                }
+              };
+
+              child.stdout?.on('data', handleChunk);
+              child.stderr?.on('data', (d) => {
+                stderrData += d.toString();
+                handleChunk(d);
+              });
+
+              child.on('close', (code) => {
                 try {
                   if (fs.existsSync(propsFile)) {
                     fs.unlinkSync(propsFile);
@@ -171,22 +272,51 @@ function remotionRenderPlugin(): Plugin {
                   // ignore
                 }
 
-                if (err) {
-                  console.error('[Remotion API Hatası]:', stderr || err.message);
-                  res.writeHead(500, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify({ error: err.message, details: stderr }));
-                  return;
-                }
-
-                console.log(`[Remotion API] Render tamamlandı: ${filename}`);
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(
-                  JSON.stringify({
+                if (code === 0) {
+                  console.log(`[Remotion API] Render tamamlandı: ${filename}`);
+                  sendEvent('progress', {
+                    percent: 100,
+                    stage: 'complete',
+                    message: 'Video başarıyla tamamlandı! (%100)',
+                  });
+                  sendEvent('done', {
                     success: true,
                     downloadUrl: `/out/${filename}`,
                     filename,
-                  })
-                );
+                    percent: 100,
+                  });
+                  ended = true;
+                  res.end();
+                } else {
+                  console.error('[Remotion API Hatası]:', stderrData || `Exit code ${code}`);
+                  sendEvent('error', {
+                    error: `Render işlemi tamamlanamadı (kod: ${code})`,
+                    details: stderrData,
+                  });
+                  ended = true;
+                  res.end();
+                }
+              });
+
+              child.on('error', (err) => {
+                console.error('[Remotion API Hata]:', err.message);
+                sendEvent('error', {
+                  error: err.message,
+                });
+                ended = true;
+                res.end();
+              });
+
+              res.on('close', () => {
+                if (!ended && !res.writableEnded) {
+                  if (!child.killed) {
+                    try {
+                      child.kill();
+                    } catch {
+                      // ignore
+                    }
+                  }
+                }
               });
             } catch (err: unknown) {
               const message = err instanceof Error ? err.message : String(err);

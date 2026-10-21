@@ -620,11 +620,12 @@ export const ShowcaseApp: React.FC = () => {
     'idle' | 'rendering' | 'success' | 'error'
   >('idle');
   const [renderMessage, setRenderMessage] = useState<string>('');
+  const [renderProgress, setRenderProgress] = useState<number>(0);
 
   const handleRenderVideo = async (format: 'webm' | 'mp4' | 'mov') => {
     if (renderStatus === 'rendering') return;
 
-    const isTrans = format === 'mov' ? true : format === 'webm' ? cfg.transparentBg : false;
+    const isTrans = (format === 'mov' || format === 'webm') ? cfg.transparentBg : false;
     const ext = format === 'webm' ? 'webm' : format === 'mov' ? 'mov' : 'mp4';
     const safeScene = String(activeScene.id).replace(/[^a-zA-Z0-9_-]/g, '');
     const ratioTag = cfg.aspectRatio === '9:16' ? 'dikey-9x16-' : cfg.aspectRatio === '1:1' ? 'kare-1x1-' : 'yatay-16x9-';
@@ -679,19 +680,23 @@ export const ShowcaseApp: React.FC = () => {
 
     try {
       setRenderStatus('rendering');
+      setRenderProgress(0);
       setRenderMessage(
         fileHandle
           ? `⏳ Video işleniyor ve seçtiğiniz klasöre kaydedilecek...`
           : format === 'mov'
-          ? '🎬 Şeffaf ProRes 4444 (.mov) işleniyor... (Birkaç saniye sürebilir)'
+          ? (isTrans ? '🎬 Şeffaf Apple ProRes 4444 işleniyor...' : '🎬 Apple ProRes 4444 (.mov) işleniyor...')
           : format === 'webm'
-          ? (cfg.transparentBg ? '🟢 Şeffaf WebM (Alpha) işleniyor...' : 'WebM video işleniyor...')
-          : 'MP4 Full HD video işleniyor...'
+          ? (isTrans ? '🟢 Şeffaf WebM işleniyor...' : 'WebM video işleniyor...')
+          : (cfg.transparentBg ? 'ℹ️ MP4 işleniyor (Opak siyah zemin)...' : 'MP4 video işleniyor...')
       );
 
       const res = await fetch('/api/render', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+        },
         body: JSON.stringify({
           sceneId: activeScene.id,
           transparent: isTrans,
@@ -733,20 +738,90 @@ export const ShowcaseApp: React.FC = () => {
         throw new Error(`Render sunucu hatası (${res.status})`);
       }
 
-      const json = (await res.json()) as {
+      interface RenderDonePayload {
         success?: boolean;
         downloadUrl?: string;
         filename?: string;
         error?: string;
-      };
-
-      if (!json.success || !json.downloadUrl) {
-        throw new Error(json.error || 'Video oluşturulamadı');
       }
+
+      let donePayload: RenderDonePayload | null = null;
+      const reader = res.body?.getReader();
+
+      if (reader) {
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop() ?? '';
+
+          for (const part of parts) {
+            const trimmedPart = part.trim();
+            if (!trimmedPart) continue;
+
+            let eventName = 'message';
+            let dataStr = '';
+
+            const lines = trimmedPart.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('event:')) {
+                eventName = line.slice(6).trim();
+              } else if (line.startsWith('data:')) {
+                dataStr = line.slice(5).trim();
+              }
+            }
+
+            if (!dataStr) continue;
+
+            try {
+              const data = JSON.parse(dataStr) as {
+                percent?: number;
+                message?: string;
+                success?: boolean;
+                downloadUrl?: string;
+                filename?: string;
+                error?: string;
+              };
+
+              if (eventName === 'progress') {
+                if (typeof data.percent === 'number') {
+                  setRenderProgress(data.percent);
+                }
+                if (data.message) {
+                  setRenderMessage(data.message);
+                }
+              } else if (eventName === 'done') {
+                setRenderProgress(100);
+                donePayload = data;
+              } else if (eventName === 'error') {
+                throw new Error(data.error || 'Render hatası');
+              }
+            } catch (pErr: unknown) {
+              if (pErr instanceof Error && pErr.message.includes('Render hatası')) {
+                throw pErr;
+              }
+            }
+          }
+        }
+      } else {
+        donePayload = (await res.json()) as RenderDonePayload;
+      }
+
+      if (!donePayload || !donePayload.success || !donePayload.downloadUrl) {
+        throw new Error(donePayload?.error || 'Video oluşturulamadı');
+      }
+
+      const finalDownloadUrl = donePayload.downloadUrl;
+      const finalFilename = donePayload.filename ?? 'video';
 
       // 2. Seçilen konuma doğrudan kaydet
       if (fileHandle && typeof fileHandle.createWritable === 'function') {
-        const fileRes = await fetch(json.downloadUrl);
+        const fileRes = await fetch(finalDownloadUrl);
         const writable = await fileHandle.createWritable();
         if (fileRes.body && typeof fileRes.body.pipeTo === 'function') {
           await fileRes.body.pipeTo(writable);
@@ -758,23 +833,26 @@ export const ShowcaseApp: React.FC = () => {
           }
         }
         setRenderStatus('success');
+        setRenderProgress(100);
         setRenderMessage(`✓ Video seçtiğiniz konuma kaydedildi!`);
       } else {
         // Fallback: Standart tarayıcı indirmesi
         const link = document.createElement('a');
-        link.href = json.downloadUrl;
-        link.download = json.filename ?? 'video';
+        link.href = finalDownloadUrl;
+        link.download = finalFilename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
         setRenderStatus('success');
-        setRenderMessage(`✓ Video hazır! İndiriliyor: ${json.filename}`);
+        setRenderProgress(100);
+        setRenderMessage(`✓ Video hazır! İndiriliyor: ${finalFilename}`);
       }
 
       setTimeout(() => {
         setRenderStatus('idle');
         setRenderMessage('');
+        setRenderProgress(0);
       }, 6000);
     } catch (err: unknown) {
       setRenderStatus('error');
@@ -1358,6 +1436,7 @@ export const ShowcaseApp: React.FC = () => {
                     accentColor: cfg.accentColor,
                     primaryColor: cfg.textColor,
                     taglineColor: cfg.taglineColor,
+                    transparentBackground: cfg.transparentBg,
                     backgroundColor: cfg.transparentBg ? 'transparent' : '#0B0D10',
                     fontFamily: cfg.fontFamily,
                     headlineSize: cfg.headlineSize,
@@ -1404,433 +1483,560 @@ export const ShowcaseApp: React.FC = () => {
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              flexDirection: 'column',
+              gap: 8,
               backgroundColor: '#0E1118',
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: 12,
-              padding: '7px 12px',
-              gap: 8,
+              padding: '8px 12px',
               boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
               flexShrink: 0,
+              width: '100%',
+              boxSizing: 'border-box',
             }}
           >
-            {/* Format & Oryantasyon Seçimi (Yatay 16:9 vs Dikey 9:16 vs Kare 1:1) */}
+            {/* Üst Sıra: Esnek Sarılan Kontroller ve İndirme Düğmeleri */}
             <div
               style={{
                 display: 'flex',
+                flexWrap: 'wrap',
                 alignItems: 'center',
-                gap: 3,
-                padding: '3px 6px',
-                borderRadius: 8,
-                backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                justifyContent: 'space-between',
+                gap: 8,
+                width: '100%',
               }}
             >
-              <span
+              {/* Sol / Orta: Ayar Grupları (Küçüldüğünde Zarifçe Bir Alt Satıra Sarılır) */}
+              <div
                 style={{
-                  fontSize: 10.5,
-                  color: 'rgba(255,255,255,0.5)',
-                  fontWeight: 600,
-                  marginRight: 2,
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: 6,
+                  flex: '1 1 auto',
+                  minWidth: 0,
                 }}
               >
-                📐 Format:
-              </span>
-              {[
-                { value: '16:9' as const, label: '16:9', title: '16:9 Yatay (1920×1080 - YouTube/TV)' },
-                { value: '9:16' as const, label: '9:16', title: '9:16 Dikey (1080×1920 - Reels/Shorts/TikTok)' },
-                { value: '1:1' as const, label: '1:1', title: '1:1 Kare (1080×1080 - Post/Feed)' },
-              ].map((f) => (
+                {/* Format & Oryantasyon Seçimi (Yatay 16:9 vs Dikey 9:16 vs Kare 1:1) */}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    padding: '3px 6px',
+                    borderRadius: 8,
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      color: 'rgba(255,255,255,0.5)',
+                      fontWeight: 600,
+                      marginRight: 2,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    📐 Format:
+                  </span>
+                  {[
+                    { value: '16:9' as const, label: '16:9', title: '16:9 Yatay (1920×1080 - YouTube/TV)' },
+                    { value: '9:16' as const, label: '9:16', title: '9:16 Dikey (1080×1920 - Reels/Shorts/TikTok)' },
+                    { value: '1:1' as const, label: '1:1', title: '1:1 Kare (1080×1080 - Post/Feed)' },
+                  ].map((f) => (
+                    <button
+                      key={f.value}
+                      onClick={() => updateConfig({ aspectRatio: f.value })}
+                      title={f.title}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        padding: '3px 7px',
+                        borderRadius: 6,
+                        border:
+                          cfg.aspectRatio === f.value
+                            ? '1px solid #3B82F6'
+                            : '1px solid transparent',
+                        backgroundColor:
+                          cfg.aspectRatio === f.value
+                            ? 'rgba(59, 130, 246, 0.25)'
+                            : 'transparent',
+                        color:
+                          cfg.aspectRatio === f.value
+                            ? '#93C5FD'
+                            : 'rgba(255,255,255,0.65)',
+                        fontSize: 10.5,
+                        fontWeight: cfg.aspectRatio === f.value ? 700 : 500,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <span style={{ fontSize: 11 }}>{f.value === '9:16' ? '📱' : f.value === '1:1' ? '⏹️' : '🖥️'}</span>
+                      <span>{f.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Süre Hızlı Seçimi */}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    padding: '3px 6px',
+                    borderRadius: 8,
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontSize: 10.5,
+                      color: 'rgba(255,255,255,0.5)',
+                      fontWeight: 600,
+                      marginRight: 2,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <SvgIcons.Clock size={11} />
+                    Süre:
+                  </span>
+                  {[
+                    { label: '3s', frames: 90 },
+                    { label: '5s', frames: 150 },
+                    { label: '7s', frames: 210 },
+                    { label: '10s', frames: 300 },
+                  ].map((d) => (
+                    <button
+                      key={d.frames}
+                      onClick={() => updateConfig({ durationInFrames: d.frames })}
+                      style={{
+                        padding: '3px 7px',
+                        borderRadius: 6,
+                        border:
+                          cfg.durationInFrames === d.frames
+                            ? '1px solid #6366F1'
+                            : '1px solid transparent',
+                        backgroundColor:
+                          cfg.durationInFrames === d.frames
+                            ? 'rgba(99, 102, 241, 0.2)'
+                            : 'transparent',
+                        color:
+                          cfg.durationInFrames === d.frames
+                            ? '#A5B4FC'
+                            : 'rgba(255,255,255,0.65)',
+                        fontSize: 11,
+                        fontWeight: cfg.durationInFrames === d.frames ? 700 : 500,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Animasyon Hızı Seçimi */}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    padding: '3px 6px',
+                    borderRadius: 8,
+                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 3,
+                      fontSize: 10.5,
+                      color: 'rgba(255,255,255,0.5)',
+                      fontWeight: 600,
+                      marginRight: 2,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <SvgIcons.Zap size={11} color="#F59E0B" />
+                    Hız:
+                  </span>
+                  {[
+                    { label: '0.5x', speed: 0.5 },
+                    { label: '0.75x', speed: 0.75 },
+                    { label: '1x', speed: 1.0 },
+                    { label: '1.25x', speed: 1.25 },
+                    { label: '1.5x', speed: 1.5 },
+                    { label: '2x', speed: 2.0 },
+                  ].map((s) => {
+                    const isActive = Math.abs((cfg.playbackSpeed ?? 1.0) - s.speed) < 0.01;
+                    return (
+                      <button
+                        key={s.speed}
+                        onClick={() => updateConfig({ playbackSpeed: s.speed })}
+                        title={`Geçerli animasyon hızı: ${s.label}`}
+                        style={{
+                          padding: '3px 6px',
+                          borderRadius: 6,
+                          border: isActive
+                            ? '1px solid #F59E0B'
+                            : '1px solid transparent',
+                          backgroundColor: isActive
+                            ? 'rgba(245, 158, 11, 0.2)'
+                            : 'transparent',
+                          color: isActive
+                            ? '#FCD34D'
+                            : 'rgba(255,255,255,0.65)',
+                          fontSize: 11,
+                          fontWeight: isActive ? 700 : 500,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Şeffaflık Düğmesi */}
                 <button
-                  key={f.value}
-                  onClick={() => updateConfig({ aspectRatio: f.value })}
-                  title={f.title}
+                  onClick={() => updateConfig({ transparentBg: !cfg.transparentBg })}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '5px 10px',
+                    borderRadius: 8,
+                    border: cfg.transparentBg
+                      ? '1px solid rgba(16, 185, 129, 0.5)'
+                      : '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: cfg.transparentBg
+                      ? 'rgba(16, 185, 129, 0.15)'
+                      : 'rgba(255,255,255,0.04)',
+                    color: '#FFFFFF',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      backgroundColor: cfg.transparentBg ? '#10B981' : 'rgba(255,255,255,0.3)',
+                    }}
+                  />
+                  <span>Alpha:</span>
+                  <span
+                    style={{
+                      color: cfg.transparentBg ? '#34D399' : 'rgba(255,255,255,0.45)',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {cfg.transparentBg ? 'AÇIK' : 'KAPALI'}
+                  </span>
+                </button>
+
+                {/* Logo Görünürlüğü Düğmesi */}
+                <button
+                  onClick={() => updateConfig({ showLogo: !cfg.showLogo })}
+                  title={cfg.showLogo ? 'Logoyu Gizle (Sadece Metin Modu)' : 'Logoyu Göster'}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '5px 10px',
+                    borderRadius: 8,
+                    border: cfg.showLogo
+                      ? '1px solid rgba(255,255,255,0.12)'
+                      : '1px solid rgba(245, 158, 11, 0.5)',
+                    backgroundColor: cfg.showLogo
+                      ? 'rgba(255,255,255,0.04)'
+                      : 'rgba(245, 158, 11, 0.16)',
+                    color: '#FFFFFF',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <SvgIcons.Layers size={12} color={cfg.showLogo ? 'rgba(255,255,255,0.6)' : '#FBBF24'} />
+                  <span>Logo:</span>
+                  <span
+                    style={{
+                      color: cfg.showLogo ? '#818CF8' : '#FBBF24',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {cfg.showLogo ? 'AÇIK' : 'SAF METİN'}
+                  </span>
+                </button>
+
+                {/* Hızlı Kaybolma / Ters Animasyon Seçimi */}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    padding: '3px 6px',
+                    borderRadius: 8,
+                    backgroundColor: cfg.exitAnimation !== 'none' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.03)',
+                    border: cfg.exitAnimation !== 'none' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255,255,255,0.06)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 3,
+                      fontSize: 10.5,
+                      color: cfg.exitAnimation !== 'none' ? '#34D399' : 'rgba(255,255,255,0.5)',
+                      fontWeight: 600,
+                      marginRight: 2,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <SvgIcons.EyeOff size={11} />
+                    Çıkış:
+                  </span>
+                  {[
+                    { label: 'Yok', value: 'none' as const },
+                    { label: 'Fade', value: 'fade-out' as const },
+                    { label: 'Ters Yay', value: 'reverse-spring' as const },
+                    { label: 'Süzül', value: 'slide-down' as const },
+                    { label: 'Dağıl', value: 'blur-dissolve' as const },
+                  ].map((ex) => {
+                    const isActive = cfg.exitAnimation === ex.value;
+                    return (
+                      <button
+                        key={ex.value}
+                        onClick={() => updateConfig({ exitAnimation: ex.value })}
+                        title={`Kaybolma animasyonu: ${ex.label}`}
+                        style={{
+                          padding: '3px 6px',
+                          borderRadius: 5,
+                          border: isActive ? '1px solid #10B981' : '1px solid transparent',
+                          backgroundColor: isActive ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
+                          color: isActive ? '#34D399' : 'rgba(255,255,255,0.65)',
+                          fontSize: 10.5,
+                          fontWeight: isActive ? 700 : 500,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {ex.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Sağ: İndirme Düğmeleri */}
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto' }}>
+                <button
+                  disabled={renderStatus === 'rendering'}
+                  onClick={() => handleRenderVideo('webm')}
+                  title="WebM olarak indir"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 3,
-                    padding: '3px 7px',
-                    borderRadius: 6,
-                    border:
-                      cfg.aspectRatio === f.value
-                        ? '1px solid #3B82F6'
-                        : '1px solid transparent',
-                    backgroundColor:
-                      cfg.aspectRatio === f.value
-                        ? 'rgba(59, 130, 246, 0.25)'
-                        : 'transparent',
-                    color:
-                      cfg.aspectRatio === f.value
-                        ? '#93C5FD'
-                        : 'rgba(255,255,255,0.65)',
-                    fontSize: 10.5,
-                    fontWeight: cfg.aspectRatio === f.value ? 700 : 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <span style={{ fontSize: 11 }}>{f.value === '9:16' ? '📱' : f.value === '1:1' ? '⏹️' : '🖥️'}</span>
-                  <span>{f.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Sol: Süre Hızlı Seçimi */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '3px 6px',
-                borderRadius: 8,
-                backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.5)',
-                  fontWeight: 600,
-                  marginRight: 4,
-                }}
-              >
-                <SvgIcons.Clock size={12} />
-                Süre:
-              </span>
-              {[
-                { label: '3s', frames: 90 },
-                { label: '5s', frames: 150 },
-                { label: '7s', frames: 210 },
-                { label: '10s', frames: 300 },
-              ].map((d) => (
-                <button
-                  key={d.frames}
-                  onClick={() => updateConfig({ durationInFrames: d.frames })}
-                  style={{
-                    padding: '4px 9px',
-                    borderRadius: 6,
-                    border:
-                      cfg.durationInFrames === d.frames
-                        ? '1px solid #6366F1'
-                        : '1px solid transparent',
-                    backgroundColor:
-                      cfg.durationInFrames === d.frames
-                        ? 'rgba(99, 102, 241, 0.2)'
-                        : 'transparent',
-                    color:
-                      cfg.durationInFrames === d.frames
-                        ? '#A5B4FC'
-                        : 'rgba(255,255,255,0.65)',
+                    gap: 6,
+                    padding: '6px 13px',
+                    borderRadius: 8,
+                    border: 'none',
+                    backgroundColor: '#10B981',
+                    color: '#07080C',
                     fontSize: 11.5,
-                    fontWeight: cfg.durationInFrames === d.frames ? 700 : 500,
-                    cursor: 'pointer',
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                    cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
+                    opacity: renderStatus === 'rendering' ? 0.6 : 1,
+                    boxShadow: '0 2px 10px rgba(16, 185, 129, 0.35)',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  {d.label}
+                  <SvgIcons.Download size={13} color="#07080C" />
+                  <span>
+                    {renderStatus === 'rendering'
+                      ? `%${renderProgress}`
+                      : cfg.transparentBg
+                      ? 'Şeffaf WebM'
+                      : 'WebM'}
+                  </span>
                 </button>
-              ))}
-            </div>
 
-            {/* Bağımsız Geçerli Animasyon Hızı Seçimi */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '3px 6px',
-                borderRadius: 8,
-                backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.5)',
-                  fontWeight: 600,
-                  marginRight: 4,
-                }}
-              >
-                <SvgIcons.Zap size={12} color="#F59E0B" />
-                Hız:
-              </span>
-              {[
-                { label: '0.5x', speed: 0.5 },
-                { label: '0.75x', speed: 0.75 },
-                { label: '1x', speed: 1.0 },
-                { label: '1.25x', speed: 1.25 },
-                { label: '1.5x', speed: 1.5 },
-                { label: '2x', speed: 2.0 },
-              ].map((s) => {
-                const isActive = Math.abs((cfg.playbackSpeed ?? 1.0) - s.speed) < 0.01;
-                return (
-                  <button
-                    key={s.speed}
-                    onClick={() => updateConfig({ playbackSpeed: s.speed })}
-                    title={`Geçerli animasyon hızı: ${s.label} (Toplam süreden bağımsız)`}
-                    style={{
-                      padding: '4px 8px',
-                      borderRadius: 6,
-                      border: isActive
-                        ? '1px solid #F59E0B'
-                        : '1px solid transparent',
-                      backgroundColor: isActive
-                        ? 'rgba(245, 158, 11, 0.2)'
-                        : 'transparent',
-                      color: isActive
-                        ? '#FCD34D'
-                        : 'rgba(255,255,255,0.65)',
-                      fontSize: 11.5,
-                      fontWeight: isActive ? 700 : 500,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    {s.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Şeffaflık Düğmesi */}
-            <button
-              onClick={() => updateConfig({ transparentBg: !cfg.transparentBg })}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 7,
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: cfg.transparentBg
-                  ? '1px solid rgba(16, 185, 129, 0.5)'
-                  : '1px solid rgba(255,255,255,0.1)',
-                backgroundColor: cfg.transparentBg
-                  ? 'rgba(16, 185, 129, 0.15)'
-                  : 'rgba(255,255,255,0.04)',
-                color: '#FFFFFF',
-                fontSize: 11.5,
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  backgroundColor: cfg.transparentBg ? '#10B981' : 'rgba(255,255,255,0.3)',
-                }}
-              />
-              <span>Alpha Şeffaf:</span>
-              <span
-                style={{
-                  color: cfg.transparentBg ? '#34D399' : 'rgba(255,255,255,0.45)',
-                  fontWeight: 700,
-                }}
-              >
-                {cfg.transparentBg ? 'AÇIK' : 'KAPALI'}
-              </span>
-            </button>
-
-            {/* Logo Görünürlüğü Düğmesi */}
-            <button
-              onClick={() => updateConfig({ showLogo: !cfg.showLogo })}
-              title={cfg.showLogo ? 'Logoyu Gizle (Sadece Metin Modu)' : 'Logoyu Göster'}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 7,
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: cfg.showLogo
-                  ? '1px solid rgba(255,255,255,0.12)'
-                  : '1px solid rgba(245, 158, 11, 0.5)',
-                backgroundColor: cfg.showLogo
-                  ? 'rgba(255,255,255,0.04)'
-                  : 'rgba(245, 158, 11, 0.16)',
-                color: '#FFFFFF',
-                fontSize: 11.5,
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <SvgIcons.Layers size={13} color={cfg.showLogo ? 'rgba(255,255,255,0.6)' : '#FBBF24'} />
-              <span>Logo:</span>
-              <span
-                style={{
-                  color: cfg.showLogo ? '#818CF8' : '#FBBF24',
-                  fontWeight: 700,
-                }}
-              >
-                {cfg.showLogo ? 'AÇIK' : 'SAF METİN'}
-              </span>
-            </button>
-
-            {/* Hızlı Kaybolma / Ters Animasyon Seçimi */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 3,
-                padding: '3px 6px',
-                borderRadius: 8,
-                backgroundColor: cfg.exitAnimation !== 'none' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.03)',
-                border: cfg.exitAnimation !== 'none' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 3,
-                  fontSize: 10.5,
-                  color: cfg.exitAnimation !== 'none' ? '#34D399' : 'rgba(255,255,255,0.5)',
-                  fontWeight: 600,
-                  marginRight: 2,
-                }}
-              >
-                <SvgIcons.EyeOff size={11} />
-                Çıkış:
-              </span>
-              {[
-                { label: 'Yok', value: 'none' as const },
-                { label: 'Fade', value: 'fade-out' as const },
-                { label: 'Ters Yay', value: 'reverse-spring' as const },
-                { label: 'Süzül', value: 'slide-down' as const },
-                { label: 'Dağıl', value: 'blur-dissolve' as const },
-              ].map((ex) => {
-                const isActive = cfg.exitAnimation === ex.value;
-                return (
-                  <button
-                    key={ex.value}
-                    onClick={() => updateConfig({ exitAnimation: ex.value })}
-                    title={`Kaybolma animasyonu: ${ex.label}`}
-                    style={{
-                      padding: '3px 6px',
-                      borderRadius: 5,
-                      border: isActive ? '1px solid #10B981' : '1px solid transparent',
-                      backgroundColor: isActive ? 'rgba(16, 185, 129, 0.22)' : 'transparent',
-                      color: isActive ? '#34D399' : 'rgba(255,255,255,0.65)',
-                      fontSize: 10.5,
-                      fontWeight: isActive ? 700 : 500,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    {ex.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Canlı Durum / Bildirim */}
-            {renderStatus !== 'idle' ? (
-              <div
-                style={{
-                  flex: 1,
-                  padding: '6px 12px',
-                  borderRadius: 8,
-                  fontSize: 11.5,
-                  fontWeight: 600,
-                  textAlign: 'center',
-                  backgroundColor:
-                    renderStatus === 'rendering'
-                      ? 'rgba(245, 158, 11, 0.15)'
-                      : renderStatus === 'success'
-                      ? 'rgba(16, 185, 129, 0.15)'
-                      : 'rgba(239, 68, 68, 0.15)',
-                  border:
-                    renderStatus === 'rendering'
-                      ? '1px solid rgba(245, 158, 11, 0.4)'
-                      : renderStatus === 'success'
-                      ? '1px solid rgba(16, 185, 129, 0.4)'
-                      : '1px solid rgba(239, 68, 68, 0.4)',
-                  color:
-                    renderStatus === 'rendering'
-                      ? '#FBBF24'
-                      : renderStatus === 'success'
-                      ? '#34D399'
-                      : '#F87171',
-                }}
-              >
-                {renderStatus === 'rendering' ? 'Rendering... ' : renderStatus === 'success' ? '✓ ' : '⚠ '}
-                {renderMessage}
+                <button
+                  disabled={renderStatus === 'rendering'}
+                  onClick={() => handleRenderVideo('mp4')}
+                  title="H.264 MP4 olarak indir"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    backgroundColor: 'rgba(255,255,255,0.05)',
+                    color: '#F1F5F9',
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                    cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
+                    opacity: renderStatus === 'rendering' ? 0.6 : 1,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <SvgIcons.Film size={13} color="#A5B4FC" />
+                  <span>MP4</span>
+                </button>
               </div>
-            ) : (
+            </div>
+
+            {/* Alt Sıra: Canlı Render İlerleme Barı (% Gösterimi) veya Durum Mesajı */}
+            {renderStatus === 'rendering' && (
               <div
                 style={{
-                  flex: 1,
-                  textAlign: 'center',
-                  fontSize: 11,
-                  color: 'rgba(255,255,255,0.38)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 5,
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                  border: '1px solid rgba(99, 102, 241, 0.35)',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
                 }}
               >
-                {cfg.transparentBg
-                  ? 'Transparan alpha mod aktif • Export için hazır'
-                  : 'Stüdyo önizleme aktif'}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: 11.5,
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: 7,
+                        height: 7,
+                        borderRadius: '50%',
+                        backgroundColor: '#10B981',
+                        boxShadow: '0 0 8px #10B981',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span
+                      style={{
+                        color: '#E2E8F0',
+                        fontWeight: 600,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {renderMessage || 'Video render ediliyor...'}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontWeight: 800,
+                      fontSize: 13,
+                      color: '#10B981',
+                      padding: '2px 8px',
+                      borderRadius: 6,
+                      backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      flexShrink: 0,
+                    }}
+                  >
+                    %{renderProgress}
+                  </div>
+                </div>
+
+                {/* İlerleme Çubuğu */}
+                <div
+                  style={{
+                    width: '100%',
+                    height: 5,
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    borderRadius: 999,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${Math.max(2, Math.min(100, renderProgress))}%`,
+                      height: '100%',
+                      background: 'linear-gradient(90deg, #6366F1 0%, #10B981 100%)',
+                      borderRadius: 999,
+                      transition: 'width 0.25s ease-out',
+                      boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)',
+                    }}
+                  />
+                </div>
               </div>
             )}
 
-            {/* Sağ: İndirme Düğmeleri */}
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button
-                disabled={renderStatus === 'rendering'}
-                onClick={() => handleRenderVideo('webm')}
+            {renderStatus === 'success' && (
+              <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: '7px 14px',
+                  justifyContent: 'space-between',
+                  padding: '6px 12px',
                   borderRadius: 8,
-                  border: 'none',
-                  backgroundColor: '#10B981',
-                  color: '#07080C',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
-                  opacity: renderStatus === 'rendering' ? 0.6 : 1,
-                  boxShadow: '0 2px 10px rgba(16, 185, 129, 0.35)',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <SvgIcons.Download size={13} color="#07080C" />
-                <span>{cfg.transparentBg ? 'Şeffaf WebM' : 'WebM'}</span>
-              </button>
-
-              <button
-                disabled={renderStatus === 'rendering'}
-                onClick={() => handleRenderVideo('mp4')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '7px 12px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  color: '#F1F5F9',
-                  fontSize: 12,
+                  backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  color: '#34D399',
+                  fontSize: 11.5,
                   fontWeight: 600,
-                  cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
-                  opacity: renderStatus === 'rendering' ? 0.6 : 1,
-                  transition: 'all 0.15s ease',
                 }}
               >
-                <SvgIcons.Film size={13} color="#A5B4FC" />
-                <span>MP4</span>
-              </button>
-            </div>
+                <span>✓ {renderMessage}</span>
+                <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#10B981' }}>%100</span>
+              </div>
+            )}
+
+            {renderStatus === 'error' && (
+              <div
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  color: '#F87171',
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                }}
+              >
+                ⚠ {renderMessage}
+              </div>
+            )}
           </div>
         </main>
 
@@ -3439,10 +3645,10 @@ export const ShowcaseApp: React.FC = () => {
                     <SvgIcons.Film size={16} color="#818CF8" />
                     <div>
                       <div style={{ fontSize: 12.5, fontWeight: 700 }}>
-                        Full HD MP4 İndir
+                        {cfg.transparentBg ? 'Full HD MP4 İndir (Opak Siyah)' : 'Full HD MP4 İndir'}
                       </div>
-                      <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.5)' }}>
-                        H.264 evrensel uyumluluk (YouTube, Instagram, Sunum)
+                      <div style={{ fontSize: 9.5, color: cfg.transparentBg ? '#FCD34D' : 'rgba(255,255,255,0.5)' }}>
+                        {cfg.transparentBg ? '⚠️ MP4 formatı şeffaflığı desteklemez (Şeffaf için WebM veya MOV seçiniz)' : 'H.264 evrensel uyumluluk (YouTube, Instagram, Sunum)'}
                       </div>
                     </div>
                   </div>
@@ -3459,8 +3665,8 @@ export const ShowcaseApp: React.FC = () => {
                     justifyContent: 'space-between',
                     padding: '10px 14px',
                     borderRadius: 8,
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    border: cfg.transparentBg ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: cfg.transparentBg ? 'rgba(245, 158, 11, 0.12)' : 'rgba(255,255,255,0.03)',
                     color: '#FFFFFF',
                     cursor: renderStatus === 'rendering' ? 'not-allowed' : 'pointer',
                     opacity: renderStatus === 'rendering' ? 0.6 : 1,
@@ -3471,14 +3677,14 @@ export const ShowcaseApp: React.FC = () => {
                     <SvgIcons.Sparkles size={16} color="#FBBF24" />
                     <div>
                       <div style={{ fontSize: 12.5, fontWeight: 700 }}>
-                        Apple ProRes 4444 (.mov)
+                        {cfg.transparentBg ? 'Şeffaf Apple ProRes 4444 (.mov)' : 'Apple ProRes 4444 (.mov)'}
                       </div>
                       <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.45)' }}>
-                        Kayıpsız kurgu kalitesi (Premiere, After Effects, DaVinci)
+                        {cfg.transparentBg ? 'Kayıpsız kurgu kalitesi + Alpha şeffaflık (Premiere, AE, DaVinci)' : 'Kayıpsız kurgu kalitesi (Premiere, After Effects, DaVinci)'}
                       </div>
                     </div>
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>.mov</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#FBBF24' }}>.mov</span>
                 </button>
               </div>
 
@@ -3520,8 +3726,8 @@ export const ShowcaseApp: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255,255,255,0.5)' }}>
                   <span>Arka Plan:</span>
-                  <span style={{ color: cfg.transparentBg ? '#34D399' : '#FFFFFF' }}>
-                    {cfg.transparentBg ? 'Transparan (Alpha)' : 'Siyah Opak'}
+                  <span style={{ color: cfg.transparentBg ? '#34D399' : '#FFFFFF', fontWeight: cfg.transparentBg ? 700 : 400 }}>
+                    {cfg.transparentBg ? '🟢 %100 Transparan (Alpha Kanalı)' : 'Siyah Opak'}
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(255,255,255,0.5)' }}>
@@ -3534,38 +3740,69 @@ export const ShowcaseApp: React.FC = () => {
                 </div>
               </div>
 
-              {/* Canlı Render Durumu */}
-              {renderStatus !== 'idle' && (
+              {/* Canlı Render Durumu & İlerleme Çubuğu */}
+              {renderStatus === 'rendering' && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6,
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    border: '1px solid rgba(99, 102, 241, 0.35)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11.5, color: '#E2E8F0', fontWeight: 600 }}>{renderMessage || 'İşleniyor...'}</span>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 13, color: '#10B981' }}>%{renderProgress}</span>
+                  </div>
+                  <div style={{ width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 999, overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        width: `${Math.max(2, Math.min(100, renderProgress))}%`,
+                        height: '100%',
+                        background: 'linear-gradient(90deg, #6366F1, #10B981)',
+                        transition: 'width 0.25s ease-out',
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {renderStatus === 'success' && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: 11.5,
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                    color: '#34D399',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    fontWeight: 600,
+                  }}
+                >
+                  <span>✓ {renderMessage}</span>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#10B981' }}>%100</span>
+                </div>
+              )}
+
+              {renderStatus === 'error' && (
                 <div
                   style={{
                     fontSize: 11.5,
                     padding: '8px 12px',
                     borderRadius: 8,
-                    backgroundColor:
-                      renderStatus === 'error'
-                        ? 'rgba(239, 68, 68, 0.15)'
-                        : renderStatus === 'success'
-                        ? 'rgba(16, 185, 129, 0.15)'
-                        : 'rgba(245, 158, 11, 0.15)',
-                    color:
-                      renderStatus === 'error'
-                        ? '#F87171'
-                        : renderStatus === 'success'
-                        ? '#34D399'
-                        : '#FBBF24',
-                    border: `1px solid ${
-                      renderStatus === 'error'
-                        ? 'rgba(239, 68, 68, 0.3)'
-                        : renderStatus === 'success'
-                        ? 'rgba(16, 185, 129, 0.3)'
-                        : 'rgba(245, 158, 11, 0.3)'
-                    }`,
-                    textAlign: 'center',
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    color: '#F87171',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
                     fontWeight: 600,
                   }}
                 >
-                  {renderStatus === 'rendering' ? 'İşleniyor: ' : renderStatus === 'success' ? '✓ ' : '⚠ '}
-                  {renderMessage}
+                  ⚠ {renderMessage}
                 </div>
               )}
             </>

@@ -16,10 +16,13 @@ export const EchoOutlineTunnel: React.FC<ArchitecturalSceneProps> = (props) => {
   const {
     accentColor = '#B89758',
     primaryColor = '#E6EDF3',
+    backgroundColor,
+    transparentBackground,
     logoScale = 1,
     showLogo = true,
     textDelayFrames,
   } = props;
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
   const frame = useCurrentFrame();
   const { fps, width: compWidth = 1920, height: compHeight = 1080 } = useVideoConfig();
 
@@ -36,7 +39,7 @@ export const EchoOutlineTunnel: React.FC<ArchitecturalSceneProps> = (props) => {
   });
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#07080D', overflow: 'hidden' }}>
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#07080D'), overflow: 'hidden' }}>
       {showLogo !== false && (
         <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
           {/* Imploding Concentric Echo Rings */}

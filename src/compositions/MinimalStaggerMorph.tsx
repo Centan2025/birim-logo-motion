@@ -15,6 +15,7 @@ export const MinimalStaggerMorph: React.FC<ArchitecturalSceneProps> = (props) =>
     accentColor,
     primaryColor,
     backgroundColor,
+    transparentBackground,
     textDelayFrames,
     showLogo = true,
   } = props;
@@ -30,10 +31,10 @@ export const MinimalStaggerMorph: React.FC<ArchitecturalSceneProps> = (props) =>
   const offsetX = (compWidth - renderedWidth) / 2;
   const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 36);
 
-  const isTransparent = backgroundColor === 'transparent';
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
 
   return (
-    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : backgroundColor }}>
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#0B0D10') }}>
       {showLogo !== false && (
         <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <defs>

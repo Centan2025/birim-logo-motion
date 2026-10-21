@@ -34,6 +34,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = (props
     primaryColor,
     taglineColor,
     backgroundColor,
+    transparentBackground,
     fontFamily = "'Inter', sans-serif",
     headlineSize = 64,
     subtitleSize = 40,
@@ -50,6 +51,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = (props
     showLogo = true,
   } = props;
 
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
   const frame = useCurrentFrame();
   const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
 
@@ -65,7 +67,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = (props
   const STAGGER_FRAMES = 4;
 
   return (
-    <AbsoluteFill style={{ backgroundColor, overflow: 'hidden' }}>
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#0B0D10'), overflow: 'hidden' }}>
       {showLogo !== false && (
         <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <defs>

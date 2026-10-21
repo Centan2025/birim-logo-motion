@@ -17,6 +17,7 @@ export const LiquidChromeSweep: React.FC<ArchitecturalSceneProps> = (props) => {
     accentColor,
     primaryColor,
     backgroundColor,
+    transparentBackground,
     textDelayFrames,
     showLogo = true,
   } = props;
@@ -32,7 +33,7 @@ export const LiquidChromeSweep: React.FC<ArchitecturalSceneProps> = (props) => {
   const offsetX = (compWidth - renderedWidth) / 2;
   const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 28);
 
-  const isTransparent = backgroundColor === 'transparent';
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
 
   // Subtle camera push-in
   const camScale = interpolate(frame, [0, 150], [0.94, 1.02], {
@@ -57,7 +58,7 @@ export const LiquidChromeSweep: React.FC<ArchitecturalSceneProps> = (props) => {
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: '#050507',
+        backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#050507'),
         overflow: 'hidden',
       }}
     >

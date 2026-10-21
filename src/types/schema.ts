@@ -89,6 +89,7 @@ export const ArchitecturalSceneSchema = z.object({
   primaryColor: zColor().default('#F4F1EA'),
   taglineColor: zColor().optional(),
   backgroundColor: zColor().default('#0B0D10'),
+  transparentBackground: z.boolean().optional(),
   fontFamily: z.enum(FONT_OPTIONS).optional().default("'Inter', sans-serif"),
   headlineSize: z.number().min(6).max(500).optional().default(64),
   subtitleSize: z.number().min(6).max(500).optional().default(40),

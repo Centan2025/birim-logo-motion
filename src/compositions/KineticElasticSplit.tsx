@@ -21,6 +21,7 @@ export const KineticElasticSplit: React.FC<ArchitecturalSceneProps> = (props) =>
     accentColor,
     primaryColor,
     backgroundColor,
+    transparentBackground,
     textDelayFrames,
     showLogo = true,
   } = props;
@@ -36,7 +37,7 @@ export const KineticElasticSplit: React.FC<ArchitecturalSceneProps> = (props) =>
   const offsetX = (compWidth - renderedWidth) / 2;
   const offsetY = (compHeight - renderedHeight) / 2 - (isVertical ? 100 : 42);
 
-  const isTransparent = backgroundColor === 'transparent';
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
 
   const pillSpring = spring({
     frame: frame - 42,
@@ -53,20 +54,22 @@ export const KineticElasticSplit: React.FC<ArchitecturalSceneProps> = (props) =>
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: '#F6F4EF',
+        backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#F6F4EF'),
         overflow: 'hidden',
       }}
     >
       {/* Subtle Modern Editorial Frame */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 44,
-          border: '1px solid rgba(13, 13, 16, 0.08)',
-          borderRadius: 24,
-          pointerEvents: 'none',
-        }}
-      />
+      {!isTransparent && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 44,
+            border: '1px solid rgba(13, 13, 16, 0.08)',
+            borderRadius: 24,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
 
       {showLogo !== false && (
         <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>

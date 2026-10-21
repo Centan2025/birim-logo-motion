@@ -14,10 +14,13 @@ export const SplitScreenShutter: React.FC<ArchitecturalSceneProps> = (props) => 
   const {
     accentColor = '#B89758',
     primaryColor = '#E6EDF3',
+    backgroundColor,
+    transparentBackground,
     logoScale = 1,
     showLogo = true,
     textDelayFrames,
   } = props;
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
   const frame = useCurrentFrame();
   const { fps, width: compWidth = 1920, height: compHeight = 1080 } = useVideoConfig();
 
@@ -37,7 +40,7 @@ export const SplitScreenShutter: React.FC<ArchitecturalSceneProps> = (props) => 
   const shutterOffset = interpolate(shutterSpring, [0, 1], [0, 820]);
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#0A0B0E', overflow: 'hidden' }}>
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#0A0B0E'), overflow: 'hidden' }}>
       <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         {/* Center Macro-to-Normal Logo */}
         {showLogo !== false && (

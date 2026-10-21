@@ -31,7 +31,9 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
   line2Delay,
   line3Delay,
   showLogo = true,
-}) => {
+  ...restProps
+}: LowerThirdProps & { backgroundColor?: string }) => {
+  const isTransparent = transparentBackground || restProps.backgroundColor === 'transparent';
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
@@ -68,10 +70,10 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: transparentBackground ? 'transparent' : '#0E1015',
+        backgroundColor: isTransparent ? 'transparent' : (restProps.backgroundColor || '#0E1015'),
       }}
     >
-      {!transparentBackground && (
+      {!isTransparent && (
         <AbsoluteFill
           style={{
             background:

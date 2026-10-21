@@ -15,10 +15,13 @@ export const SpotlightDarkroomReveal: React.FC<ArchitecturalSceneProps> = (props
   const {
     accentColor = '#B89758',
     primaryColor = '#E6EDF3',
+    backgroundColor,
+    transparentBackground,
     logoScale = 1,
     showLogo = true,
     textDelayFrames,
   } = props;
+  const isTransparent = transparentBackground || backgroundColor === 'transparent';
   const frame = useCurrentFrame();
   const { fps, width: compWidth = 1920, height: compHeight = 1080 } = useVideoConfig();
 
@@ -48,7 +51,7 @@ export const SpotlightDarkroomReveal: React.FC<ArchitecturalSceneProps> = (props
   });
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#060608', overflow: 'hidden' }}>
+    <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#060608'), overflow: 'hidden' }}>
       {showLogo !== false && (
         <>
           {/* Ambient Stage Spotlight Cone */}
