@@ -735,6 +735,9 @@ export const ShowcaseApp: React.FC = () => {
       });
 
       if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('Canlı ortamda (Vercel/Netlify gibi statik hostinglerde) Node.js/Chromium arka plan render servisi bulunmamaktadır. Video kaydı yerel sunucuda (localhost:5173) veya Node.js sunucusunda çalışmaktadır.');
+        }
         throw new Error(`Render sunucu hatası (${res.status})`);
       }
 
@@ -1375,6 +1378,7 @@ export const ShowcaseApp: React.FC = () => {
           >
             {activeScene.isOverlay && activeScene.overlayComponent ? (
               <Player
+                acknowledgeRemotionLicense
                 key={`${activeScene.id}-${cfg.aspectRatio}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.fontFamily}-${cfg.textAlign}-${cfg.textOffsetX}-${cfg.textOffsetY}-${cfg.letterSpacing}-${cfg.headline}-${cfg.subtitle}-${cfg.tagline}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.durationInFrames}-${cfg.showLogo}-${cfg.exitAnimation}-${cfg.exitTarget}-${cfg.exitDurationFrames}-${cfg.exitTimingMode}-${cfg.exitDelayFrames}`}
                 component={getOrCreateExitWrapped(activeScene.overlayComponent)}
                 inputProps={{
@@ -1425,6 +1429,7 @@ export const ShowcaseApp: React.FC = () => {
             ) : (
               activeScene.archComponent && (
                 <Player
+                  acknowledgeRemotionLicense
                   key={`${activeScene.id}-${cfg.aspectRatio}-${cfg.transparentBg}-${cfg.textAnimation}-${cfg.textColor}-${cfg.accentColor}-${cfg.fontFamily}-${cfg.textAlign}-${cfg.textOffsetX}-${cfg.textOffsetY}-${cfg.letterSpacing}-${cfg.headline}-${cfg.subtitle}-${cfg.tagline}-${cfg.headlineSize}-${cfg.subtitleSize}-${cfg.taglineSize}-${cfg.line1Delay}-${cfg.line2Delay}-${cfg.line3Delay}-${cfg.durationInFrames}-${cfg.showLogo}-${cfg.exitAnimation}-${cfg.exitTarget}-${cfg.exitDurationFrames}-${cfg.exitTimingMode}-${cfg.exitDelayFrames}`}
                   component={getOrCreateExitWrapped(activeScene.archComponent)}
                   inputProps={{

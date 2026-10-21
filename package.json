@@ -7,6 +7,8 @@
     "dev": "remotion studio",
     "dev:web": "node scripts/dev-server.mjs",
     "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 5173",
+    "start": "vite preview --host 0.0.0.0 --port 5173",
     "build:remotion": "remotion bundle",
     "render:blueprint": "remotion render src/index.ts 01-CAD-Blueprint-Draft out/01-blueprint.mp4",
     "render:monolith": "remotion render src/index.ts 02-Monolith-Sun-Shadow out/02-monolith.mp4",

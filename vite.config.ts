@@ -1,40 +1,37 @@
-import { defineConfig, Plugin } from 'vite';
+import { defineConfig, Plugin, ViteDevServer, PreviewServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
-function remotionRenderPlugin(): Plugin {
-  return {
-    name: 'remotion-render-api',
-    configureServer(server) {
-      // 1. /out/ klasöründeki dosyaları doğrudan indirme akışı olarak sun
-      server.middlewares.use((req, res, next) => {
-        if (req.url && req.url.startsWith('/out/')) {
-          const cleanUrl = req.url.split('?')[0];
-          const filePath = path.join(process.cwd(), cleanUrl);
-          if (fs.existsSync(filePath)) {
-            const stat = fs.statSync(filePath);
-            const isWebm = filePath.endsWith('.webm');
-            const isMp4 = filePath.endsWith('.mp4');
-            const isMov = filePath.endsWith('.mov');
-            res.writeHead(200, {
-              'Content-Type': isWebm
-                ? 'video/webm'
-                : isMp4
-                ? 'video/mp4'
-                : isMov
-                ? 'video/quicktime'
-                : 'application/octet-stream',
-              'Content-Length': stat.size,
-              'Content-Disposition': `attachment; filename="${path.basename(filePath)}"`,
-            });
-            fs.createReadStream(filePath).pipe(res);
-            return;
-          }
-        }
-        next();
-      });
+function registerRenderMiddlewares(server: ViteDevServer | PreviewServer) {
+  // 1. /out/ klasöründeki dosyaları doğrudan indirme akışı olarak sun
+  server.middlewares.use((req, res, next) => {
+    if (req.url && req.url.startsWith('/out/')) {
+      const cleanUrl = req.url.split('?')[0];
+      const filePath = path.join(process.cwd(), cleanUrl);
+      if (fs.existsSync(filePath)) {
+        const stat = fs.statSync(filePath);
+        const isWebm = filePath.endsWith('.webm');
+        const isMp4 = filePath.endsWith('.mp4');
+        const isMov = filePath.endsWith('.mov');
+        res.writeHead(200, {
+          'Content-Type': isWebm
+            ? 'video/webm'
+            : isMp4
+            ? 'video/mp4'
+            : isMov
+            ? 'video/quicktime'
+            : 'application/octet-stream',
+          'Content-Length': stat.size,
+          'Content-Disposition': `attachment; filename="${path.basename(filePath)}"`,
+        });
+        fs.createReadStream(filePath).pipe(res);
+        return;
+      }
+    }
+    next();
+  });
 
       // 2. /api/render endpoint: Web arayüzünden doğrudan video render alma
       server.middlewares.use((req, res, next) => {
@@ -328,6 +325,16 @@ function remotionRenderPlugin(): Plugin {
         }
         next();
       });
+}
+
+function remotionRenderPlugin(): Plugin {
+  return {
+    name: 'remotion-render-api',
+    configureServer(server) {
+      registerRenderMiddlewares(server);
+    },
+    configurePreviewServer(server) {
+      registerRenderMiddlewares(server);
     },
   };
 }
