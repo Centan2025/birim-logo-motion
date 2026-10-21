@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
+import fixWebmDuration from 'fix-webm-duration';
 import { DirectionalLetterExpand } from '../compositions/DirectionalLetterExpand';
 import { CadBlueprintDraft } from '../compositions/CadBlueprintDraft';
 import { MonolithSunShadow } from '../compositions/MonolithSunShadow';
@@ -651,6 +652,8 @@ export const ShowcaseApp: React.FC = () => {
     const width = cfg.aspectRatio === '9:16' ? 1080 : cfg.aspectRatio === '1:1' ? 1080 : 1920;
     const height = cfg.aspectRatio === '9:16' ? 1920 : cfg.aspectRatio === '1:1' ? 1080 : 1080;
     const totalFrames = cfg.durationInFrames;
+    const targetFps = 30;
+    const frameIntervalMs = 1000 / targetFps;
 
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -660,7 +663,7 @@ export const ShowcaseApp: React.FC = () => {
       throw new Error('Canvas render katmanı oluşturulamadı');
     }
 
-    const stream = canvas.captureStream(30);
+    const stream = canvas.captureStream(targetFps);
     let mimeType = 'video/webm;codecs=vp9';
     if (typeof MediaRecorder !== 'undefined') {
       if (!MediaRecorder.isTypeSupported(mimeType)) {
@@ -673,7 +676,7 @@ export const ShowcaseApp: React.FC = () => {
     const chunks: Blob[] = [];
     const recorder = new MediaRecorder(stream, {
       mimeType,
-      videoBitsPerSecond: 16000000,
+      videoBitsPerSecond: 3000000, // 3 Mbps - yüksek kaliteli 1080p, hafif dosya (~1.5 MB)
     });
 
     recorder.ondataavailable = (e) => {
@@ -688,10 +691,15 @@ export const ShowcaseApp: React.FC = () => {
 
     try {
       for (let f = 0; f < totalFrames; f++) {
+        const frameStart = performance.now();
         player.seekTo(f);
+
+        // React DOM render döngüsünün frame'i çizmesini bekle
         await new Promise<void>((resolve) => {
           requestAnimationFrame(() => {
-            setTimeout(resolve, 34);
+            requestAnimationFrame(() => {
+              resolve();
+            });
           });
         });
 
@@ -701,14 +709,24 @@ export const ShowcaseApp: React.FC = () => {
           ctx.fillRect(0, 0, width, height);
         }
 
-        // 1. SVG Vektörlerini Çiz
-        const svgEl = container.querySelector('svg');
-        if (svgEl) {
+        const contRect = container.getBoundingClientRect();
+        const scaleX = width / (contRect.width || 1);
+        const scaleY = height / (contRect.height || 1);
+
+        // 1. Kök SVG Vektörlerini Çiz
+        const allSvgs = Array.from(container.querySelectorAll('svg'));
+        const rootSvgs = allSvgs.filter((svg) => !svg.parentElement?.closest('svg'));
+
+        for (const svgEl of rootSvgs) {
+          const sRect = svgEl.getBoundingClientRect();
+          const x = (sRect.left - contRect.left) * scaleX;
+          const y = (sRect.top - contRect.top) * scaleY;
+          const w = sRect.width * scaleX;
+          const h = sRect.height * scaleY;
+
           const clone = svgEl.cloneNode(true) as SVGSVGElement;
           clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
           clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-          clone.setAttribute('width', String(width));
-          clone.setAttribute('height', String(height));
 
           const svgString = new XMLSerializer().serializeToString(clone);
           const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
@@ -717,7 +735,7 @@ export const ShowcaseApp: React.FC = () => {
 
           await new Promise<void>((resolve) => {
             img.onload = () => {
-              ctx.drawImage(img, 0, 0, width, height);
+              ctx.drawImage(img, x, y, w, h);
               URL.revokeObjectURL(svgUrl);
               resolve();
             };
@@ -729,22 +747,30 @@ export const ShowcaseApp: React.FC = () => {
           });
         }
 
-        // 2. Metin Katmanlarını Çiz (Canvas 2D - Güvenli & Net)
-        const textSpans = container.querySelectorAll('span');
-        if (textSpans.length > 0) {
-          const contRect = container.getBoundingClientRect();
-          const scaleX = width / (contRect.width || 1);
-          const scaleY = height / (contRect.height || 1);
+        // 2. Metin Katmanlarını Çiz (Canvas 2D - Güvenli & Tainting Olmayan)
+        const textNodes = Array.from(container.querySelectorAll('span, p, h1, h2, h3'));
+        const leafTextNodes = textNodes.filter(
+          (node) => node.children.length === 0 || !node.querySelector('span, p, h1, h2, h3')
+        );
 
+        if (leafTextNodes.length > 0) {
           ctx.save();
-          for (const span of Array.from(textSpans)) {
-            const text = span.textContent?.trim();
+          for (const node of leafTextNodes) {
+            const text = node.textContent?.trim();
             if (!text) continue;
-            const sRect = span.getBoundingClientRect();
-            const style = window.getComputedStyle(span);
+            const style = window.getComputedStyle(node);
+            if (
+              style.display === 'none' ||
+              style.visibility === 'hidden' ||
+              style.opacity === '0'
+            ) {
+              continue;
+            }
+
+            const sRect = node.getBoundingClientRect();
             const x = (sRect.left - contRect.left) * scaleX;
-            const y = (sRect.bottom - contRect.top) * scaleY;
             const fontSize = parseFloat(style.fontSize) * scaleY;
+            const y = (sRect.top - contRect.top) * scaleY + fontSize * 0.88;
 
             ctx.font = `${style.fontWeight || '600'} ${fontSize}px ${style.fontFamily || cfg.fontFamily}`;
             ctx.fillStyle = style.color || cfg.textColor;
@@ -757,15 +783,39 @@ export const ShowcaseApp: React.FC = () => {
         const pct = Math.round(((f + 1) / totalFrames) * 100);
         setRenderProgress(pct);
         setRenderMessage(`Tarayıcıda işleniyor: %${pct} (${f + 1}/${totalFrames})`);
+
+        // Kararlı 30 FPS akışı için zamanlama hizalama
+        const elapsed = performance.now() - frameStart;
+        const sleepMs = Math.max(8, Math.round(frameIntervalMs - elapsed));
+        await new Promise((r) => setTimeout(r, sleepMs));
       }
 
-      await new Promise<void>((resolve) => {
-        recorder.onstop = () => resolve();
+      // Kaydı durdur ve ham Blob al
+      const rawBlob = await new Promise<Blob>((resolve) => {
+        recorder.onstop = () => {
+          resolve(new Blob(chunks, { type: mimeType }));
+        };
         recorder.stop();
       });
 
-      const finalBlob = new Blob(chunks, { type: mimeType });
-      const outFilename = suggestedFilename.replace(/\.mp4$/i, '.webm');
+      // EBML Duration düzeltmesi (Chromium'un süresiz ve bozuk dosya hatasını giderir)
+      const durationMs = Math.round((totalFrames / targetFps) * 1000);
+      let finalBlob = rawBlob;
+      try {
+        finalBlob = await new Promise<Blob>((resolve) => {
+          fixWebmDuration(rawBlob, durationMs, (fixedBlob: Blob) => {
+            resolve(fixedBlob);
+          });
+          setTimeout(() => resolve(rawBlob), 3500);
+        });
+      } catch (err) {
+        console.warn('[Render] fixWebmDuration hatası:', err);
+        finalBlob = rawBlob;
+      }
+
+      const outFilename = suggestedFilename.endsWith('.webm')
+        ? suggestedFilename
+        : suggestedFilename.replace(/\.[^.]+$/, '') + '.webm';
 
       if (fileHandle && typeof fileHandle.createWritable === 'function') {
         const writable = await fileHandle.createWritable();
@@ -777,7 +827,7 @@ export const ShowcaseApp: React.FC = () => {
         }
         setRenderStatus('success');
         setRenderProgress(100);
-        setRenderMessage(`✓ Video seçtiğiniz konuma kaydedildi! (%100)`);
+        setRenderMessage(`✓ Video seçtiğiniz konuma kaydedildi: ${outFilename} (%100)`);
       } else {
         const downloadUrl = URL.createObjectURL(finalBlob);
         const link = document.createElement('a');
@@ -786,6 +836,7 @@ export const ShowcaseApp: React.FC = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
 
         setRenderStatus('success');
         setRenderProgress(100);
@@ -804,8 +855,16 @@ export const ShowcaseApp: React.FC = () => {
   const handleRenderVideo = async (format: 'webm' | 'mp4' | 'mov') => {
     if (renderStatus === 'rendering') return;
 
-    const isTrans = (format === 'mov' || format === 'webm') ? cfg.transparentBg : false;
-    const ext = format === 'webm' ? 'webm' : format === 'mov' ? 'mov' : 'mp4';
+    const isLocalHost = typeof window !== 'undefined' && (
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.port === '5173'
+    );
+
+    // Canlı statik barındırmada (Vercel vb.) tarayıcı içi WebM motoru kullanılır
+    const effectiveFormat = isLocalHost ? format : 'webm';
+    const isTrans = (effectiveFormat === 'mov' || effectiveFormat === 'webm') ? cfg.transparentBg : false;
+    const ext = effectiveFormat;
     const safeScene = String(activeScene.id).replace(/[^a-zA-Z0-9_-]/g, '');
     const ratioTag = cfg.aspectRatio === '9:16' ? 'dikey-9x16-' : cfg.aspectRatio === '1:1' ? 'kare-1x1-' : 'yatay-16x9-';
     const suggestedFilename = `${safeScene}-${ratioTag}${isTrans ? 'seffaf-' : ''}${Date.now()}.${ext}`;
@@ -825,15 +884,15 @@ export const ShowcaseApp: React.FC = () => {
             types: [
               {
                 description:
-                  format === 'webm'
+                  effectiveFormat === 'webm'
                     ? 'WebM Video (*.webm)'
-                    : format === 'mp4'
+                    : effectiveFormat === 'mp4'
                     ? 'MP4 Video (*.mp4)'
                     : 'Apple ProRes (*.mov)',
                 accept: {
-                  [format === 'webm'
+                  [effectiveFormat === 'webm'
                     ? 'video/webm'
-                    : format === 'mp4'
+                    : effectiveFormat === 'mp4'
                     ? 'video/mp4'
                     : 'video/quicktime']: [`.${ext}`],
                 },
@@ -853,12 +912,6 @@ export const ShowcaseApp: React.FC = () => {
     try {
       setRenderStatus('rendering');
       setRenderProgress(0);
-
-      const isLocalHost = typeof window !== 'undefined' && (
-        window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.port === '5173'
-      );
 
       // Canlı ortamda (Vercel vb.) doğrudan tarayıcı içi render motoruna geç, /api/render çağrısı yapma
       if (!isLocalHost) {
