@@ -801,6 +801,33 @@ export const ShowcaseApp: React.FC = () => {
       return Math.max(0, Math.min(1, alpha));
     };
 
+    // Hiyerarşik CSS filter hesaplama (blur-dissolve vb. efektleri doğrudan Canvas context'ine aktarır)
+    const getAccumulatedFilter = (el: Element): string => {
+      const filters: string[] = [];
+      let curr: Element | null = el;
+      while (curr && curr !== compContainer.parentElement) {
+        const s = window.getComputedStyle(curr);
+        if (s.filter && s.filter !== 'none') {
+          filters.push(s.filter);
+        }
+        curr = curr.parentElement;
+      }
+      return filters.join(' ') || 'none';
+    };
+
+    // Hiyerarşik CSS clipPath hesaplama (wipe-curtain perdesi için)
+    const getAccumulatedClipPath = (el: Element): string | null => {
+      let curr: Element | null = el;
+      while (curr && curr !== compContainer.parentElement) {
+        const s = window.getComputedStyle(curr);
+        if (s.clipPath && s.clipPath !== 'none') {
+          return s.clipPath;
+        }
+        curr = curr.parentElement;
+      }
+      return null;
+    };
+
     try {
       for (let f = 0; f < totalFrames; f++) {
         const frameStart = performance.now();
@@ -855,6 +882,23 @@ export const ShowcaseApp: React.FC = () => {
             img.onload = () => {
               offCtx.save();
               offCtx.globalAlpha = svgOpacity;
+              const filterStr = getAccumulatedFilter(svgEl);
+              if (filterStr && filterStr !== 'none') {
+                offCtx.filter = filterStr;
+              }
+              const clipStr = getAccumulatedClipPath(svgEl);
+              if (clipStr) {
+                const m = clipStr.match(/inset\(\s*([\d.]+)%\s+([\d.]+)%\s+([\d.]+)%\s+([\d.]+)%\)/);
+                if (m) {
+                  const t = (parseFloat(m[1]) / 100) * height;
+                  const r = (parseFloat(m[2]) / 100) * width;
+                  const b = (parseFloat(m[3]) / 100) * height;
+                  const l = (parseFloat(m[4]) / 100) * width;
+                  offCtx.beginPath();
+                  offCtx.rect(l, t, width - l - r, height - t - b);
+                  offCtx.clip();
+                }
+              }
               offCtx.drawImage(img, x, y, w, h);
               offCtx.restore();
               URL.revokeObjectURL(svgUrl);
@@ -892,8 +936,12 @@ export const ShowcaseApp: React.FC = () => {
             const y = (sRect.top - compRect.top) * scaleY;
             const fontSize = parseFloat(style.fontSize) * scaleY;
 
+            const textFilter = getAccumulatedFilter(node);
             offCtx.save();
             offCtx.globalAlpha = textOpacity;
+            if (textFilter && textFilter !== 'none') {
+              offCtx.filter = textFilter;
+            }
             offCtx.font = `${style.fontWeight || '600'} ${fontSize}px ${style.fontFamily || cfg.fontFamily}`;
             offCtx.fillStyle = style.color || cfg.textColor;
             offCtx.fillText(text, x, y);

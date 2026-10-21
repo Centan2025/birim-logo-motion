@@ -9,6 +9,7 @@ import {
 import { BIRIM_LETTERS as DEFAULT_BIRIM_LETTERS, LOGO_VIEWBOX as DEFAULT_LOGO_VIEWBOX, LogoLetterData } from '../data/birimLogoPaths';
 import { getEffectiveLogo } from '../data/logoAdapter';
 import { SceneCaption } from '../components/SceneCaption';
+import { SceneExitWrapper } from '../components/SceneExitWrapper';
 import { ArchitecturalSceneProps } from '../types/schema';
 
 type ExpandDirection = 'left' | 'bottom' | 'right' | 'top';
@@ -71,7 +72,17 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = (props
   return (
     <AbsoluteFill style={{ backgroundColor: isTransparent ? 'transparent' : (backgroundColor || '#0B0D10'), overflow: 'hidden' }}>
       {showLogo !== false && (
-        <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
+        <SceneExitWrapper
+          target="logo"
+          exitAnimation={props.exitAnimation}
+          exitTarget={props.exitTarget}
+          exitDurationFrames={props.exitDurationFrames}
+          exitStartFrame={props.exitStartFrame}
+          exitTimingMode={props.exitTimingMode}
+          exitDelayFrames={props.exitDelayFrames}
+          style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
+        >
+          <svg width={compWidth} height={compHeight} viewBox={`0 0 ${compWidth} ${compHeight}`}>
         <defs>
           {BIRIM_LETTERS.map((letter) => (
             <clipPath key={`bounds-${letter.id}`} id={`bounds-clip-${letter.id}`}>
@@ -141,6 +152,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = (props
           })}
         </g>
       </svg>
+        </SceneExitWrapper>
       )}
 
       {/* Customizable Animated Bottom Text */}
