@@ -57,6 +57,8 @@ export const SceneExitProvider: React.FC<SceneExitProviderProps> = ({
 };
 
 export interface SceneExitWrapperProps {
+  id?: string;
+  'data-role'?: string;
   children: React.ReactNode;
   target: 'scene' | 'text' | 'logo';
   style?: React.CSSProperties;
@@ -70,6 +72,8 @@ export interface SceneExitWrapperProps {
 }
 
 export const SceneExitWrapper: React.FC<SceneExitWrapperProps> = ({
+  id,
+  'data-role': dataRole,
   children,
   target,
   style,
@@ -96,7 +100,7 @@ export const SceneExitWrapper: React.FC<SceneExitWrapperProps> = ({
   // If no exit animation requested, render directly
   if (exitAnimation === 'none') {
     return (
-      <div style={style} className={className}>
+      <div id={id} data-role={dataRole} style={style} className={className}>
         {children}
       </div>
     );
@@ -118,7 +122,7 @@ export const SceneExitWrapper: React.FC<SceneExitWrapperProps> = ({
 
   if (!shouldAnimate) {
     return (
-      <div style={style} className={className}>
+      <div id={id} data-role={dataRole} style={style} className={className}>
         {children}
       </div>
     );
@@ -140,7 +144,7 @@ export const SceneExitWrapper: React.FC<SceneExitWrapperProps> = ({
   // If we haven't reached exit start frame yet
   if (frame < computedStartFrame) {
     return (
-      <div style={style} className={className}>
+      <div id={id} data-role={dataRole} style={style} className={className}>
         {children}
       </div>
     );
@@ -244,7 +248,7 @@ export const SceneExitWrapper: React.FC<SceneExitWrapperProps> = ({
   };
 
   return (
-    <div style={exitStyle} className={className}>
+    <div id={id} data-role={dataRole} style={exitStyle} className={className}>
       {children}
     </div>
   );

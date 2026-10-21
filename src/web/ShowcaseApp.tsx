@@ -575,6 +575,8 @@ function getOrCreateExitWrapped(Comp: React.ComponentType<any>): React.Component
         exitDelayFrames={props.exitDelayFrames}
       >
         <SceneExitWrapper
+          id="remotion-active-scene-canvas"
+          data-role="remotion-composition-root"
           target="scene"
           exitAnimation={props.exitAnimation}
           exitTarget={props.exitTarget}
@@ -778,9 +780,15 @@ export const ShowcaseApp: React.FC = () => {
     player.pause();
     recorder.start(100);
 
-    // Kompozisyon DOM alanı (Player kontrolleri, play butonu ve arayüz kesinlikle hariç tutulur)
+    // Sabit referans alanı (Player kontrolleri hariç tutulur, transform iptali önlenir)
+    const playerViewport =
+      (container.querySelector('.__remotion-player > div') as HTMLElement) ||
+      (container.querySelector('.__remotion-player') as HTMLElement) ||
+      container;
     const compContainer =
-      (container.querySelector('.__remotion-player') as HTMLElement) || container;
+      (container.querySelector('#remotion-active-scene-canvas') as HTMLElement) ||
+      (container.querySelector('[data-role="remotion-composition-root"]') as HTMLElement) ||
+      playerViewport;
 
     // Hiyerarşik saydamlık hesaplama (SceneExitWrapper ve kaybolma animasyonlarının gerçek opacity değerini alır)
     const getAccumulatedAlpha = (el: Element): number => {
@@ -849,12 +857,15 @@ export const ShowcaseApp: React.FC = () => {
           offCtx.fillRect(0, 0, width, height);
         }
 
-        const compRect = compContainer.getBoundingClientRect();
+        const compRect = playerViewport.getBoundingClientRect();
         const scaleX = width / (compRect.width || 1);
         const scaleY = height / (compRect.height || 1);
 
         // 1. SADECE kompozisyon içindeki SVG Vektörlerini Çiz (Ters kaybolma animasyonu ve saydamlık tam uygulanır)
-        const allSvgs = Array.from(compContainer.querySelectorAll('svg'));
+        // Oynatıcı kontrolleri, play butonu ve arayüz kesinlikle hariç tutulur
+        const allSvgs = Array.from(compContainer.querySelectorAll('svg')).filter((svg) => {
+          return !svg.closest('button, [role="button"], [class*="control"], [class*="player-bar"], [class*="remotion-player-controls"]');
+        });
         const rootSvgs = allSvgs.filter((svg) => !svg.parentElement?.closest('svg'));
 
         for (const svgEl of rootSvgs) {
@@ -913,7 +924,9 @@ export const ShowcaseApp: React.FC = () => {
         }
 
         // 2. SADECE kompozisyon içindeki Metin Katmanlarını Çiz (Ters animasyon ve saydamlık tam uygulanır)
-        const textNodes = Array.from(compContainer.querySelectorAll('span, p, h1, h2, h3'));
+        const textNodes = Array.from(compContainer.querySelectorAll('span, p, h1, h2, h3')).filter((node) => {
+          return !node.closest('button, [role="button"], [class*="control"], [class*="player-bar"], [class*="remotion-player-controls"]');
+        });
         const leafTextNodes = textNodes.filter(
           (node) => node.children.length === 0 && (node.textContent?.trim() || '').length > 0
         );
