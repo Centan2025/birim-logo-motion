@@ -22,7 +22,7 @@ const defaultExitContext: SceneExitContextValue = {
   exitTarget: 'both',
   exitDurationFrames: 25,
   exitTimingMode: 'before-end',
-  exitDelayFrames: 30,
+  exitDelayFrames: 0,
 };
 
 export const SceneExitContext = createContext<SceneExitContextValue>(defaultExitContext);
@@ -37,7 +37,7 @@ export const SceneExitProvider: React.FC<SceneExitProviderProps> = ({
   exitDurationFrames = 25,
   exitStartFrame,
   exitTimingMode = 'before-end',
-  exitDelayFrames = 30,
+  exitDelayFrames = 0,
   children,
 }) => {
   return (
@@ -94,7 +94,7 @@ export const SceneExitWrapper: React.FC<SceneExitWrapperProps> = ({
   const exitTarget = propExitTarget ?? ctx.exitTarget ?? 'both';
   const exitDuration = Math.max(5, propExitDuration ?? ctx.exitDurationFrames ?? 25);
   const exitTimingMode = propExitTimingMode ?? ctx.exitTimingMode ?? 'before-end';
-  const exitDelay = propExitDelay ?? ctx.exitDelayFrames ?? 30;
+  const exitDelay = propExitDelay ?? ctx.exitDelayFrames ?? 0;
   const customStart = propExitStart ?? ctx.exitStartFrame;
 
   // If no exit animation requested, render directly

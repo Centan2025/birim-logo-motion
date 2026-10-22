@@ -119,7 +119,7 @@ const DEFAULT_ARCH_PROPS = {
   exitTarget: 'both' as const,
   exitDurationFrames: 25,
   exitTimingMode: 'before-end' as const,
-  exitDelayFrames: 30,
+  exitDelayFrames: 0,
 };
 
 const DEFAULT_MODERN_PROPS = {
@@ -144,7 +144,7 @@ const DEFAULT_MODERN_PROPS = {
   exitTarget: 'both' as const,
   exitDurationFrames: 25,
   exitTimingMode: 'before-end' as const,
-  exitDelayFrames: 30,
+  exitDelayFrames: 0,
 };
 
 const DEFAULT_TYPOGRAPHY_PROPS = {
@@ -169,7 +169,7 @@ const DEFAULT_TYPOGRAPHY_PROPS = {
   exitTarget: 'both' as const,
   exitDurationFrames: 25,
   exitTimingMode: 'before-end' as const,
-  exitDelayFrames: 30,
+  exitDelayFrames: 0,
 };
 
 const calculateDynamicMetadata: CalculateMetadataFunction<ArchitecturalSceneProps> = ({ props }) => {

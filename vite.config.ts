@@ -76,7 +76,7 @@ function registerRenderMiddlewares(server: ViteDevServer | PreviewServer) {
                 exitDurationFrames = 25,
                 exitStartFrame,
                 exitTimingMode = 'before-end',
-                exitDelayFrames = 30,
+                exitDelayFrames = 0,
                 customLogo = null,
               } = data;
 
@@ -139,7 +139,7 @@ function registerRenderMiddlewares(server: ViteDevServer | PreviewServer) {
                 exitDurationFrames: Number(exitDurationFrames) || 25,
                 exitStartFrame: exitStartFrame !== undefined ? Number(exitStartFrame) : undefined,
                 exitTimingMode: exitTimingMode || 'before-end',
-                exitDelayFrames: Number(exitDelayFrames) || 30,
+                exitDelayFrames: exitDelayFrames !== undefined ? Number(exitDelayFrames) : 0,
                 customLogo: customLogo || undefined,
               };
 

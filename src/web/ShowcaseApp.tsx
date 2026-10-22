@@ -428,7 +428,7 @@ const DEFAULT_SCENE_CONFIG: SceneCustomConfig = {
   exitTarget: 'both',
   exitDurationFrames: 25,
   exitTimingMode: 'before-end',
-  exitDelayFrames: 30,
+  exitDelayFrames: 0,
 };
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
@@ -857,7 +857,7 @@ export const ShowcaseApp: React.FC = () => {
           offCtx.fillRect(0, 0, width, height);
         }
 
-        const compRect = playerViewport.getBoundingClientRect();
+        const compRect = compContainer.getBoundingClientRect();
         const scaleX = width / (compRect.width || 1);
         const scaleY = height / (compRect.height || 1);
 
@@ -1107,7 +1107,9 @@ export const ShowcaseApp: React.FC = () => {
 
       // Canlı ortamda (Vercel vb.) doğrudan tarayıcı içi render motoruna geç, /api/render çağrısı yapma
       if (!isLocalHost) {
-        console.log('[Render] Canlı statik ortam (Vercel): Doğrudan tarayıcı içi render motoru başlatılıyor...');
+        if (format === 'mov') {
+          setRenderMessage('ℹ️ ProRes 4444 yerel Remotion sunucusu gerektirir. Canlı web için şeffaf WebM hazırlanıyor...');
+        }
         await recordInBrowser(suggestedFilename, fileHandle);
         return;
       }
