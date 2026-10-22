@@ -136,8 +136,9 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = (props
               scaleY = interpolate(progress, [0, 1], [0, 1]);
             }
 
+            const isExpanding = progress < 0.999;
             return (
-              <g key={letter.id} clipPath={`url(#bounds-clip-${letter.id})`}>
+              <g key={letter.id} clipPath={isExpanding ? `url(#bounds-clip-${letter.id})` : undefined}>
                 <g
                   transform={`translate(${anchorX}, ${anchorY}) scale(${scaleX}, ${scaleY}) translate(${-anchorX}, ${-anchorY})`}
                 >
