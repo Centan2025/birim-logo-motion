@@ -1,3 +1,4 @@
+import { useSceneFrame } from '../utils/useSceneFrame';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -19,7 +20,7 @@ export const ElasticWaveDomino: React.FC<ArchitecturalSceneProps> = (props) => {
     showLogo = true,
   } = props;
 
-  const frame = useCurrentFrame();
+  const frame = useSceneFrame(props.playbackSpeed);
   const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
 
   const isVertical = compHeight > compWidth;

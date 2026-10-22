@@ -8,6 +8,7 @@ import {
 } from 'remotion';
 import { ExitAnimationType, ExitTargetType, TextAnimationType } from '../types/schema';
 import { SceneExitWrapper } from './SceneExitWrapper';
+import { useSceneFrame } from '../utils/useSceneFrame';
 
 const DECODE_GLYPHS = '▓▒░#/_01X+<>[]=';
 
@@ -23,6 +24,7 @@ export interface AnimatedTextLineProps {
   startFrame: number;
   isSubtitle?: boolean;
   textAlign?: 'left' | 'center' | 'right';
+  playbackSpeed?: number;
 }
 
 export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
@@ -37,8 +39,9 @@ export const AnimatedTextLine: React.FC<AnimatedTextLineProps> = ({
   startFrame,
   isSubtitle = false,
   textAlign = 'center',
+  playbackSpeed,
 }) => {
-  const frame = useCurrentFrame();
+  const frame = useSceneFrame(playbackSpeed);
   const { fps } = useVideoConfig();
 
   if (!text) return null;
@@ -1116,6 +1119,7 @@ interface SceneCaptionProps {
   textOffsetX?: number;
   textOffsetY?: number;
   textAlign?: 'left' | 'center' | 'right';
+  playbackSpeed?: number;
   textAnimation?: TextAnimationType;
   baseTop?: number;
   delayFrames?: number;
@@ -1146,6 +1150,7 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
   textOffsetX = 0,
   textOffsetY = 0,
   textAlign = 'center',
+  playbackSpeed,
   textAnimation = 'char-wave',
   baseTop = 678,
   delayFrames = 32,
@@ -1223,6 +1228,7 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
         animation={textAnimation}
         startFrame={startLine1}
         textAlign={textAlign}
+        playbackSpeed={playbackSpeed}
       />
       {subtitle && (
         <AnimatedTextLine
@@ -1236,6 +1242,7 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
           animation={textAnimation}
           startFrame={startLine2}
           textAlign={textAlign}
+        playbackSpeed={playbackSpeed}
           isSubtitle
         />
       )}
@@ -1251,6 +1258,7 @@ export const SceneCaption: React.FC<SceneCaptionProps> = ({
           animation={textAnimation}
           startFrame={startLine3}
           textAlign={textAlign}
+        playbackSpeed={playbackSpeed}
           isSubtitle
         />
       )}

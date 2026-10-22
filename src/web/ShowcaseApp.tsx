@@ -1858,13 +1858,13 @@ export const ShowcaseApp: React.FC = () => {
                 }}
                 durationInFrames={cfg.durationInFrames}
                 fps={30}
-                playbackRate={cfg.playbackSpeed ?? 1.0}
+                playbackRate={1.0}
                 compositionWidth={cfg.aspectRatio === '9:16' ? 1080 : cfg.aspectRatio === '1:1' ? 1080 : 1920}
                 compositionHeight={cfg.aspectRatio === '9:16' ? 1920 : cfg.aspectRatio === '1:1' ? 1080 : 1080}
                 style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
                 controls={renderStatus !== 'rendering'}
                 alwaysShowControls={renderStatus !== 'rendering'}
-                showPlaybackRateControl={renderStatus !== 'rendering'}
+                showPlaybackRateControl={false}
                 allowFullscreen={renderStatus !== 'rendering'}
                 showPosterWhenPaused={false}
                 autoPlay={renderStatus !== 'rendering'}
@@ -1915,13 +1915,13 @@ export const ShowcaseApp: React.FC = () => {
                   }}
                   durationInFrames={cfg.durationInFrames}
                   fps={30}
-                  playbackRate={cfg.playbackSpeed ?? 1.0}
+                  playbackRate={1.0}
                   compositionWidth={cfg.aspectRatio === '9:16' ? 1080 : cfg.aspectRatio === '1:1' ? 1080 : 1920}
                   compositionHeight={cfg.aspectRatio === '9:16' ? 1920 : cfg.aspectRatio === '1:1' ? 1080 : 1080}
                   style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
                   controls={renderStatus !== 'rendering'}
                   alwaysShowControls={renderStatus !== 'rendering'}
-                  showPlaybackRateControl={renderStatus !== 'rendering'}
+                  showPlaybackRateControl={false}
                   allowFullscreen={renderStatus !== 'rendering'}
                   showPosterWhenPaused={false}
                   autoPlay={renderStatus !== 'rendering'}

@@ -1,3 +1,4 @@
+import { useSceneFrame } from '../utils/useSceneFrame';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -34,7 +35,7 @@ export const MinimalCornerWatermark: React.FC<LowerThirdProps> = ({
   ...restProps
 }: LowerThirdProps & { backgroundColor?: string }) => {
   const isTransparent = transparentBackground || restProps.backgroundColor === 'transparent';
-  const frame = useCurrentFrame();
+  const frame = useSceneFrame(restProps.playbackSpeed);
   const { fps, durationInFrames } = useVideoConfig();
 
   // Phase 1 (0..38): Center Hero Intro -> Phase 2 (38..72): Glide to Top-Left Corner Bug

@@ -1,3 +1,4 @@
+import { useSceneFrame } from '../utils/useSceneFrame';
 import { AnimatedTextLine } from '../components/SceneCaption';
 import React from 'react';
 import {
@@ -34,7 +35,7 @@ export const CleanVideoBadge: React.FC<LowerThirdProps> = ({
   ...restProps
 }: LowerThirdProps & { backgroundColor?: string }) => {
   const isTransparent = transparentBackground || restProps.backgroundColor === 'transparent';
-  const frame = useCurrentFrame();
+  const frame = useSceneFrame(restProps.playbackSpeed);
   const { fps, durationInFrames } = useVideoConfig();
 
   const enter = spring({

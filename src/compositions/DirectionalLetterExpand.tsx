@@ -11,6 +11,7 @@ import { getEffectiveLogo } from '../data/logoAdapter';
 import { SceneCaption } from '../components/SceneCaption';
 import { SceneExitWrapper } from '../components/SceneExitWrapper';
 import { ArchitecturalSceneProps } from '../types/schema';
+import { useSceneFrame } from '../utils/useSceneFrame';
 
 type ExpandDirection = 'left' | 'bottom' | 'right' | 'top';
 
@@ -55,7 +56,7 @@ export const DirectionalLetterExpand: React.FC<ArchitecturalSceneProps> = (props
 
   const { viewBox: LOGO_VIEWBOX, letters: BIRIM_LETTERS } = getEffectiveLogo(props.customLogo);
   const isTransparent = transparentBackground || backgroundColor === 'transparent';
-  const frame = useCurrentFrame();
+  const frame = useSceneFrame(props.playbackSpeed);
   const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
 
   const isVertical = compHeight > compWidth;

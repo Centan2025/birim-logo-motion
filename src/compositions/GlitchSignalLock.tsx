@@ -1,3 +1,4 @@
+import { useSceneFrame } from '../utils/useSceneFrame';
 import React from 'react';
 import {
   AbsoluteFill,
@@ -31,7 +32,7 @@ export const GlitchSignalLock: React.FC<ArchitecturalSceneProps> = (props) => {
     textDelayFrames,
   } = props;
   const isTransparent = transparentBackground || backgroundColor === 'transparent';
-  const frame = useCurrentFrame();
+  const frame = useSceneFrame(props.playbackSpeed);
   const { fps, width: compWidth = 1920, height: compHeight = 1080 } = useVideoConfig();
 
   const { viewBox: LOGO_VIEWBOX, fullPath: FULL_LOGO_PATH } = getEffectiveLogo(props.customLogo);

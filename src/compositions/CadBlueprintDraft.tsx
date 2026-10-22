@@ -1,3 +1,4 @@
+import { useSceneFrame } from '../utils/useSceneFrame';
 import { SceneCaption } from '../components/SceneCaption';
 import React from 'react';
 import {
@@ -27,7 +28,7 @@ export const CadBlueprintDraft: React.FC<ArchitecturalSceneProps> = (props) => {
   } = props;
 
   const isTransparent = transparentBackground || backgroundColor === 'transparent';
-  const frame = useCurrentFrame();
+  const frame = useSceneFrame(props.playbackSpeed);
   const { width: compWidth = 1920, height: compHeight = 1080, fps } = useVideoConfig();
 
   const { viewBox: LOGO_VIEWBOX, letters: BIRIM_LETTERS } = getEffectiveLogo(props.customLogo);
